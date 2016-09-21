@@ -1,30 +1,30 @@
 ### Sep 19 - Sep 25
 
   - IO/data persister
-    H - Read from file
-    V - Write to backup file
-    H - Save onto disk
-    V - Delete from disk/memory
+    - (H) Read from file
+    - (V) Write to backup file
+    - (H) Save onto disk
+    - (V) Delete from disk/memory
     
   - Dataset parser
-    H - multiple sources/structures
+    - (H) multiple sources/structures
     
   - Define common data structure for data sets
-    V - Design interface to access data sets
-    H - accessors (get/set/delete/etc) rows
+    - (V) Design interface to access data sets
+    - (H) accessors (get/set/delete/etc) rows
   
   - Query
-    V - Query validators
-    H - Implement WHERE: [allowed operations](https://github.com/ubccpsc/310/blob/2016sept/project/Deliverable1.md#where-ebnf)
+    - (V) Query validators
+    - (H) Implement WHERE: [allowed operations](https://github.com/ubccpsc/310/blob/2016sept/project/Deliverable1.md#where-ebnf)
     
 ### Sep 26 - Oct 2
 
   - Query
-    V - Implement ORDER: sort
-    H - Implement GET: returns copy of specified data
-    V - Implement AS: formatting
+    - (V) Implement ORDER: sort
+    - (H) Implement GET: returns copy of specified data
+    - (V) Implement AS: formatting
   
-  V - Non-cryptic Exception handling
+  - (H) Non-cryptic Exception handling
   
   - Endpoints
-    V - DELETE: call IO/data persister
+    - (V) DELETE: call IO/data persister
