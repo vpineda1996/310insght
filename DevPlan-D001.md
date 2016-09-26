@@ -11,10 +11,10 @@
     
   - Define common data structure for data sets
     - (V) Design interface to access data sets
-    - (H) accessors (get/set/delete/etc) rows
+    - (V) accessors (get/set/delete/etc) rows
   
   - Query
-    - (V) Query validators
+    - (H) Query validators
     - (H) Implement WHERE: [allowed operations](https://github.com/ubccpsc/310/blob/2016sept/project/Deliverable1.md#where-ebnf)
     
 ### Sep 26 - Oct 2
