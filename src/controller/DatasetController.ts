@@ -77,11 +77,11 @@ export default class DatasetController {
         return new Promise((fulfill, reject) => {
             try {
                 let myZip = new JSZip();
-                let resCode = 204;
+                let resCode = 201;
                 this.getDataset(id).then(oDataTable => {
                     if (!oDataTable) {
                         oDataTable = new Datatable(id, PARENT_DIR + "/" + id, []);
-                        resCode = 201;
+                        resCode = 204;
                     }
                     return myZip.loadAsync(data, { base64: true }).then((zip: JSZip) => {
                         Log.trace('DatasetController::process(..) - unzipped');
@@ -98,6 +98,23 @@ export default class DatasetController {
                 Log.trace('DatasetController::process(..) - ERROR: ' + err);
                 reject(err);
             }
+        });
+    }
+
+    public clearCache() {
+        this.datasets = null;
+    }
+
+    public removeDataset(id: string): Promise<any> {
+        return new Promise((resolve, reject) => {
+            let tmp = this.datasets[id];
+            if (!tmp) {
+                throw new Error("Dataset does not exist!")
+            }
+            delete this.datasets[id];
+            return tmp.removeColumns().then(() => {
+                return this.writeCacheIntoDisk();
+            }).then(resolve);
         });
     }
 
@@ -172,11 +189,11 @@ export default class DatasetController {
                     return reject();
                 }
                 try {
-                    let parsedJSON = JSON.parse(data);
+                    let parsedJSON: { [id: string]: Datatable } = JSON.parse(data);
                     this.datasets = {};
                     for (var i in parsedJSON) {
                         if (parsedJSON[i]) {
-                            let cols = (parsedJSON[i].column || []).map((col: Column) => {
+                            let cols = (parsedJSON[i].columns || []).map((col: Column) => {
                                 return new Column(col.name, col.src, col.datatype);
                             });
                             this.datasets[i] = new Datatable(parsedJSON[i].id, parsedJSON[i].src, cols);

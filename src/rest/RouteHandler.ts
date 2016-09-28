@@ -83,4 +83,36 @@ export default class RouteHandler {
             res.send(403);
         });
     }
+
+    public static deleteDataset(req: restify.Request, res: restify.Response, next: restify.Next) {
+        try {
+            Log.trace('RouteHandler::deleteDataset(..) - params: ' + JSON.stringify(req.params));
+            var id: string = req.params.id;
+            var DC = DatasetController.getInstance();
+            DC.getDatasets().then((oDatasets) => {
+                if (oDatasets[id]) {
+                    Log.trace('RouteHandler::deleteDataset(..) - found dataset, deleting: ');
+                    return DC.removeDataset(id).then(() => {
+                        Log.trace('RouteHandler::deleteDataset(..) - deletion successful ');
+                        return 204;
+                    });
+                } else {
+                    return 404;
+                }
+            }).then((code: number) => {
+                if (code === 404) {
+                    res.json(code, {error: "dataset could not be found"});
+                } else {
+                    res.json(code, {success: true});
+                }
+            }).catch(function (error: Error) {
+                Log.trace('RouteHandler::deleteDataset(..) - ERROR: ' + error.message);
+                res.json(400, {error: error.message});
+            });
+        } catch (error) {
+            Log.error('RouteHandler::deleteDataset(..) - ERROR: ' + error.message);
+            res.send(400, {error: error.message});
+        }
+        return next();
+    }
 }
