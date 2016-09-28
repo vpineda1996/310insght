@@ -97,10 +97,14 @@ export default class RouteHandler {
                         return 204;
                     });
                 } else {
-                    return 204;
+                    return 404;
                 }
             }).then((code: number) => {
-                res.json(code, {success: true});
+                if (code === 404) {
+                    res.json(code, {error: "dataset could not be found"});
+                } else {
+                    res.json(code, {success: true});
+                }
             }).catch(function (error: Error) {
                 Log.trace('RouteHandler::deleteDataset(..) - ERROR: ' + error.message);
                 res.json(400, {error: error.message});
@@ -109,7 +113,6 @@ export default class RouteHandler {
             Log.error('RouteHandler::deleteDataset(..) - ERROR: ' + error.message);
             res.send(400, {error: error.message});
         }
-            
         return next();
     }
 }
