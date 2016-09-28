@@ -66,9 +66,8 @@ export default class RouteHandler {
 
     public static postQuery(req: restify.Request, res: restify.Response, next: restify.Next) {
         Log.trace('RouteHandler::postQuery(..) - params: ' + JSON.stringify(req.params));
-        try {
-            let query: QueryRequest = req.params;
-            let datasets: Datasets = RouteHandler.datasetController.getDatasets();
+        let query: QueryRequest = req.params;
+        RouteHandler.datasetController.getDatasets().then((datasets) => {
             let controller = new QueryController(datasets);
             let isValid = controller.isValid(query);
 
@@ -78,10 +77,10 @@ export default class RouteHandler {
             } else {
                 res.json(400, {status: 'invalid query'});
             }
-        } catch (err) {
+            next();
+        }).catch((err) => {
             Log.error('RouteHandler::postQuery(..) - ERROR: ' + err);
             res.send(403);
-        }
-        return next();
+        });
     }
 }
