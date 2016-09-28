@@ -31,77 +31,91 @@ export default class JSONParser {
 
     public static parse(zipFiles: { [id: string]: JSZipObject }, datatable: Datatable): Promise<Datatable> {
         Log.trace('JSONParser::parse( ... )');
-        this.createColumns(datatable);
-        let aRowsArray: Row[] = [];
-        let aPromiseArray: Promise<any>[] = [];
-        for (var i in zipFiles) {
-            if (zipFiles[i]) {
-                let oPromise = this.parseCourse(zipFiles[i], i).then((course) => {
-                    Array.prototype.push.apply(aRowsArray, course);
-                });
-                aPromiseArray.push(oPromise);
+        return this.createColumns(datatable).then(() => {
+            let aPromiseArray: Promise<any>[] = [];
+            for (var i in zipFiles) {
+                if (zipFiles[i] && this.validZipFile(i, zipFiles[i])) {
+                    let oPromise = this.parseCourse(zipFiles[i], i, datatable);
+                    aPromiseArray.push(oPromise);
+                }
             }
-        }
-        return Promise.all(aPromiseArray).then(() => {
-            Log.trace('JSONParser::parse( pushing columns... )');
-            this.pushDataToColumns(datatable, aRowsArray);
-            return datatable;
+            return Promise.all(aPromiseArray).then(() => {
+                return datatable;
+            }).catch((e) => {
+                Log.trace('JSONParser::parse( error pushing data to columns');
+                return e;
+            });
         });
+    }
+
+    private static validZipFile(i: string, zipObj: JSZipObject) {
+        if (!i.match(/^course/)) {
+            Log.trace(i);
+            throw new Error("unknown data structure for zip file")
+        }
+        return true;
     }
 
     private static createColumns(datatable: Datatable) {
         Log.trace('JSONParser::createColumns( ... )');
+        let aPromises: Promise<Column>[] = [];
         COLUMNS.forEach((colName) => {
-            datatable.createColumn(colName);
-            datatable.getColumn(colName).getData();
+            aPromises.push(datatable.createColumn(colName));
+        });
+        return Promise.all(aPromises).then((col) => {
+            // Need to load the column data to make it fast
+            let aPromiseArray: Promise<Array<string|number>>[] = [];
+            COLUMNS.forEach((colName, idx) => {
+                aPromiseArray.push(datatable.getColumn(idx).getData());
+            });
+            return Promise.all(aPromiseArray);
         });
     };
 
-    private static pushDataToColumns(datatable: Datatable, aRowsArray: Row[]) {
-        Log.trace('JSONParser::pushDataToColumns( ... )');
-        aRowsArray.forEach((oRow) => {
-            datatable.insertRow(oRow);
-        });
-    }
-
-    private static parseCourse(courseZip: JSZipObject, coursePath: string): Promise<Row[]> {
+    private static parseCourse(courseZip: JSZipObject, coursePath: string, datatable: Datatable): Promise<boolean> {
         return new Promise((resolve, reject) => {
             courseZip.async('string').then((res) => {
                 try {
                     let listOfCourseYears = JSON.parse(res);
-                    let aRet: Row[] = [];
                     if (listOfCourseYears.result && listOfCourseYears.result.length) {
                         listOfCourseYears.result.forEach((courseOffering: any) => {
-                            let row: Row = {
-                                courses_dept: this.getCourseDept(coursePath),
-                                courses_id: this.getCourseId(coursePath),
-                                courses_avg: this.getCourseAvg(courseOffering),
-                                courses_instructor: this.getCourseInstructor(courseOffering),
-                                courses_title: this.getCourseTitle(courseOffering),
-                                courses_pass: this.getCoursePass(courseOffering),
-                                courses_fail: this.getCourseFail(courseOffering),
-                                courses_audit: this.getCourseAudit(courseOffering)
-                            };
-                            aRet.push(row);
+                            datatable.columns[0].insertCellFast(this.getCourseDept(coursePath));
+                            datatable.columns[1].insertCellFast(this.getCourseId(coursePath));
+                            datatable.columns[2].insertCellFast(this.getCourseAvg(coursePath));
+                            datatable.columns[3].insertCellFast(this.getCourseInstructor(coursePath));
+                            datatable.columns[4].insertCellFast(this.getCourseTitle(coursePath));
+                            datatable.columns[5].insertCellFast(this.getCoursePass(coursePath));
+                            datatable.columns[6].insertCellFast(this.getCourseFail(coursePath));
+                            datatable.columns[7].insertCellFast(this.getCourseAudit(courseOffering));
                         });
                     }
-                    resolve(aRet);
                 } catch (e) {
                     Log.trace('JSONParser::pushDataToColumns( ... ) ' +  e + " " + res);
-                    resolve([]);
                 }
-            }).catch((err) => Log.trace(err));
+                resolve(true);
+            }).catch((err) => {
+                Log.trace(err);
+                return err;
+            });
         });
     };
 
     private static getCourseDept(coursePath: string) {
-        let course = coursePath.split(/\//);
-        return course[course.length - 1].substring(0, COURSE_KEY_LEN);
+        try {
+            let course = coursePath.split(/\//);
+            return course[course.length - 1].substring(0, COURSE_KEY_LEN);
+        } catch (err) {
+            throw new Error("Unable to parse course dept -- " + coursePath);
+        }
     }
 
     private static getCourseId(coursePath: string) {
-        let course = coursePath.split(/\//);
-        return course[course.length - 1].substring(COURSE_KEY_LEN);
+        try {
+            let course = coursePath.split(/\//);
+            return course[course.length - 1].substring(COURSE_KEY_LEN);
+        } catch (err) {
+            throw new Error("Unable to parse course id -- " + coursePath);
+        }
     }
     private static getCourseAvg(courseOffering: any) {
         return courseOffering.Avg || 0;

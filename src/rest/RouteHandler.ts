@@ -51,15 +51,15 @@ export default class RouteHandler {
                 controller.process(id, req.body).then(function (result) {
                     Log.trace('RouteHandler::postDataset(..) - processed');
                     res.json(result, {success: true});
-                }).catch(function (err: Error) {
-                    Log.trace('RouteHandler::postDataset(..) - ERROR: ' + err.message);
-                    res.json(400, {err: err.message});
+                }).catch(function (error: Error) {
+                    Log.trace('RouteHandler::postDataset(..) - ERROR: ' + error.message);
+                    res.json(400, {error: error.message});
                 });
             });
 
         } catch (err) {
             Log.error('RouteHandler::postDataset(..) - ERROR: ' + err.message);
-            res.send(400, {err: err.message});
+            res.send(400, {error: err.message});
         }
         return next();
     }

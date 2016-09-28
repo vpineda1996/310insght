@@ -70,7 +70,7 @@ export default class DatasetController {
      *
      * @param id
      * @param data base64 representation of a zip file
-     * @returns {Promise<boolean>} returns true if successful; false if the dataset was invalid (for whatever reason)
+     * @returns {Promise<number>} returns the response code of the request
      */
     public process(id: string, data: any): Promise<number> {
         Log.trace('DatasetController::process( ' + id + '... )');
@@ -83,9 +83,9 @@ export default class DatasetController {
                         oDataTable = new Datatable(id, PARENT_DIR + "/" + id, []);
                         resCode = 201;
                     }
-                    myZip.loadAsync(data, { base64: true }).then((zip: JSZip) => {
+                    return myZip.loadAsync(data, { base64: true }).then((zip: JSZip) => {
                         Log.trace('DatasetController::process(..) - unzipped');
-                        JSONParser.parse(zip.files, oDataTable).then((processedMetadata: Datatable) => {
+                        return JSONParser.parse(zip.files, oDataTable).then((processedMetadata: Datatable) => {
                             this.save(id, processedMetadata);
                             fulfill(resCode);
                         });
@@ -172,7 +172,16 @@ export default class DatasetController {
                     return reject();
                 }
                 try {
-                    this.datasets = JSON.parse(data);
+                    let parsedJSON = JSON.parse(data);
+                    this.datasets = {};
+                    for (var i in parsedJSON) {
+                        if (parsedJSON[i]) {
+                            let cols = (parsedJSON[i].column || []).map((col: Column) => {
+                                return new Column(col.name, col.src, col.datatype);
+                            });
+                            this.datasets[i] = new Datatable(parsedJSON[i].id, parsedJSON[i].src, cols);
+                        }
+                    }
                 } catch (err) {
                     Log.trace('DatasetController::readCachedDatasetsInDisk(cannot parse json file)');
                     throw err;
