@@ -93,10 +93,12 @@ export class Datatable {
         });
     }
 
-    public createColumn(name: string, src?: string, datatype?: Datatype): Promise<boolean> {
+    public createColumn(name: string, src?: string, datatype?: Datatype): Promise<Column> {
         // If a column with the same name already exists, then dont bother creating a new one;
         if (this.getColumn(name)) {
-            return new Promise(resolve => resolve(this.getColumn(name)));
+            return new Promise(resolve => {
+                resolve(this.getColumn(name));
+            });
         }
 
         // Create folders and necesary files for column
@@ -155,10 +157,10 @@ export class Column {
         this.datatype = datatype || Datatype.STRING;
     }
 
-    private data: string[] | number[];
+    private data: Array<string|number>;
 
-    public getData(): Promise<string[] | number[]> {
-        return new Promise<string[] | number[]>((resolve, reject) => {
+    public getData(): Promise<Array<string|number>> {
+        return new Promise<Array<string|number>>((resolve, reject) => {
             if (this.data) {
                 return resolve(this.data);
             } else {
@@ -179,6 +181,10 @@ export class Column {
             this.data = data;
             return this;
         });
+    }
+
+    public insertCellFast(value: string | number) {
+        this.data.push(value);
     }
 
     public insertCell(value: string | number): Promise<Column> {
