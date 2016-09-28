@@ -9,33 +9,130 @@ import Log from "../src/Util";
 
 import {expect} from 'chai';
 describe("QueryController", function () {
+    let GET: string;
+    let WHERE: {};
+    let ORDER: string;
+    let AS: string;
+
+    const VALID_MCOMPARISON : {} = { GT: {'course_avg': 50 } }
+    const VALID_SCOMPARISON : {} = { IS: {'course_avg': '50' } }
+    const VALID_NEGATION : {} = { NOT: VALID_MCOMPARISON }
+    const VALID_LOGICCOMPARISON : {} = { AND: [VALID_MCOMPARISON, VALID_SCOMPARISON] }
+
+    let QUERY : QueryRequest;
+    let DATASET : Datasets;
+
+    function query() : QueryRequest {
+        if (typeof QUERY !== 'undefined') return QUERY;
+        QUERY = {GET: GET, WHERE: WHERE, ORDER: ORDER, AS: AS};
+        return QUERY;
+    }
+    function dataset() : Datasets {
+        if (typeof DATASET !== 'undefined') return DATASET;
+        DATASET = {};
+        return DATASET;
+    }
+    function isValid() : boolean {
+        let controller = new QueryController(dataset());
+        return controller.isValid(query());
+    }
 
     beforeEach(function () {
+        GET = 'food';
+        WHERE = {GT: {'course_avg': 90}};
+        ORDER = 'food';
+        AS = 'TABLE';
+
+        QUERY = undefined;
+        DATASET = undefined;
     });
 
     afterEach(function () {
     });
 
-    it("Should be able to validate a valid query", function () {
-        // NOTE: this is not actually a valid query for D1
-        let query: QueryRequest = {GET: 'food', WHERE: {IS: 'apple'}, ORDER: 'food', AS: 'table'};
-        let dataset: Datasets = {};
-        let controller = new QueryController(dataset);
-        let isValid = controller.isValid(query);
+    describe('QUERY BODY', function() {
 
-        expect(isValid).to.equal(true);
+        describe('SCOMPARISON', function () {
+            it('fails on invalid type: string <- json', function () {
+                WHERE = { IS: 'apple' };
+                expect(isValid()).to.equal(false);
+            });
+            it('fails on invalid type: null', function () {
+                WHERE = { IS: { 'apple': null } };
+                expect(isValid()).to.equal(false);
+            });
+            it('fails on invalid type: number', function () {
+                WHERE = { IS: { 'apple': 5 } };
+                expect(isValid()).to.equal(false);
+            });
+            it('fails on invalid string ^[*]+$', function () {
+                WHERE = { IS: {'name': '*****'} };
+                expect(isValid()).to.equal(false);
+            });
+            it('succeeds with valid [*]string[*]', function () {
+                WHERE = { IS: {'name': '*apple*'} };
+                expect(isValid()).to.equal(true);
+            });
+            it('succeeds with valid json {string : string}', function () {
+                WHERE = { IS: {'name': 'apple'} };
+                expect(isValid()).to.equal(true);
+            });
+        });
+
+        describe('MCOMPARISON', function () {
+            it('fails on invalid type: json', function () {
+                WHERE = { GT: { GT: { 'course_avg': 5 } } };
+                expect(isValid()).to.equal(false);
+            });
+            it('fails on invalid type: null', function () {
+                WHERE = { GT: null };
+                expect(isValid()).to.equal(false);
+            });
+            it('succeeds with valid type', function () {
+                WHERE = { GT: {'course_avg': 50} };
+                expect(isValid()).to.equal(true);
+            });
+        });
+
+        describe('LOGICCOMPARISON', function () {
+            it('fails on invalid type: json', function () {
+                WHERE = { AND: VALID_MCOMPARISON };
+                expect(isValid()).to.equal(false);
+            });
+            it('fails on invalid type: null', function () {
+                WHERE = { OR: null };
+                expect(isValid()).to.equal(false);
+            });
+            it('succeeds with valid type', function () {
+                WHERE = VALID_LOGICCOMPARISON;
+                expect(isValid()).to.equal(true);
+            });
+        });
+
+        describe('NEGATION', function () {
+            it('fails on invalid type: json', function () {
+                WHERE = { NOT: VALID_MCOMPARISON };
+                expect(isValid()).to.equal(true);
+            });
+            it('fails on invalid type: null', function () {
+                WHERE = { NOT: null };
+                expect(isValid()).to.equal(false);
+            });
+            it('succeeds with valid type', function () {
+                WHERE = VALID_LOGICCOMPARISON;
+                expect(isValid()).to.equal(true);
+            });
+        });
+
+        it('invalidates null query', function () {
+            QUERY = null;
+
+            expect(isValid()).to.equal(false);
+        });
+
     });
 
-    it("Should be able to invalidate an invalid query", function () {
-        let query: any = null;
-        let dataset: Datasets = {};
-        let controller = new QueryController(dataset);
-        let isValid = controller.isValid(query);
-
-        expect(isValid).to.equal(false);
-    });
-
-    it("Should be able to query, although the answer will be empty", function () {
+    it('Should be able to query, although the answer will be empty', function () {
         // NOTE: this is not actually a valid query for D1, nor is the result correct.
         let query: QueryRequest = {GET: 'food', WHERE: {IS: 'apple'}, ORDER: 'food', AS: 'table'};
         let dataset: Datasets = {};
