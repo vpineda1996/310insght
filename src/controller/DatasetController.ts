@@ -77,11 +77,11 @@ export default class DatasetController {
         return new Promise((fulfill, reject) => {
             try {
                 let myZip = new JSZip();
-                let resCode = 204;
+                let resCode = 201;
                 this.getDataset(id).then(oDataTable => {
                     if (!oDataTable) {
                         oDataTable = new Datatable(id, PARENT_DIR + "/" + id, []);
-                        resCode = 201;
+                        resCode = 204;
                     }
                     return myZip.loadAsync(data, { base64: true }).then((zip: JSZip) => {
                         Log.trace('DatasetController::process(..) - unzipped');
