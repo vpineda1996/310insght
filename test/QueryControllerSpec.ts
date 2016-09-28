@@ -2,7 +2,7 @@
  * Created by rtholmes on 2016-10-31.
  */
 
-import {Datasets} from "../src/controller/DatasetController";
+import {Datasets} from "../src/common/Common";
 import QueryController from "../src/controller/QueryController";
 import {QueryRequest} from "../src/controller/QueryController";
 import Log from "../src/Util";

@@ -2,7 +2,7 @@
  * Created by rtholmes on 2016-06-19.
  */
 
-import {Datasets} from "./DatasetController";
+import {Datasets} from "../common/Common";
 import Log from "../Util";
 
 export interface QueryRequest {

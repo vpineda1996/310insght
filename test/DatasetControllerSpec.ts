@@ -3,9 +3,9 @@
  */
 
 import DatasetController from "../src/controller/DatasetController";
-import {Datatable} from "../src/controller/DatasetController";
-import {Column} from "../src/controller/DatasetController";
-import {Row} from "../src/controller/DatasetController";
+import {Datatable} from "../src/common/Common";
+import {Column} from "../src/common/Common";
+import {Row} from "../src/common/Common";
 import Log from "../src/Util";
 
 import JSZip = require('jszip');
@@ -32,7 +32,7 @@ describe("DatasetController", function () {
         };
         return zip.generateAsync(opts).then(function (data) {
             Log.test('Dataset created');
-            let controller = new DatasetController();
+            let controller = DatasetController.getInstance();
             return controller.process('setA', data);
         }).then(function (result) {
             Log.test('Dataset processed; result: ' + result);
@@ -43,30 +43,24 @@ describe("DatasetController", function () {
 
     describe("Open the saved dataset", function() {
         var test = {
-            test: "abc"
+            columns: "abc"
         };
         beforeEach(function() {
             fs.writeFileSync(DATASETFILE, JSON.stringify(test));
         });
 
         it("opens the main datasets", function(done){
-            let controller = new DatasetController();
+            let controller = DatasetController.getInstance();
             controller.getDatasets().then((res) => {
                 expect(res).to.be.deep.equal(test);
-                done();
-            }).catch(() => {
-                expect(false).to.be.equal(true);
                 done();
             });
         });
 
         it("opens the main datasets and selects a specific one", function(done){
-            let controller = new DatasetController();
-            controller.getDataset("test").then((res) => {
-                expect(res).to.be.deep.equal(test.test);
-                done();
-            }).catch(() => {
-                expect(false).to.be.equal(true);
+            let controller = DatasetController.getInstance();
+            controller.getDataset("columns").then((res) => {
+                expect(res).to.be.deep.equal(test.columns);
                 done();
             });
         });

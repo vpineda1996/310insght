@@ -6,99 +6,37 @@ import Log from "../Util";
 import JSZip = require('jszip');
 import fs = require('fs');
 
-/**
- * In memory representation of all datasets.
- * Value for every key is the src of the datatable
- */
-export interface Datasets {
-    [id: string]: Datatable;
-}
+import {Datasets} from "../common/Common";
+import {Datatable} from "../common/Common";
+import {Column} from "../common/Common";
 
-/**
- * The key is the name of the column and the value
- * is a column
- */
-export class Datatable {
-    src: string;
-    columns: Column[];
-
-    /** 
-     * Returns a promise that will be called whenever the row is inserted
-     */
-    public insertRow(row: Row): Promise<number> {
-        return null;
-    }
-
-    /** 
-     * Returns a promise that will be called whenever the row is edited
-     */
-    public editRow(idx: number, row: Row): Promise<boolean> {
-        //TODO
-        return null;
-    }
-
-    public getRow(idx: number): Promise<Row> {
-        //TODO
-        return null;
-    }
-
-    /**
-     * Get a column by index in table or by name
-     */
-    public getColumn(name: string, idx?: number) {
-        if (idx) {
-            return this.columns[idx];
-        }
-        return this.columns.find((col) => {
-            return col.name === name;
-        });
-    }
-}
-
-export interface Row {
-    [column: string]: string;
-}
-
-const DATASETFILE = './data/datasets.json';
-
-/**
- * Column defn where the index of the data 
- * array corresponds to row index in the table
- */
-export class Column {
-    private data: string[];
-
-    name: string;
-    src: string;
-
-    public getData(): Promise<Column> {
-        // TODO: read column
-        return null;
-    }
-
-    public updateCell(number: number, value: string): Promise<Column> {
-        // TODO: write to cache and disk
-        return null;
-    }
-
-    public insertCell(value: string): Promise<Column> {
-        // TODO: insert cell value and save async
-        return null;
-    }
-
-    public removeCell(number: number): Promise<Column> {
-        // TODO: remove and save
-        return null;
-    }
-}
+const PARENT_DIR = './data';
+const DATASETFILE = PARENT_DIR + '/datasets.json';
 
 export default class DatasetController {
-
+    private static _instance : DatasetController = new DatasetController();
     private datasets: Datasets = null;
+
+    public static getInstance(): DatasetController {
+        return DatasetController._instance;
+    }
 
     constructor() {
         Log.trace('DatasetController::init()');
+
+        if (DatasetController._instance) {
+            throw new Error("Error: Instantiation failed: Use DatasetController.getInstance() instead of new.");
+        }
+
+        DatasetController._instance = this;
+        if (!fs.existsSync(PARENT_DIR)) {
+            fs.mkdirSync(PARENT_DIR);
+        }
+        if (!fs.existsSync(DATASETFILE)) {
+            fs.writeFileSync(DATASETFILE, '{}');
+        }
     };
+
     /**
      * Returns the referenced dataset. If the dataset is not in memory, it should be
      * loaded from disk and put in memory. If it is not in disk, then it should return
@@ -108,8 +46,8 @@ export default class DatasetController {
      * @returns {{}}
      */
     public getDataset(id: string): Promise<Datatable> {
-        // TODO: this should check if the dataset is on disk in ./data if it is not already in memory.
         return new Promise((resolve, reject) => {
+            Log.trace('DatasetController::getDataset( ' + id + '... )');
             this.readCachedDatasetsInDisk().then((datasets: Datasets) => {
                 resolve(datasets[id]);
             });
@@ -118,6 +56,7 @@ export default class DatasetController {
 
     public getDatasets(): Promise<Datasets> {
         return new Promise<Datasets>((resolve, reject) => {
+            Log.trace('DatasetController::getDatasets( )');
             this.readCachedDatasetsInDisk().then((datasets: Datasets) => {
                 resolve(datasets);
             });
@@ -174,11 +113,11 @@ export default class DatasetController {
         this.readCachedDatasetsInDisk().then((datasets) => {
             this.datasets[id] = processedDataset;
         }).catch((err) => {
-            Log.error('DatasetController::save(..) read from disk' + err );
+            Log.error('DatasetController::save(..) read from disk' + err);
         });
 
         this.writeCacheIntoDisk().catch((err) => {
-            Log.error('DatasetController::save(..) write to disk' + err );
+            Log.error('DatasetController::save(..) write to disk' + err);
         });
     }
 
@@ -189,7 +128,7 @@ export default class DatasetController {
         return new Promise((resolve, reject) => {
             fs.writeFile(DATASETFILE, JSON.stringify(this.datasets), (err) => {
                 if (err) {
-                    Log.trace('DatasetController::writeCacheIntoDisk(..) ' + err );
+                    Log.trace('DatasetController::writeCacheIntoDisk(..) ' + err);
                     reject();
                 } else {
                     resolve();
@@ -208,9 +147,15 @@ export default class DatasetController {
         return new Promise<Datasets>((resolve, reject) => {
             fs.readFile(DATASETFILE, 'utf8', (err, data) => {
                 if (err) {
-                    reject();
+                    Log.trace('DatasetController::readCachedDatasetsInDisk(cannot parse json file)');
+                    return reject();
                 }
-                this.datasets = JSON.parse(data);
+                try {
+                    this.datasets = JSON.parse(data);
+                } catch (err) {
+                    Log.trace('DatasetController::readCachedDatasetsInDisk(cannot parse json file)');
+                    throw err;
+                }
                 resolve(this.datasets);
             });
         });
