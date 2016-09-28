@@ -44,7 +44,8 @@ describe("DatasetController", function () {
             Log.test('Dataset processed; result: ' + result);
             expect(!!result).to.equal(true);
             done();
-        }).catch(() => {
+        }).catch((result) => {
+            Log.test('Dataset processed; result: ' + result);
             done();
         });
     });
@@ -87,7 +88,6 @@ describe("DatasetController", function () {
                     done();
                 });
             });
-            
             function createDataset() {
                 return DS.getDataset("EMPTY").then(obj => {
                     return obj.createColumn('test').then(() => obj);
