@@ -1,6 +1,10 @@
 import fs = require('fs');
 import Log from "../Util";
 
+import Constants = require('../common/Constants');
+const PARENT_DIR = Constants.PARENT_DIR;
+const DATASETFILE = Constants.DATASETFILE;
+
 /**
  * In memory representation of all datasets.
  * Value for every key is the src of the datatable
@@ -15,9 +19,11 @@ export interface Datasets {
  */
 export class Datatable {
     public src: string;
+    public id: string;
     public columns: Column[];
 
-    constructor(src: string, columns: Column[]) {
+    constructor(id: string, src: string, columns: Column[]) {
+        this.id = id;
         this.src = src;
         this.columns = columns;
     }
@@ -87,10 +93,39 @@ export class Datatable {
         });
     }
 
+    public createColumn(name: string, src?: string, datatype?: Datatype): Promise<boolean> {
+        // If a column with the same name already exists, then dont bother creating a new one;
+        if (this.getColumn(name)) {
+            return new Promise(resolve => resolve(this.getColumn(name)));
+        }
+
+        // Create folders and necesary files for column
+        if (!src) {
+            src = PARENT_DIR + '/' + this.id + '/' + name + '.json';
+            if (!fs.existsSync(PARENT_DIR)) {
+                fs.mkdirSync(PARENT_DIR);
+            }
+            if (!fs.existsSync(PARENT_DIR + '/' + this.id)) {
+                fs.mkdirSync(PARENT_DIR + '/' + this.id);
+            }
+            if (!fs.existsSync(src)) {
+                fs.writeFileSync(src, '[]');
+            }
+            // TODO: resize new array of column to the current size of datatable
+        }
+        // Push new cols to array
+        return new Promise( resolve => {
+            let newCol = new Column(name, src, datatype);
+            this.columns.push(newCol);
+            resolve(newCol);
+        });
+    }
+
     public removeColumn(name: string | number): Promise<boolean> {
         // TODO
         return new Promise((resolve) => resolve());
     }
+
 }
 
 export interface Row {
@@ -117,16 +152,17 @@ export class Column {
     public getData(): Promise<string[] | number[]> {
         return new Promise<string[] | number[]>((resolve, reject) => {
             if (this.data) {
-                return this.data.slice();
+                return resolve(this.data);
+            } else {
+                fs.readFile(this.src, 'utf-8', (err, data) => {
+                    Log.trace('Column::getData( ' + data + '... )');
+                    if (!data || err) {
+                        return reject(err);
+                    }
+                    this.data = JSON.parse(data);
+                    resolve(this.data);
+                });
             }
-            fs.readFile(this.src, 'utf-8', (err, data) => {
-                Log.trace('Column::getData( ' + data + '... )');
-                if (!data || err) {
-                    return reject(err);
-                }
-                this.data = JSON.parse(data);
-                resolve(this.data.slice());
-            });
         });
     }
 
@@ -134,7 +170,7 @@ export class Column {
         return this.getData().then((data) => {
             data[idx] = value;
             this.data = data;
-            return this.saveData();
+            return this;
         });
     }
 
@@ -142,7 +178,7 @@ export class Column {
         return this.getData().then((data: any) => {
             data.push(value);
             this.data = data;
-            return this.saveData();
+            return this;
         });
     }
 
@@ -150,11 +186,11 @@ export class Column {
         return this.getData().then((data: any) => {
             data.splice(idx, 1);
             this.data = data;
-            return this.saveData();
+            return this;
         });
     }
 
-    private saveData(): Promise<Column> {
+    public saveData(): Promise<Column> {
         return new Promise((resolve, reject) => {
             fs.writeFile(this.src, JSON.stringify(this.data), (err) => {
                 if (err) {
@@ -163,6 +199,7 @@ export class Column {
                     resolve(this);
                 }
             });
+            resolve(this);
         });
     }
 };

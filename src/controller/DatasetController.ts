@@ -9,12 +9,14 @@ import fs = require('fs');
 import {Datasets} from "../common/Common";
 import {Datatable} from "../common/Common";
 import {Column} from "../common/Common";
+import JSONParser from "../parsers/JSONParser";
 
-const PARENT_DIR = './data';
-const DATASETFILE = PARENT_DIR + '/datasets.json';
+import Constants = require('../common/Constants');
+const PARENT_DIR = Constants.PARENT_DIR;
+const DATASETFILE = Constants.DATASETFILE;
 
 export default class DatasetController {
-    private static _instance : DatasetController = new DatasetController();
+    private static _instance: DatasetController = new DatasetController();
     private datasets: Datasets = null;
 
     public static getInstance(): DatasetController {
@@ -77,19 +79,13 @@ export default class DatasetController {
         return new Promise(function (fulfill, reject) {
             try {
                 let myZip = new JSZip();
-                myZip.loadAsync(data, { base64: true }).then(function (zip: JSZip) {
+                let oDatatable = new Datatable(id, PARENT_DIR + "/" + id, []);
+                myZip.loadAsync(data, { base64: true }).then((zip: JSZip) => {
                     Log.trace('DatasetController::process(..) - unzipped');
-
-                    let processedDataset = {};
-                    // TODO: iterate through files in zip (zip.files)
-                    // The contents of the file will depend on the id provided. e.g.,
-                    // some zips will contain .html files, some will contain .json files.
-                    // You can depend on 'id' to differentiate how the zip should be handled,
-                    // although you should still be tolerant to errors.
-
-                    that.save(id, processedDataset);
-
-                    fulfill(true);
+                    JSONParser.parse(zip.files, oDatatable).then((processedMetadata: Datatable) => {
+                        that.save(id, processedMetadata);
+                        fulfill(true);
+                    });
                 }).catch(function (err) {
                     Log.trace('DatasetController::process(..) - unzip ERROR: ' + err.message);
                     reject(err);
@@ -108,16 +104,14 @@ export default class DatasetController {
      * @param id
      * @param processedDataset
      */
-    private save(id: string, processedDataset: any) {
+    private save(id: string, processedDataset: Datatable) {
         // add it to the memory model
         this.readCachedDatasetsInDisk().then((datasets) => {
             this.datasets[id] = processedDataset;
+        }).then(() => {
+            return this.writeCacheIntoDisk();
         }).catch((err) => {
             Log.error('DatasetController::save(..) read from disk' + err);
-        });
-
-        this.writeCacheIntoDisk().catch((err) => {
-            Log.error('DatasetController::save(..) write to disk' + err);
         });
     }
 
@@ -126,7 +120,7 @@ export default class DatasetController {
      */
     private writeCacheIntoDisk(): Promise<Datasets> {
         return new Promise((resolve, reject) => {
-            fs.writeFile(DATASETFILE, JSON.stringify(this.datasets), (err) => {
+            fs.writeFile(DATASETFILE, JSON.stringify(this.getDatasetsForExport()), (err) => {
                 if (err) {
                     Log.trace('DatasetController::writeCacheIntoDisk(..) ' + err);
                     reject();
@@ -137,6 +131,28 @@ export default class DatasetController {
         });
     }
 
+    private getDatasetsForExport() {
+        var acc: any = {};
+        for (var i in this.datasets) {
+            if (this.datasets[i]) {
+                var cleanCol: any[] = [];
+                this.datasets[i].columns.forEach((column) => {
+                    column.saveData();
+                    cleanCol.push({
+                        name: column.name,
+                        src: column.src,
+                        datatype: column.datatype
+                    });
+                });
+                acc[i] = {
+                    id: this.datasets[i].id,
+                    src: this.datasets[i].src,
+                    columns : cleanCol
+                };
+            }
+        }
+        return acc;
+    }
     /**
      * Reads datasets from disk
      */
