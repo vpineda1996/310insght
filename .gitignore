@@ -16,5 +16,5 @@ npm-debug.log
 mochawesome-reports/
 test/**/*.js
 test/**/*.map
-data/*
+data/
 
