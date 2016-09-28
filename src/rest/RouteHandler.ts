@@ -13,7 +13,7 @@ import Log from '../Util';
 
 export default class RouteHandler {
 
-    private static datasetController = new DatasetController();
+    private static datasetController = DatasetController.getInstance();
 
     public static getHomepage(req: restify.Request, res: restify.Response, next: restify.Next) {
         Log.trace('RoutHandler::getHomepage(..)');

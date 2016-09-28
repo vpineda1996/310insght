@@ -42,7 +42,7 @@ describe("CommonSpec", function () {
             fs.unlinkSync('./data/wat/hello.json');
         });
         beforeEach(function () {
-            datatable = new Datatable('./data/wat.json', [
+            datatable = new Datatable('wat', './data/wat.json', [
                 new Column("hello", "./data/wat/hello.json")
             ]);
         });
@@ -54,14 +54,10 @@ describe("CommonSpec", function () {
         it("inserts rows", function(done){
             datatable.insertRow({
                 hello: 1
-            }).then(() => done());
-        });
-
-        it("get inserted rows", function(done){
-            datatable.getRow(0).then((row) => {
-                expect(row).to.be.deep.equal({
-                    hello: 1
-                });
+            }).then(() => {
+                return datatable.getColumn(0).getData();
+            }).then((data) => {
+                expect(data[0]).to.be.equal(1);
                 done();
             });
         });
@@ -70,15 +66,6 @@ describe("CommonSpec", function () {
             datatable.editRow(0, {
                 hello: 2
             }).then(() => done());
-        });
-
-        it("get updated rows", function(done){
-            datatable.getRow(0).then((row) => {
-                expect(row).to.be.deep.equal({
-                    hello: 2
-                });
-                done();
-            });
         });
 
         it("deletes rows", function(done){
