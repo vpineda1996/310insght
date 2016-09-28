@@ -106,10 +106,15 @@ export default class DatasetController {
     }
 
     public removeDataset(id: string): Promise<any> {
-        let tmp = this.datasets[id];
-        delete this.datasets[id];
-        return tmp.removeColumns().then(() => {
-            return this.writeCacheIntoDisk();
+        return new Promise((resolve, reject) => {
+            let tmp = this.datasets[id];
+            if (!tmp) {
+                throw new Error("Dataset does not exist!")
+            }
+            delete this.datasets[id];
+            return tmp.removeColumns().then(() => {
+                return this.writeCacheIntoDisk();
+            }).then(resolve);
         });
     }
 

@@ -4,6 +4,7 @@
 
 import DatasetController from "../src/controller/DatasetController";
 import {Datatable} from "../src/common/Common";
+import {Datasets} from "../src/common/Common";
 import {Column} from "../src/common/Common";
 import {Row} from "../src/common/Common";
 import Log from "../src/Util";
@@ -15,6 +16,8 @@ import fs = require('fs');
 const DATASETFILE = './data/datasets.json';
 
 const TEST_DATATABLE_OBJ = { "afasfas": { "id": "afasfas", "src": "./data/afasfas", "columns": [{ "name": "courses_dept", "src": "./data/afasfas/courses_dept.json", "datatype": 0 }, { "name": "courses_id", "src": "./data/afasfas/courses_id.json", "datatype": 0 }, { "name": "courses_avg", "src": "./data/afasfas/courses_avg.json", "datatype": 0 }, { "name": "courses_instructor", "src": "./data/afasfas/courses_instructor.json", "datatype": 0 }, { "name": "courses_title", "src": "./data/afasfas/courses_title.json", "datatype": 0 }, { "name": "courses_pass", "src": "./data/afasfas/courses_pass.json", "datatype": 0 }, { "name": "courses_fail", "src": "./data/afasfas/courses_fail.json", "datatype": 0 }, { "name": "courses_audit", "src": "./data/afasfas/courses_audit.json", "datatype": 0 }] } };
+
+const TEST_DATASET_EMPTY: any = { "EMPTY": { "id": "EMPTY", "src": "./data/EMPTY", "columns":[]}};
 
 describe("DatasetController", function () {
 
@@ -48,11 +51,11 @@ describe("DatasetController", function () {
 
     describe("Open the saved dataset", function() {
         beforeEach(function(done) {
+            DatasetController.getInstance().clearCache();
             fs.writeFile(DATASETFILE, JSON.stringify(TEST_DATATABLE_OBJ), done);
         });
 
         it("opens the main datasets", function(done){
-            DatasetController.getInstance().clearCache();
             let controller = DatasetController.getInstance();
             controller.getDatasets().then((res) => {
                 expect(!!res).to.be.true;
@@ -63,11 +66,52 @@ describe("DatasetController", function () {
         it("opens the main datasets and selects a specific one", function(done){
             let controller = DatasetController.getInstance();
             controller.getDataset("afasfas").then((res) => {
-                expect(res.id).to.be.deep.equal("afasfas");
+                expect(JSON.parse(JSON.stringify(res))).to.be.deep.equal(TEST_DATATABLE_OBJ.afasfas);
                 expect(res instanceof Datatable).to.be.true;
                 done();
             });
         });
+    });
+
+    describe("creates and removes on a saved dataset", function() {
+        let DS = DatasetController.getInstance();
+        before(function(done) {
+            DS.clearCache();
+            fs.writeFile(DATASETFILE, JSON.stringify(TEST_DATASET_EMPTY), done);
+        });
+
+        it("creates columns", function(done) {
+            createDataset().then(() => {
+                DS.getDataset("EMPTY").then((dataset) => {
+                    expect(dataset.columns.length).to.be.equal(2);
+                    done();
+                });
+            });
+            
+            function createDataset() {
+                return DS.getDataset("EMPTY").then(obj => {
+                    return obj.createColumn('test').then(() => obj);
+                }).then((obj) => {
+                    return obj.createColumn('test2');
+                });
+            }
+        });
+
+        it("removes col", function() {
+            DS.removeDataset("EMPTY").then(() => {
+                return DS.getDataset("EMPTY");
+            }).then((nonExistentDataset) => {
+                expect(nonExistentDataset).to.not.exist;
+            });
+        });
+
+        it("throws if the dataset is not there", function(done){
+            DS.removeDataset("afasfas").catch((err) => {
+                expect(err).to.exist;
+                done();
+            });
+        });
+
 
     });
 
