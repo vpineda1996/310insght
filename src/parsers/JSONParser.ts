@@ -81,11 +81,11 @@ export default class JSONParser {
                         listOfCourseYears.result.forEach((courseOffering: any) => {
                             datatable.columns[0].insertCellFast(this.getCourseDept(coursePath));
                             datatable.columns[1].insertCellFast(this.getCourseId(coursePath));
-                            datatable.columns[2].insertCellFast(this.getCourseAvg(coursePath));
-                            datatable.columns[3].insertCellFast(this.getCourseInstructor(coursePath));
-                            datatable.columns[4].insertCellFast(this.getCourseTitle(coursePath));
-                            datatable.columns[5].insertCellFast(this.getCoursePass(coursePath));
-                            datatable.columns[6].insertCellFast(this.getCourseFail(coursePath));
+                            datatable.columns[2].insertCellFast(this.getCourseAvg(courseOffering));
+                            datatable.columns[3].insertCellFast(this.getCourseInstructor(courseOffering));
+                            datatable.columns[4].insertCellFast(this.getCourseTitle(courseOffering));
+                            datatable.columns[5].insertCellFast(this.getCoursePass(courseOffering));
+                            datatable.columns[6].insertCellFast(this.getCourseFail(courseOffering));
                             datatable.columns[7].insertCellFast(this.getCourseAudit(courseOffering));
                         });
                     }

@@ -24,14 +24,35 @@ describe("DatasetController", function () {
     afterEach(function () {
     });
 
-    describe("Open the saved dataset", function() {
-        var test = TEST_DATATABLE_OBJ;
-        before(function(done) {
-            fs.writeFileSync(DATASETFILE, JSON.stringify(test));
+    it("Should be able to receive a Dataset", function (done) {
+        Log.test('Creating dataset');
+        // this.timeout(1500000);
+        let content = {key: 'value'};
+        let zip = new JSZip();
+        zip.file('courses/content.obj', JSON.stringify(content));
+        const opts = {
+            compression: 'deflate', compressionOptions: {level: 2}, type: 'base64'
+        };
+        return zip.generateAsync(opts).then(function (data) {
+            Log.test('Dataset created');
+            let controller = DatasetController.getInstance();
+            return controller.process('setA', data);
+        }).then(function (result) {
+            Log.test('Dataset processed; result: ' + result);
+            expect(!!result).to.equal(true);
             done();
+        }).catch(() => {
+            done();
+        });
+    });
+
+    describe("Open the saved dataset", function() {
+        beforeEach(function(done) {
+            fs.writeFile(DATASETFILE, JSON.stringify(TEST_DATATABLE_OBJ), done);
         });
 
         it("opens the main datasets", function(done){
+            DatasetController.getInstance().clearCache();
             let controller = DatasetController.getInstance();
             controller.getDatasets().then((res) => {
                 expect(!!res).to.be.true;
@@ -46,29 +67,6 @@ describe("DatasetController", function () {
                 expect(res instanceof Datatable).to.be.true;
                 done();
             });
-        });
-
-    });
-
-    it("Should be able to receive a Dataset", function (done) {
-        Log.test('Creating dataset');
-        // this.timeout(1500000);
-        let content = {key: 'value'};
-        let zip = new JSZip();
-        zip.file('content.obj', JSON.stringify(content));
-        const opts = {
-            compression: 'deflate', compressionOptions: {level: 2}, type: 'base64'
-        };
-        return zip.generateAsync(opts).then(function (data) {
-            Log.test('Dataset created');
-            let controller = DatasetController.getInstance();
-            return controller.process('setA', data);
-        }).then(function (result) {
-            Log.test('Dataset processed; result: ' + result);
-            expect(!!result).to.equal(true);
-            done();
-        }).catch(() => {
-            done();
         });
 
     });

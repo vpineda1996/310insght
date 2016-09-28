@@ -101,6 +101,10 @@ export default class DatasetController {
         });
     }
 
+    public clearCache() {
+        this.datasets = null;
+    }
+
     /**
      * Writes the processed dataset to disk as 'id.json'. The function should overwrite
      * any existing dataset with the same name.
