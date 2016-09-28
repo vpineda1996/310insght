@@ -114,11 +114,19 @@ export class Datatable {
             // TODO: resize new array of column to the current size of datatable
         }
         // Push new cols to array
-        return new Promise( resolve => {
+        return new Promise(resolve => {
             let newCol = new Column(name, src, datatype);
             this.columns.push(newCol);
             resolve(newCol);
         });
+    }
+
+    public saveData(): Promise<any> {
+        let aPromise: Promise<any>[] = [];
+        this.columns.forEach((col) => {
+            aPromise.push(col.saveData());
+        });
+        return Promise.all(aPromise);
     }
 
     public removeColumn(name: string | number): Promise<boolean> {
@@ -155,7 +163,6 @@ export class Column {
                 return resolve(this.data);
             } else {
                 fs.readFile(this.src, 'utf-8', (err, data) => {
-                    Log.trace('Column::getData( ' + data + '... )');
                     if (!data || err) {
                         return reject(err);
                     }
@@ -192,13 +199,15 @@ export class Column {
 
     public saveData(): Promise<Column> {
         return new Promise((resolve, reject) => {
-            fs.writeFile(this.src, JSON.stringify(this.data), (err) => {
-                if (err) {
-                    reject(err);
-                } else {
-                    resolve(this);
-                }
-            });
+            if (this.data) {
+                fs.writeFile(this.src, JSON.stringify(this.data), (err) => {
+                    if (err) {
+                        reject(err);
+                    } else {
+                        resolve(this);
+                    }
+                });
+            }
             resolve(this);
         });
     }
