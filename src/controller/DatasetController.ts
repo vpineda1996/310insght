@@ -72,23 +72,27 @@ export default class DatasetController {
      * @param data base64 representation of a zip file
      * @returns {Promise<boolean>} returns true if successful; false if the dataset was invalid (for whatever reason)
      */
-    public process(id: string, data: any): Promise<boolean> {
+    public process(id: string, data: any): Promise<number> {
         Log.trace('DatasetController::process( ' + id + '... )');
-
-        let that = this;
-        return new Promise(function (fulfill, reject) {
+        return new Promise((fulfill, reject) => {
             try {
                 let myZip = new JSZip();
-                let oDatatable = new Datatable(id, PARENT_DIR + "/" + id, []);
-                myZip.loadAsync(data, { base64: true }).then((zip: JSZip) => {
-                    Log.trace('DatasetController::process(..) - unzipped');
-                    JSONParser.parse(zip.files, oDatatable).then((processedMetadata: Datatable) => {
-                        that.save(id, processedMetadata);
-                        fulfill(true);
+                let resCode = 204;
+                this.getDataset(id).then(oDataTable => {
+                    if (!oDataTable) {
+                        oDataTable = new Datatable(id, PARENT_DIR + "/" + id, []);
+                        resCode = 201;
+                    }
+                    myZip.loadAsync(data, { base64: true }).then((zip: JSZip) => {
+                        Log.trace('DatasetController::process(..) - unzipped');
+                        JSONParser.parse(zip.files, oDataTable).then((processedMetadata: Datatable) => {
+                            this.save(id, processedMetadata);
+                            fulfill(resCode);
+                        });
+                    }).catch(function (err) {
+                        Log.trace('DatasetController::process(..) - unzip ERROR: ' + err.message);
+                        reject(err);
                     });
-                }).catch(function (err) {
-                    Log.trace('DatasetController::process(..) - unzip ERROR: ' + err.message);
-                    reject(err);
                 });
             } catch (err) {
                 Log.trace('DatasetController::process(..) - ERROR: ' + err);
@@ -148,7 +152,7 @@ export default class DatasetController {
                 acc[i] = {
                     id: this.datasets[i].id,
                     src: this.datasets[i].src,
-                    columns : cleanCol
+                    columns: cleanCol
                 };
             }
         }
