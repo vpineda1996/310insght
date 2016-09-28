@@ -66,6 +66,9 @@ export default class Server {
                 // curl localhost:4321/dataset/test --upload-file FNAME.zip
                 that.rest.put('/dataset/:id', RouteHandler.putDataset);
 
+                // Removes a dataset on DELETE method
+                that.rest.del('/dataset/:id', RouteHandler.deleteDataset);
+
                 // Receives queries. Although these queries never change the server (and thus could be GETs)
                 // they are formed by sending JSON bodies, which is not standard for normal GET requests.
                 // curl -is -X POST -d '{ "key": "value" }' http://localhost:4321/query

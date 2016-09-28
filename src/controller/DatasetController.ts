@@ -105,6 +105,14 @@ export default class DatasetController {
         this.datasets = null;
     }
 
+    public removeDataset(id: string): Promise<any> {
+        let tmp = this.datasets[id];
+        delete this.datasets[id];
+        return tmp.removeColumns().then(() => {
+            return this.writeCacheIntoDisk();
+        });
+    }
+
     /**
      * Writes the processed dataset to disk as 'id.json'. The function should overwrite
      * any existing dataset with the same name.
@@ -176,11 +184,11 @@ export default class DatasetController {
                     return reject();
                 }
                 try {
-                    let parsedJSON = JSON.parse(data);
+                    let parsedJSON: { [id: string]: Datatable } = JSON.parse(data);
                     this.datasets = {};
                     for (var i in parsedJSON) {
                         if (parsedJSON[i]) {
-                            let cols = (parsedJSON[i].column || []).map((col: Column) => {
+                            let cols = (parsedJSON[i].columns || []).map((col: Column) => {
                                 return new Column(col.name, col.src, col.datatype);
                             });
                             this.datasets[i] = new Datatable(parsedJSON[i].id, parsedJSON[i].src, cols);

@@ -3,7 +3,6 @@ import Log from "../Util";
 
 import Constants = require('../common/Constants');
 const PARENT_DIR = Constants.PARENT_DIR;
-const DATASETFILE = Constants.DATASETFILE;
 
 /**
  * In memory representation of all datasets.
@@ -131,9 +130,29 @@ export class Datatable {
         return Promise.all(aPromise);
     }
 
-    public removeColumn(name: string | number): Promise<boolean> {
-        // TODO
-        return new Promise((resolve) => resolve());
+    public removeColumn(idx: number, slice?: boolean): Promise<boolean> {
+        return new Promise((resolve, reject) => {
+            if (slice) {
+                this.columns.slice(idx, 1);
+            }
+            Log.trace('Datatable::removeColumn(..) - Deleting column ' + this.columns[idx].name);
+            fs.unlink(this.columns[idx].src, (err) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(true);
+                }
+            });
+
+        });
+    }
+
+    public removeColumns(): Promise<any> {
+        let aPromise: Promise<boolean>[] = [];
+        this.columns.forEach((col, idx) => {
+            aPromise.push(this.removeColumn(idx));
+        });
+        return Promise.all(aPromise);
     }
 
 }
@@ -151,16 +170,16 @@ export class Column {
     public src: string;
     public datatype: Datatype;
 
+    private data: Array<string | number>;
+
     constructor(name: string, src: string, datatype?: Datatype) {
         this.name = name;
         this.src = src;
         this.datatype = datatype || Datatype.STRING;
     }
 
-    private data: Array<string|number>;
-
-    public getData(): Promise<Array<string|number>> {
-        return new Promise<Array<string|number>>((resolve, reject) => {
+    public getData(): Promise<Array<string | number>> {
+        return new Promise<Array<string | number>>((resolve, reject) => {
             if (this.data) {
                 return resolve(this.data);
             } else {
