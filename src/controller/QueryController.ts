@@ -63,6 +63,7 @@ export default class QueryController {
             this.isHash(val) &&
             (keys = Object.keys(val)).length === 1 &&
             this.isString(keys[0]) &&
+            this.isValidColumnKey(keys[0]) &&
             (this.isString(val[keys[0]]) || this.isNumber(val[keys[0]]));
     }
 
@@ -74,6 +75,7 @@ export default class QueryController {
             this.isHash(val) &&
             (keys = Object.keys(val)).length === 1 &&
             this.isString(keys[0]) &&
+            this.isValidColumnKey(keys[0]) &&
             this.hasString(val[keys[0]]);
     }
 
@@ -123,6 +125,7 @@ export default class QueryController {
             'courses_fail',
             'courses_audit'
         ];
+        console.log(name);
         return VALID_KEYS.includes(name);
     }
 

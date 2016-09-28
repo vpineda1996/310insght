@@ -14,8 +14,9 @@ describe("QueryController", function () {
     let ORDER: string;
     let AS: string;
 
-    const VALID_MCOMPARISON : {} = { GT: {'course_avg': 50 } }
-    const VALID_SCOMPARISON : {} = { IS: {'course_avg': '50' } }
+    const VALID_KEY = 'courses_avg';
+    const VALID_MCOMPARISON : {} = { GT: { [VALID_KEY]: 50 } }
+    const VALID_SCOMPARISON : {} = { IS: { [VALID_KEY]: '50' } }
     const VALID_NEGATION : {} = { NOT: VALID_MCOMPARISON }
     const VALID_LOGICCOMPARISON : {} = { AND: [VALID_MCOMPARISON, VALID_SCOMPARISON] }
 
@@ -39,7 +40,7 @@ describe("QueryController", function () {
 
     beforeEach(function () {
         GET = 'food';
-        WHERE = {GT: {'course_avg': 90}};
+        WHERE = {GT: { [VALID_KEY]: 90}};
         ORDER = 'food';
         AS = 'TABLE';
 
@@ -54,34 +55,34 @@ describe("QueryController", function () {
 
         describe('SCOMPARISON', function () {
             it('fails on invalid type: string <- json', function () {
-                WHERE = { IS: 'apple' };
+                WHERE = { IS: VALID_KEY };
                 expect(isValid()).to.equal(false);
             });
             it('fails on invalid type: null', function () {
-                WHERE = { IS: { 'apple': null } };
+                WHERE = { IS: { [VALID_KEY]: null } };
                 expect(isValid()).to.equal(false);
             });
             it('fails on invalid type: number', function () {
-                WHERE = { IS: { 'apple': 5 } };
+                WHERE = { IS: { [VALID_KEY]: 5 } };
                 expect(isValid()).to.equal(false);
             });
             it('fails on invalid string ^[*]+$', function () {
-                WHERE = { IS: {'name': '*****'} };
+                WHERE = { IS: { [VALID_KEY]: '*****'} };
                 expect(isValid()).to.equal(false);
             });
             it('succeeds with valid [*]string[*]', function () {
-                WHERE = { IS: {'name': '*apple*'} };
+                WHERE = { IS: { [VALID_KEY]: '*course_avg*'} };
                 expect(isValid()).to.equal(true);
             });
             it('succeeds with valid json {string : string}', function () {
-                WHERE = { IS: {'name': 'apple'} };
+                WHERE = { IS: { [VALID_KEY]: VALID_KEY} };
                 expect(isValid()).to.equal(true);
             });
         });
 
         describe('MCOMPARISON', function () {
             it('fails on invalid type: json', function () {
-                WHERE = { GT: { GT: { 'course_avg': 5 } } };
+                WHERE = { GT: { GT: { [VALID_KEY]: 5 } } };
                 expect(isValid()).to.equal(false);
             });
             it('fails on invalid type: null', function () {
@@ -89,7 +90,7 @@ describe("QueryController", function () {
                 expect(isValid()).to.equal(false);
             });
             it('succeeds with valid type', function () {
-                WHERE = { GT: {'course_avg': 50} };
+                WHERE = { GT: { [VALID_KEY]: 50} };
                 expect(isValid()).to.equal(true);
             });
         });
