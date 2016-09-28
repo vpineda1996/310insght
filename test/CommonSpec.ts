@@ -21,6 +21,26 @@ describe("CommonSpec", function () {
 
     describe("Datatable", function() {
         var datatable: Datatable;
+
+        before(function() {
+            if (!fs.existsSync('./data/')) {
+                fs.mkdirSync('./data/');
+            }
+            if (!fs.existsSync('./data/wat.json')) {
+                fs.writeFileSync('./data/wat.json', '{}');
+            }
+            if (!fs.existsSync('./data/wat/')) {
+                fs.mkdirSync('./data/wat/');
+            }
+            if (!fs.existsSync('./data/wat/hello.json')) {
+                fs.writeFileSync('./data/wat/hello.json', '[]');
+            }
+        });
+
+        after(function() {
+            fs.unlinkSync('./data/wat.json');
+            fs.unlinkSync('./data/wat/hello.json');
+        });
         beforeEach(function () {
             datatable = new Datatable('./data/wat.json', [
                 new Column("hello", "./data/wat/hello.json")
@@ -37,15 +57,29 @@ describe("CommonSpec", function () {
             }).then(() => done());
         });
 
+        it("get inserted rows", function(done){
+            datatable.getRow(0).then((row) => {
+                expect(row).to.be.deep.equal({
+                    hello: 1
+                });
+                done();
+            });
+        });
+
         it("updates rows", function(done){
             datatable.editRow(0, {
                 hello: 2
             }).then(() => done());
         });
 
-        // it("gets rows", function(done){
-        //     datatable.getRow(0).then(() => done());
-        // });
+        it("get updated rows", function(done){
+            datatable.getRow(0).then((row) => {
+                expect(row).to.be.deep.equal({
+                    hello: 2
+                });
+                done();
+            });
+        });
 
         it("deletes rows", function(done){
             datatable.removeRow(0).then(() => done());

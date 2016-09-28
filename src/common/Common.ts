@@ -46,17 +46,24 @@ export class Datatable {
         return Promise.all(aPromises);
     }
 
-    public getRow(idx: number): Promise<any[]> {
-        let row: Row = {};
-        let aPromises: Promise<number[] | string[]>[] = [];
+    public getRow(idx: number): Promise<Row> {
+        let aPromises: Promise<any>[] = [];
         this.columns.forEach(function (column) {
             let prom = column.getData().then((data) => {
-                row[column.name] = data[idx];
-                return data;
+                return {
+                    column: column.name,
+                    data: data[idx]
+                };
             });
             aPromises.push(prom);
         });
-        return Promise.all(aPromises);
+        return Promise.all(aPromises).then(rowDef => {
+            let row: Row = {};
+            rowDef.forEach((colDefn: any) => {
+                row[colDefn.column] = colDefn.data;
+            });
+            return row;
+        });
     }
 
     public removeRow(idx: number): Promise<any[]> {
@@ -109,30 +116,54 @@ export class Column {
 
     public getData(): Promise<string[] | number[]> {
         return new Promise<string[] | number[]>((resolve, reject) => {
+            if (this.data) {
+                return this.data.slice();
+            }
             fs.readFile(this.src, 'utf-8', (err, data) => {
                 Log.trace('Column::getData( ' + data + '... )');
                 if (!data || err) {
                     return reject(err);
                 }
                 this.data = JSON.parse(data);
-                resolve(this.data);
+                resolve(this.data.slice());
             });
         });
     }
 
     public updateCell(idx: number, value: string | number): Promise<Column> {
-        // TODO: write to cache and disk
-        return null;
+        return this.getData().then((data) => {
+            data[idx] = value;
+            this.data = data;
+            return this.saveData();
+        });
     }
 
     public insertCell(value: string | number): Promise<Column> {
-        // TODO: insert cell value and save async
-        return null;
+        return this.getData().then((data: any) => {
+            data.push(value);
+            this.data = data;
+            return this.saveData();
+        });
     }
 
-    public removeCell(number: number): Promise<Column> {
-        // TODO: remove and save
-        return null;
+    public removeCell(idx: number): Promise<Column> {
+        return this.getData().then((data: any) => {
+            data.splice(idx, 1);
+            this.data = data;
+            return this.saveData();
+        });
+    }
+
+    private saveData(): Promise<Column> {
+        return new Promise((resolve, reject) => {
+            fs.writeFile(this.src, JSON.stringify(this.data), (err) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(this);
+                }
+            });
+        });
     }
 };
 
