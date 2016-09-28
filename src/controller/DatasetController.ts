@@ -110,10 +110,12 @@ export default class DatasetController {
             this.datasets[id] = processedDataset;
         }).then(() => {
             return this.writeCacheIntoDisk();
+        }).then(() => {
+            return processedDataset.saveData();
         }).catch((err) => {
             Log.error('DatasetController::save(..) read from disk' + err);
         });
-    }
+    };
 
     /**
      * Saves datasets to disk
@@ -137,7 +139,6 @@ export default class DatasetController {
             if (this.datasets[i]) {
                 var cleanCol: any[] = [];
                 this.datasets[i].columns.forEach((column) => {
-                    column.saveData();
                     cleanCol.push({
                         name: column.name,
                         src: column.src,
