@@ -2,10 +2,11 @@
  * Created by rtholmes on 2016-10-31.
  */
 
-import {Datasets} from "../src/common/Common";
-import QueryController from "../src/controller/QueryController";
-import {QueryRequest} from "../src/controller/QueryController";
+import { Datasets, Datatable } from "../src/common/Common";
+import DatasetController from "../src/controller/DatasetController";
+import QueryController, { QueryRequest, QueryResponse } from "../src/controller/QueryController";
 import Log from "../src/Util";
+import JSZip = require('jszip');
 
 import {expect} from 'chai';
 describe("QueryController", function () {
@@ -22,6 +23,7 @@ describe("QueryController", function () {
 
     let QUERY : QueryRequest;
     let DATASET : Datasets;
+    let DATATABLE : Datatable;
 
     function query() : QueryRequest {
         if (typeof QUERY !== 'undefined') return QUERY;
@@ -33,15 +35,19 @@ describe("QueryController", function () {
         DATASET = {};
         return DATASET;
     }
+    function datatable() : Datatable {
+
+        return DATATABLE;
+    }
     function isValid() : boolean {
         let controller = new QueryController(dataset());
         return controller.isValid(query());
     }
 
     beforeEach(function () {
-        GET = 'food';
-        WHERE = {GT: { [VALID_KEY]: 90}};
-        ORDER = 'food';
+        GET = 'courses_avg';
+        WHERE = {GT: { [VALID_KEY]: 40}};
+        ORDER = 'courses_avg';
         AS = 'TABLE';
 
         QUERY = undefined;
@@ -129,6 +135,95 @@ describe("QueryController", function () {
             QUERY = null;
 
             expect(isValid()).to.equal(false);
+        });
+
+    });
+    describe('::query()', function() {
+        beforeEach(function () {
+        })
+
+        function perform_query() : Promise<any> {
+            return new Promise<any>((resolve, reject) =>{
+                let content = {key: 'value'};
+                let zip = new JSZip();
+                zip.file('courses/content.obj', JSON.stringify(content));
+                const opts = {
+                    compression: 'deflate', compressionOptions: {level: 2}, type: 'base64'
+                };
+                return zip.generateAsync(opts).then(function (data) {
+                    return DatasetController.getInstance().process('courses', data);
+                }).then(function (result) {
+                    return DatasetController.getInstance().getDatasets();
+                }).then((data:any) => { 
+                    return DatasetController.getInstance().getDataset('courses');
+                }).then((datatable:Datatable) => {
+                    let controller = new QueryController(dataset());
+                    let q : any = query();
+                    let indices : boolean[] = new Array(5);
+                    for (let i in indices) indices[i] = true;
+
+                    return controller.query(q);
+                }).then((data) => {
+                    return resolve(data);
+                });
+            });
+        }
+        describe('SCOMPARISON', function () {
+            /*
+            it('works on PCOMPARATOR', function (done) {
+                WHERE = { GT: { [VALID_KEY]: 40 } };
+                perform_query().then((res:QueryResponse) => {
+                    expect(res.result.length).to.be.equal(3)
+                    done();
+                }).catch((result) => {
+                    Log.test('Dataset processed; result: ' + result);
+                    done();
+                });
+            });
+            it('works on LOGICCOMPARISON { PCOMPARATORS }', function (done) {
+                WHERE = { AND: [{LT: { [VALID_KEY]: 50 } }, {EQ: { ['courses_id']: 'ssss' } }] };
+                perform_query().then((res:QueryResponse) => {
+                    expect(res.result.length).to.be.equal(1)
+                    done();
+                })
+            });
+            it('works on SCOMPARATOR', function (done) {
+                WHERE = { IS: { 'courses_id': 'bbbb'} };
+                perform_query().then((res:QueryResponse) => {
+                    expect(res.result.length).to.be.equal(1)
+                    done();
+                });
+            });
+            it('does query', function (done) {
+                WHERE = { NOT: VALID_MCOMPARISON };
+                perform_query().then((res:QueryResponse) => {
+                    expect(res.result.length).to.be.equal(2)
+                    done();
+                });
+            });
+            */
+            it('works on NEGATOR', function (done) {
+                WHERE = { NOT: VALID_MCOMPARISON };
+                Log.test('Creating dataset');
+                // this.timeout(1500000);
+                let content = {key: 'value'};
+                let zip = new JSZip();
+                zip.file('courses/content.obj', JSON.stringify(content));
+                const opts = {
+                    compression: 'deflate', compressionOptions: {level: 2}, type: 'base64'
+                };
+                return zip.generateAsync(opts).then(function (data) {
+                    Log.test('Dataset created');
+                    let controller = DatasetController.getInstance();
+                    return controller.process('setA', data);
+                }).then(function (result) {
+                    Log.test('Dataset processed; result: ' + result);
+                    expect(!!result).to.equal(true);
+                    done();
+                }).catch((result) => {
+                    Log.test('Dataset processed; result: ' + result);
+                });
+            });
         });
 
     });
