@@ -127,6 +127,9 @@ export default class DatasetController {
      */
     private save(id: string, processedDataset: Datatable) {
         // add it to the memory model
+        if (typeof processedDataset !== 'object') {
+            throw new Error("Processed dataset cannot be saved");
+        }
         this.readCachedDatasetsInDisk().then((datasets) => {
             this.datasets[id] = processedDataset;
         }).then(() => {

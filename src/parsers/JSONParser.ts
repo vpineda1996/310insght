@@ -34,7 +34,7 @@ export default class JSONParser {
         return this.createColumns(datatable).then(() => {
             let aPromiseArray: Promise<any>[] = [];
             for (var i in zipFiles) {
-                if (zipFiles[i] && this.validZipFile(i, zipFiles[i])) {
+                if (zipFiles[i] && !zipFiles[i].dir && this.validZipFile(i, zipFiles[i])) {
                     let oPromise = this.parseCourse(zipFiles[i], i, datatable);
                     aPromiseArray.push(oPromise);
                 }
@@ -42,16 +42,16 @@ export default class JSONParser {
             return Promise.all(aPromiseArray).then(() => {
                 return datatable;
             }).catch((e) => {
-                Log.trace('JSONParser::parse( error pushing data to columns');
+                Log.trace('JSONParser::parse( error pushing data to columns ) ' + e );
                 return e;
             });
         });
     }
 
     private static validZipFile(i: string, zipObj: JSZipObject) {
-        if (!i.match(/^course/)) {
+        if (!i.match(/(list|course)/) && i.length > 3) {
             Log.trace(i);
-            throw new Error("unknown data structure for zip file")
+            throw new Error("unknown data structure for zip file");
         }
         return true;
     }
@@ -72,7 +72,7 @@ export default class JSONParser {
         });
     };
 
-    private static parseCourse(courseZip: JSZipObject, coursePath: string, datatable: Datatable): Promise<boolean> {
+    private static parseCourse(courseZip: JSZipObject, coursePath: string, datatable: Datatable): Promise<number> {
         return new Promise((resolve, reject) => {
             courseZip.async('string').then((res) => {
                 try {
@@ -89,10 +89,11 @@ export default class JSONParser {
                             datatable.columns[7].insertCellFast(this.getCourseAudit(courseOffering));
                         });
                     }
+                    resolve((listOfCourseYears.result && listOfCourseYears.result.length) || 0);
                 } catch (e) {
                     Log.trace('JSONParser::pushDataToColumns( ... ) ' +  e + " " + res);
+                    reject("Invalid dataset with file: " + res);
                 }
-                resolve(true);
             }).catch((err) => {
                 Log.trace(err);
                 return err;
