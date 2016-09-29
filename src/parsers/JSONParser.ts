@@ -34,7 +34,7 @@ export default class JSONParser {
         return this.createColumns(datatable).then(() => {
             let aPromiseArray: Promise<any>[] = [];
             for (var i in zipFiles) {
-                if (zipFiles[i] && !zipFiles[i].dir && this.validZipFile(i, zipFiles[i])) {
+                if (zipFiles[i] && !zipFiles[i].dir) {
                     let oPromise = this.parseCourse(zipFiles[i], i, datatable);
                     aPromiseArray.push(oPromise);
                 }
@@ -46,14 +46,6 @@ export default class JSONParser {
                 return e;
             });
         });
-    }
-
-    private static validZipFile(i: string, zipObj: JSZipObject) {
-        if (!i.match(/(list|course)/) && i.length > 3) {
-            Log.trace(i);
-            throw new Error("unknown data structure for zip file");
-        }
-        return true;
     }
 
     private static createColumns(datatable: Datatable) {
