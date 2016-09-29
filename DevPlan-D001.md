@@ -1,9 +1,9 @@
 ### Sep 19 - Sep 25
 
   - IO/data persister
-    - (H) Read from file
+    - (V) Read from file
     - (V) Write to backup file
-    - (H) Save onto disk
+    - (V) Save onto disk
     - (V) Delete from disk/memory
     
   - Dataset parser
@@ -20,9 +20,9 @@
 ### Sep 26 - Oct 2
 
   - Query
-    - (V) Implement ORDER: sort
+    - (H) Implement ORDER: sort
     - (H) Implement GET: returns copy of specified data
-    - (V) Implement AS: formatting
+    - (H) Implement AS: formatting
   
   - (H) Non-cryptic Exception handling
   
