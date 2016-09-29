@@ -6,14 +6,14 @@ import {Row} from "../common/Common";
 import Log from '../Util';
 
 const COLUMNS: string[] = [
-    'courses_dept',
-    'courses_id',
-    'courses_avg',
-    'courses_instructor',
-    'courses_title',
-    'courses_pass',
-    'courses_fail',
-    'courses_audit'
+    'dept',
+    'id',
+    'avg',
+    'instructor',
+    'title',
+    'pass',
+    'fail',
+    'audit'
 ];
 const COURSE_KEY_LEN = 4;
 
