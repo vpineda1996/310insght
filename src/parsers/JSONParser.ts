@@ -88,6 +88,8 @@ export default class JSONParser {
                             datatable.columns[6].insertCellFast(this.getCourseFail(courseOffering));
                             datatable.columns[7].insertCellFast(this.getCourseAudit(courseOffering));
                         });
+                    } else if(!listOfCourseYears.result && listOfCourseYears.rank === undefined){
+                        reject("Invalid JSON file");
                     }
                     resolve((listOfCourseYears.result && listOfCourseYears.result.length) || 0);
                 } catch (e) {
