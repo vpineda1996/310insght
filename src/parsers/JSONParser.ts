@@ -71,8 +71,8 @@ export default class JSONParser {
                     let listOfCourseYears = JSON.parse(res);
                     if (listOfCourseYears.result && listOfCourseYears.result.length) {
                         listOfCourseYears.result.forEach((courseOffering: any) => {
-                            datatable.columns[0].insertCellFast(this.getCourseDept(coursePath));
-                            datatable.columns[1].insertCellFast(this.getCourseId(coursePath));
+                            datatable.columns[0].insertCellFast(this.getCourseDept(courseOffering, coursePath));
+                            datatable.columns[1].insertCellFast(this.getCourseId(courseOffering, coursePath));
                             datatable.columns[2].insertCellFast(this.getCourseAvg(courseOffering));
                             datatable.columns[3].insertCellFast(this.getCourseInstructor(courseOffering));
                             datatable.columns[4].insertCellFast(this.getCourseTitle(courseOffering));
@@ -95,19 +95,25 @@ export default class JSONParser {
         });
     };
 
-    private static getCourseDept(coursePath: string) {
+    private static getCourseDept(courseOffering: any, coursePath: string) {
         try {
+            if(courseOffering && courseOffering.Course !== undefined) {
+                return courseOffering.Subject;
+            }
             let course = coursePath.split(/\//);
-            return course[course.length - 1].substring(0, COURSE_KEY_LEN);
+            return course[course.length - 1].substring(0, COURSE_KEY_LEN).toLocaleLowerCase();
         } catch (err) {
             throw new Error("Unable to parse course dept -- " + coursePath);
         }
     }
 
-    private static getCourseId(coursePath: string) {
+    private static getCourseId(courseOffering: any, coursePath: string) {
         try {
+            if(courseOffering && courseOffering.Course !== undefined) {
+                return courseOffering.Course;
+            }
             let course = coursePath.split(/\//);
-            return course[course.length - 1].substring(COURSE_KEY_LEN);
+            return course[course.length - 1].substring(COURSE_KEY_LEN).toLocaleLowerCase();
         } catch (err) {
             throw new Error("Unable to parse course id -- " + coursePath);
         }
