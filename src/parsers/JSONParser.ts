@@ -42,7 +42,7 @@ export default class JSONParser {
             return Promise.all(aPromiseArray).then(() => {
                 return datatable;
             }).catch((e) => {
-                Log.trace('JSONParser::parse( error pushing data to columns ) ' + e );
+                Log.trace('JSONParser::parse( error pushing data to columns ) ' + e);
                 return e;
             });
         });
@@ -56,7 +56,7 @@ export default class JSONParser {
         });
         return Promise.all(aPromises).then((col) => {
             // Need to load the column data to make it fast
-            let aPromiseArray: Promise<Array<string|number>>[] = [];
+            let aPromiseArray: Promise<Array<string | number>>[] = [];
             COLUMNS.forEach((colName, idx) => {
                 aPromiseArray.push(datatable.getColumn(idx).getData());
             });
@@ -71,21 +71,23 @@ export default class JSONParser {
                     let listOfCourseYears = JSON.parse(res);
                     if (listOfCourseYears.result && listOfCourseYears.result.length) {
                         listOfCourseYears.result.forEach((courseOffering: any) => {
-                            datatable.columns[0].insertCellFast(this.getCourseDept(courseOffering, coursePath));
-                            datatable.columns[1].insertCellFast(this.getCourseId(courseOffering, coursePath));
-                            datatable.columns[2].insertCellFast(this.getCourseAvg(courseOffering));
-                            datatable.columns[3].insertCellFast(this.getCourseInstructor(courseOffering));
-                            datatable.columns[4].insertCellFast(this.getCourseTitle(courseOffering));
-                            datatable.columns[5].insertCellFast(this.getCoursePass(courseOffering));
-                            datatable.columns[6].insertCellFast(this.getCourseFail(courseOffering));
-                            datatable.columns[7].insertCellFast(this.getCourseAudit(courseOffering));
+                            if (Object.keys(courseOffering).length > 4) {
+                                datatable.columns[0].insertCellFast(this.getCourseDept(courseOffering, coursePath));
+                                datatable.columns[1].insertCellFast(this.getCourseId(courseOffering, coursePath));
+                                datatable.columns[2].insertCellFast(this.getCourseAvg(courseOffering));
+                                datatable.columns[3].insertCellFast(this.getCourseInstructor(courseOffering));
+                                datatable.columns[4].insertCellFast(this.getCourseTitle(courseOffering));
+                                datatable.columns[5].insertCellFast(this.getCoursePass(courseOffering));
+                                datatable.columns[6].insertCellFast(this.getCourseFail(courseOffering));
+                                datatable.columns[7].insertCellFast(this.getCourseAudit(courseOffering));
+                            }
                         });
                     } else if (!listOfCourseYears.courses && !listOfCourseYears.result && listOfCourseYears.rank === undefined) {
                         reject("Invalid JSON file: " + coursePath);
                     }
                     resolve((listOfCourseYears.result && listOfCourseYears.result.length) || 0);
                 } catch (e) {
-                    Log.trace('JSONParser::pushDataToColumns( ... ) ' +  e + " " + res);
+                    Log.trace('JSONParser::pushDataToColumns( ... ) ' + e + " " + res);
                     reject("Invalid dataset with file: " + res);
                 }
             }).catch((err) => {
@@ -97,7 +99,7 @@ export default class JSONParser {
 
     private static getCourseDept(courseOffering: any, coursePath: string) {
         try {
-            if(courseOffering && courseOffering.Course !== undefined) {
+            if (courseOffering && courseOffering.Course !== undefined) {
                 return courseOffering.Subject;
             }
             let course = coursePath.split(/\//);
@@ -109,7 +111,7 @@ export default class JSONParser {
 
     private static getCourseId(courseOffering: any, coursePath: string) {
         try {
-            if(courseOffering && courseOffering.Course !== undefined) {
+            if (courseOffering && courseOffering.Course !== undefined) {
                 return courseOffering.Course;
             }
             let course = coursePath.split(/\//);
