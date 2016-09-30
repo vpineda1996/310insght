@@ -29,6 +29,10 @@ export interface QueryResponse {
     result: {}[];
 }
 
+interface QueryData {
+    [columnName:string] : string[] | number[];
+}
+
 const MCOMPARATOR = ['LT', 'GT', 'EQ'];
 const SCOMPARATOR = ['IS'];
 const LOGICCOMPARISON = ['AND', 'OR'];
@@ -145,6 +149,7 @@ export default class QueryController {
         });
     }
 
+    // returns matching index(row numbers)
     private extractValidRowNumbers(indices: boolean[]) : number[] {
         let rowNumbers : number[] = [];
         indices.forEach((row:boolean, index:number) => {
@@ -153,57 +158,87 @@ export default class QueryController {
         return rowNumbers;
     }
 
-    private getValues(columns:string[], rowNumbers:number[], datatable: Datatable) : Promise<{}[]> {
-        return new Promise<{}[]>((resolve, reject) => {
-            let values : {[s:string]:string|number}[] = [];
-            let promises = rowNumbers.map((rn:number) => {
-                return datatable.getRow(rn).then((row:{[s:string]:string|number}) => {
-                    let selectRow : {[s:string]:string|number} = {};
-                    Object.keys(row).forEach((col:string) => {
-                        if (columns.includes(col)) {
-                            selectRow[col] = row[col];
-                        }
-                    });
-                    values.push(selectRow);
+    // returns values for given columns & given row numbers in a form of
+    // [
+    //   {courses_id: [2, 1, 3],
+    //   {courses_avg: [60, 70, 80]
+    // ]
+    // O(rc)
+    private getValues(columns:string[], rowNumbers:number[], datatable: Datatable) : Promise<any> {
+        let promises : Promise<any>[] = [];
+
+        columns.forEach((colName) => {
+            promises.push(new Promise<{}>((resolve, reject) => {
+                datatable.getColumn(colName).getData().then((data: string[]|number[]) => {
+                    let filteredData = rowNumbers.map((rn) => data[rn]);
+                    return resolve({ [colName] : filteredData });
                 });
-            });
-            return Promise.all(promises).then(() => resolve(values))
+            }));
         });
+
+        return Promise.all(promises);
     }
 
-    private numberASC(a:number, b:number) : number { return a - b }
-    private stringASC(a:string, b:string) : number { return a < b ? -1 : 1 }
-
-    private orders(res: QueryResponse, id_column: string) : QueryResponse {
+    // order QueryData in O(r^2 + c)
+    private orders(queryData: QueryData[], columnName: string) : QueryData[] {
         
-        let id = id_column.split('_')[0];
+        let columnNames : string[] = queryData.map((qd) => Object.keys(qd)[0]);
+        let qdCol = queryData[columnNames.indexOf(columnName)];
+        let data : any[] = qdCol[Object.keys(qdCol)[0]];
 
-        let array : {[s:string]:any}[] = res.result;
+        let indexedData : any[] = [];
+        for (let i in data) {
+            indexedData.push([data[i], i]);
+        }
 
-        let operator : Function = array && array[0] && typeof array[0][id_column] === 'number' ? this.numberASC : this.stringASC;
-        res.result = res.result.sort((a:{[s:string]:string|number}, b:{[s:string]:string|number}) => {
-           return operator(a[id_column], b[id_column]);
+        indexedData.sort();
+
+        let sortedData : any[] = queryData.map((qd, index) => {
+            return { [columnNames[index]] : indexedData.map((id) => qd[columnNames[index]][id[1]]) };
         });
 
-        return res;
+        return sortedData;
+    }
 
+    private renderTable(queryData: QueryData[]) : {}[] {
+        
+        let i : any;
+        let response : {}[] = [];
+        let columnNames : string[] = queryData.map((qd) => Object.keys(qd)[0]);
+
+        for (i in queryData[0][columnNames[0]]) {
+            response.push(
+                columnNames.reduce((responseRow : {[s:string]:any}, cn : string, index : number) => {
+                    responseRow[cn] = queryData[index][cn][i];
+                    return responseRow;
+                }, {})
+            );
+        }
+        return response;
     }
 
     public query(query: QueryRequest): Promise<QueryResponse> {
         return new Promise<QueryResponse>((resolve, reject) => {
-            this.getQuery(query).then((results) => {
-                // TODO rendering as TABLE
-                let json : {} = results.reduce((json:QueryResponse, res:{[s:string]:{}[]}) => {
-                    json.result = json.result.concat(res[Object.keys(res)[0]]);
-                    return json;
-                }, { render: query.AS, result: [] });
-                return (json);
-            }).then((results:any) => {
+
+            this.getQueryData(query).then((queryData) => {
+                return [].concat.apply([], queryData)
+            }).then((queryData : QueryData[]) => {
                 if (query.ORDER) {
-                    return resolve(this.orders(results, query.ORDER));
+                    return this.orders(queryData, query.ORDER);
                 } else {
-                    return resolve(results);
+                    return queryData;
                 }
+            }).then((queryData : QueryData[]) => {
+                if (query.AS === 'TABLE') {
+                    return this.renderTable(queryData);
+                } else {
+                    throw new Error('Invalid AS -- Unknown render type')
+                }
+            }).then((queryData : any[]) => {
+                return resolve({
+                    render: query.AS,
+                    result: queryData
+                })
             }).catch((err:any) => {
                 console.error(err);
                 reject(err);
@@ -211,7 +246,7 @@ export default class QueryController {
         });
     }
 
-    public getQuery(query: QueryRequest): Promise<any[]> {
+    public getQueryData(query: QueryRequest): Promise<any[]> {
         Log.trace('QueryController::query( ' + JSON.stringify(query) + ' )');
 
         let q:any = query.WHERE;
@@ -226,6 +261,7 @@ export default class QueryController {
             let id_column = g.split('_');
             ids.push(id_column[0]);
         }
+
         let unique_ids : {[s:string]:any} = {};
         ids = ids.filter((id) => {
             if (unique_ids[id] === true)
@@ -235,7 +271,7 @@ export default class QueryController {
         });
 
         let promises = ids.map((id:string, index:number) => {
-            return new Promise<{[s:string/*id*/]:{}[]}>((resolve, reject) => {
+            return new Promise<{}[]>((resolve, reject) => {
                 let _datatable : Datatable;
 
                 return DatasetController.getInstance().getDataset(id).then((datatable:Datatable) => {
@@ -249,10 +285,12 @@ export default class QueryController {
                     return this.evaluates(Object.keys(q)[0], q[Object.keys(q)[0]], _datatable, indices);
                 }).then((indices:boolean[]) => {
                     let rowNumbers = this.extractValidRowNumbers(indices);
-                    // Log.trace('QueryController::evaluates : valid rows => ' + JSON.stringify(rowNumbers) +' ');
                     return this.getValues(g, rowNumbers, _datatable);
                 }).then((res:{}[]) => {
-                    return resolve({ [id]: res });
+                    return resolve(res);
+                }).catch((err:Error) => {
+                    console.error(err);
+                    reject(err);
                 });
             });
         });
