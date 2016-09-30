@@ -60,7 +60,9 @@ export default class QueryController {
     private GT(a:number, b:number) : boolean { return a > b; }
     private LT(a:number, b:number) : boolean { return a < b; }
     private EQ(a:number, b:number) : boolean { return a === b; }
-    private IS(a:string, b:RegExp) : boolean { return b.test(a); }
+    private IS(a:string, b:string|RegExp) : boolean { 
+        return typeof b === 'string' ? new RegExp(b.split("*").join(".*")).test(a) :  b.test(a)
+    }
 
     public evaluates(key:string, query:{[s:string]:any}|any, datatable:Datatable, indices:boolean[]): Promise<boolean[]> {
         Log.trace('QueryController::evaluates( ' + key + ': ' + JSON.stringify(query) +' )');
@@ -157,7 +159,7 @@ export default class QueryController {
                         if (columns.includes(col)) {
                             selectRow[col] = row[col];
                         }
-                    })
+                    });
                     values.push(selectRow);
                 });
             });
@@ -243,6 +245,7 @@ export default class QueryController {
                     return this.evaluates(Object.keys(q)[0], q[Object.keys(q)[0]], _datatable, indices);
                 }).then((indices:boolean[]) => {
                     let rowNumbers = this.extractValidRowNumbers(indices);
+                    Log.trace('QueryController::evaluates : valid rows => ' + JSON.stringify(rowNumbers) +' ');
                     return this.getValues(g, rowNumbers, _datatable);
                 }).then((res:{}[]) => {
                     return resolve({ [id]: res });
