@@ -16,14 +16,14 @@ describe("JSON Parser", function() {
     
     before(function(){
         try{
-            fs.unlinkSync('./data/myData/dept.json');
-            fs.unlinkSync('./data/myData/id.json');
-            fs.unlinkSync('./data/myData/avg.json');
-            fs.unlinkSync('./data/myData/instructor.json');
-            fs.unlinkSync('./data/myData/title.json');
-            fs.unlinkSync('./data/myData/pass.json');
-            fs.unlinkSync('./data/myData/fail.json');
-            fs.unlinkSync('./data/myData/audit.json');
+            fs.unlinkSync('./data/myData/myData_dept.json');
+            fs.unlinkSync('./data/myData/myData_id.json');
+            fs.unlinkSync('./data/myData/myData_avg.json');
+            fs.unlinkSync('./data/myData/myData_instructor.json');
+            fs.unlinkSync('./data/myData/myData_title.json');
+            fs.unlinkSync('./data/myData/myData_pass.json');
+            fs.unlinkSync('./data/myData/myData_fail.json');
+            fs.unlinkSync('./data/myData/myData_audit.json');
         } catch (e) {Log.trace("Cannot delete files")}
     });
 
