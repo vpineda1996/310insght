@@ -69,7 +69,6 @@ export default class JSONParser {
             courseZip.async('string').then((res) => {
                 try {
                     let listOfCourseYears = JSON.parse(res);
-                    console.info(listOfCourseYears)
                     if (listOfCourseYears.result && listOfCourseYears.result.length) {
                         listOfCourseYears.result.forEach((courseOffering: any) => {
                             datatable.columns[0].insertCellFast(this.getCourseDept(courseOffering, coursePath));

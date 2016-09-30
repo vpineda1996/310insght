@@ -62,7 +62,6 @@ export default class QueryController {
     private EQ(a:number|string, b:number|string) : boolean { return a === b; }
 
     public evaluates(key:string, query:{[s:string]:any}|any, datatable:Datatable, indices:boolean[]): Promise<boolean[]> {
-        console.log(key, query, indices.map((i:boolean, index:number) => i ? index : -1).filter((i:number) => i>=0));
 
         return new Promise<boolean[]>((resolve, reject) => {
 
@@ -150,7 +149,6 @@ export default class QueryController {
     private orders(rows: number[], datatable: Datatable, columnName: string) : Promise<number[]> {
         return new Promise((resolve, reject) => {
             let col = datatable.getColumn(columnName);
-            console.log('orders', columnName, datatable)
             if (!col) {
                 // FIXME do we want to throw error instead?
                 return resolve(rows);
@@ -160,7 +158,7 @@ export default class QueryController {
             } else if (col.datatype === Datatype.NUMBER) {
 
             }
-            return resolve(rows);
+            return resolve(rows.sort());
         });
     }
 
@@ -172,7 +170,6 @@ export default class QueryController {
                     json.result = json.result.concat(res[Object.keys(res)[0]]);
                     return json;
                 }, { render: query.AS, result: [] });
-                console.log('heeeeeey', json);
                 return resolve(json);
             });
         });
@@ -196,19 +193,14 @@ export default class QueryController {
             ids.push(id_column[0]);
             columns.push(id_column[1]);
         }
-        console.info(ids);
-        console.info(columns);
         let promises = ids.map((id:string, index:number) => {
             return new Promise<{[s:string/*id*/]:{}[]}>((resolve, reject) => {
                 let _datatable : Datatable;
 
                 return DatasetController.getInstance().getDataset(id).then((datatable:Datatable) => {
-                    console.info('database', datatable);
                     _datatable = datatable;
                     return datatable.getColumn(columns[index]).getData();
-
                 }).then((columnData:string[]|number[]) => {
-                    console.info('column data', columnData);
 
                     let indices:boolean[] = new Array(columnData.length);
                     for (let i=0; i < indices.length; ++i) indices[i] = true;
@@ -224,7 +216,6 @@ export default class QueryController {
                 }).then((rowNumbers:number[]) => {
                     return this.getValues(columns, rowNumbers, _datatable);
                 }).then((res:{}[]) => {
-                    console.info(res);
                     return resolve({ [id]: res });
                 });
             });
@@ -234,7 +225,6 @@ export default class QueryController {
     }
 
     private isLogicComparison(key:string, val:any) : boolean {
-        console.info('isLogicComparison', key, val);
         let k : string;
         let values : {[s:string]:any}
 
@@ -244,7 +234,6 @@ export default class QueryController {
     }
 
     private isMComparison(key:string, val:any) : boolean {
-        console.info('isMComparison', key, val);
         let keys : string[];
 
         return MCOMPARATOR.includes(key) &&
@@ -256,7 +245,6 @@ export default class QueryController {
     }
 
     private isSComparison(key:string, val:any) : boolean {
-        console.info('isSComparison', key, val);
         let keys : string[];
 
         return SCOMPARATOR.includes(key) &&
@@ -268,50 +256,40 @@ export default class QueryController {
     }
 
     private isNegation(key:string, val:any) : boolean {
-        console.info('isNegation', key, val);
 
         return NEGATORS.includes(key) &&
             this.isHash(val) &&
             this.areFilters(Object.keys(val)[0], val)
     }
     private isStringOrStringArray(key:string, val: any) : boolean {
-        console.info('isStringOrStringArray', key, val);
         return this.isString(val) || val.constructor === Array && val.every((v:any) => this.isString(v));
     }
     private isTypeString(val: any) : boolean {
-        console.info('isTypeString', val);
         return typeof val === 'string';
     }
     private isString(val:string) : boolean {
-        console.info('isString', val);
         const regex = /^[a-zA-Z0-9_]+$/;
         return this.isTypeString(val) && regex.test(val);
     }
     private hasString(val: any) : boolean {
-        console.info('hasString', val);
         const regex = /[a-zA-Z0-9_]+/;
         return this.isTypeString(val) && regex.test(val);
     }
     private isNumber(val: any) : boolean {
-        console.info('isNumber', val);
         return !isNaN(parseFloat(val)) && isFinite(val);
     }
     private isHash(val: any) : boolean {
-        console.info('isHash', val);
         return val !== null && typeof val === 'object';
     }
     private isArray(val: any) : boolean {
-        console.info('isArray', val);
         return !!val && val.constructor === Array;
     }
     private isAsTable(key:string, val:any) : boolean {
-        console.info('isAsTable', key, val);
         return key === 'AS' &&
             this.isString(val) &&
             val === 'TABLE';
     }
     private isValidColumnKey(name: string) {
-        console.info('isValidColumnKey', name);
         const VALID_KEYS = [
             'courses_dept',
             'courses_id',
@@ -327,12 +305,10 @@ export default class QueryController {
 
 
     private areFilters(key:string, val:{[s:string]:any}) : boolean {
-        console.info('areFilters', key, val);
         return Object.keys(val).every((k:string) => this.isFilter(k, val[k]));
     }
 
     private isFilter(key:string, val:any) : boolean {
-        console.info('isFilter', key, val);
         return this.isLogicComparison(key, val) ||
             this.isMComparison(key, val) ||
             this.isSComparison(key, val) ||
