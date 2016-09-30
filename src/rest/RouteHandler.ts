@@ -6,9 +6,8 @@ import fs = require('fs');
 
 import DatasetController from '../controller/DatasetController';
 import {Datasets} from '../common/Common';
-import QueryController from '../controller/QueryController';
+import QueryController, { QueryRequest, QueryResponse } from '../controller/QueryController';
 
-import {QueryRequest} from "../controller/QueryController";
 import Log from '../Util';
 
 export default class RouteHandler {
@@ -72,12 +71,18 @@ export default class RouteHandler {
             let isValid = controller.isValid(query);
 
             if (isValid === true) {
-                let result = controller.query(query);
-                res.json(200, result);
+                controller.query(query).then((qr: QueryResponse) => {
+                    console.log('done');
+                    res.json(200, qr);
+                    return next();
+                }).catch((err:Error) => {
+                    res.json(500, { error: err });
+                    return next();
+                });
             } else {
                 res.json(400, {status: 'invalid query'});
+                return next();
             }
-            next();
         }).catch((err) => {
             Log.error('RouteHandler::postQuery(..) - ERROR: ' + err);
             res.send(403);

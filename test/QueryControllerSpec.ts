@@ -2,26 +2,28 @@
  * Created by rtholmes on 2016-10-31.
  */
 
-import {Datasets} from "../src/common/Common";
-import QueryController from "../src/controller/QueryController";
-import {QueryRequest} from "../src/controller/QueryController";
+import { Datasets, Datatable } from "../src/common/Common";
+import DatasetController from "../src/controller/DatasetController";
+import QueryController, { QueryRequest, QueryResponse } from "../src/controller/QueryController";
 import Log from "../src/Util";
+import JSZip = require('jszip');
 
 import {expect} from 'chai';
 describe("QueryController", function () {
-    let GET: string;
+    let GET: string|string[];
     let WHERE: {};
     let ORDER: string;
     let AS: string;
 
-    const VALID_KEY = 'courses_avg';
-    const VALID_MCOMPARISON : {} = { GT: { [VALID_KEY]: 50 } }
+    const VALID_KEY = 'other_avg';
+    const VALID_MCOMPARISON : {} = { GT: { [VALID_KEY]: 30 } }
     const VALID_SCOMPARISON : {} = { IS: { [VALID_KEY]: '50' } }
     const VALID_NEGATION : {} = { NOT: VALID_MCOMPARISON }
     const VALID_LOGICCOMPARISON : {} = { AND: [VALID_MCOMPARISON, VALID_SCOMPARISON] }
 
     let QUERY : QueryRequest;
     let DATASET : Datasets;
+    let DATATABLE : Datatable;
 
     function query() : QueryRequest {
         if (typeof QUERY !== 'undefined') return QUERY;
@@ -33,19 +35,27 @@ describe("QueryController", function () {
         DATASET = {};
         return DATASET;
     }
+    function datatable() : Datatable {
+
+        return DATATABLE;
+    }
     function isValid() : boolean {
         let controller = new QueryController(dataset());
         return controller.isValid(query());
     }
 
-    beforeEach(function () {
-        GET = 'food';
-        WHERE = {GT: { [VALID_KEY]: 90}};
-        ORDER = 'food';
+    beforeEach(function (done) {
+        GET = ['other_id', 'other_avg'];
+        WHERE = {GT: { [VALID_KEY]: 40}};
+        ORDER = 'other_avg';
         AS = 'TABLE';
 
         QUERY = undefined;
         DATASET = undefined;
+
+        DatasetController.getInstance().getDataset('other').then((odataset) => {
+            return odataset.removeColumns();
+        }).then(()=>done()).catch(()=>done());
     });
 
     afterEach(function () {
@@ -132,8 +142,105 @@ describe("QueryController", function () {
         });
 
     });
+    describe('::query()', function() {
+        beforeEach(function () {
+        })
 
-    it('Should be able to query, although the answer will be empty', function () {
+        function perform_query() : Promise<any> {
+            let DS = DatasetController.getInstance();
+            return new Promise<any>((resolve, reject) =>{
+
+
+                Log.test('Creating dataset');
+                let content: any = {
+                    result: [{
+                        Avg: 50,
+                        Professor: "John",
+                        Title: "",
+                        Pass: 1,
+                        Fail: 2,
+                        Audit: 1
+                    }, 
+                    {
+                        Avg: 30,
+                        Professor: "Smith",
+                        Title: "",
+                        Pass: 50,
+                        Fail: 50,
+                        Audit: 30
+                    },
+                    { result: [] }]
+                };
+                let zip = new JSZip();
+                zip.file('courses/CPSC310', JSON.stringify(content));
+                const opts = {
+                    compression: 'deflate', compressionOptions: {level: 2}, type: 'base64'
+                };
+                return zip.generateAsync(opts).then(function (data) {
+                    Log.test('Dataset created');
+                    return DS.process('other', data);
+                }).then(function (result) {
+                    Log.test('JSON processed; result: ' + result);
+                    expect(result).below(500);
+                }).then(() => { 
+                    return DatasetController.getInstance().getDataset('other');
+                }).then((datatable:Datatable) => {
+                    let controller = new QueryController(dataset());
+                    let q : any = query();
+
+                    return controller.query(q);
+                }).then((data) => {
+                    return resolve(data);
+                });
+            });
+        }
+        describe('SCOMPARISON', function () {
+            it('works on PCOMPARATOR', function (done) {
+                WHERE = { GT: { [VALID_KEY]: 40 } };
+                perform_query().then((res:QueryResponse) => {
+                    expect(res.result.length).to.be.equal(3)
+                    done();
+                }).catch((result) => {
+                    Log.test('Dataset processed; result: ' + result);
+                    done();
+                });
+            });
+            it('works on LOGICCOMPARISON { PCOMPARATORS }', function (done) {
+                WHERE = { AND: [{LT: { [VALID_KEY]: 50 } }, {EQ: { ['other_id']: 'ssss' } }] };
+                perform_query().then((res:QueryResponse) => {
+                    expect(res.result.length).to.be.equal(1)
+                    done();
+                })
+            });
+            it('works on SCOMPARATOR', function (done) {
+                WHERE = { IS: { 'other_id': 'bbbb'} };
+                perform_query().then((res:QueryResponse) => {
+                    expect(res.result.length).to.be.equal(1)
+                    done();
+                });
+            });
+            it('does query', function (done) {
+                WHERE = { NOT: VALID_MCOMPARISON };
+                perform_query().then((res:QueryResponse) => {
+                    expect(res.result.length).to.be.equal(2)
+                    done();
+                });
+            });
+            it('works on NEGATOR', function (done) {
+                WHERE = { NOT: VALID_MCOMPARISON };
+                perform_query().then((res:QueryResponse) => {
+                    expect(res.result.length).to.be.equal(2)
+                    done();
+                }).catch((result) => {
+                    Log.test('Dataset processed; result: ' + result);
+                    done();
+                });
+            });
+        });
+
+    });
+
+    xit('Should be able to query, although the answer will be empty', function () {
         // NOTE: this is not actually a valid query for D1, nor is the result correct.
         let query: QueryRequest = {GET: 'food', WHERE: {IS: 'apple'}, ORDER: 'food', AS: 'table'};
         let dataset: Datasets = {};
