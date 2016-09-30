@@ -66,76 +66,77 @@ export default class QueryController {
         Log.trace('QueryController::evaluates( ' + key + ': ' + JSON.stringify(query) +' )');
         const convertToValidRegex = new RegExp('\\*', 'g')
         return new Promise<boolean[]>((resolve, reject) => {
+            reject();
 
-            if (MCOMPARATOR.includes(key) || SCOMPARATOR.includes(key)) {
+            // if (MCOMPARATOR.includes(key) || SCOMPARATOR.includes(key)) {
 
-                let operator : Function =
-                    (key === 'GT') ? this.GT :
-                    (key === 'LT') ? this.LT :
-                    (key === 'EQ') ? this.EQ :
-                    (key === 'IS') ? this.IS :
-                    undefined;
+            //     let operator : Function =
+            //         (key === 'GT') ? this.GT :
+            //         (key === 'LT') ? this.LT :
+            //         (key === 'EQ') ? this.EQ :
+            //         (key === 'IS') ? this.IS :
+            //         undefined;
 
-                let columnName:string = this.getFirstKey(query);
-                let val : any = this.getFirst(query);
-                let value:number|RegExp = this.isNumber(val) ? val : new RegExp(val.replace(convertToValidRegex, '.*'));
+            //     let columnName:string = this.getFirstKey(query);
+            //     let val : any = this.getFirst(query);
+            //     let value:number|RegExp = this.isNumber(val) ? val : new RegExp(val.replace(convertToValidRegex, '.*'));
 
-                return datatable.getColumn(columnName).getData().then((column:any[]) => {
-                    return resolve(column.map((row:string|number) => operator(row, value)));
-                }).catch((err:any) => {
-                    console.error(err);
-                    reject(err);
-                });
+            //     return datatable.getColumn(columnName).getData().then((column:any[]) => {
+            //         return resolve(column.map((row:string|number) => operator(row, value)));
+            //     }).catch((err:any) => {
+            //         console.error(err);
+            //         reject(err);
+            //     });
 
-            } else if (LOGICCOMPARISON.includes(key)) {
+            // } else if (LOGICCOMPARISON.includes(key)) {
 
-                let operator : Function =
-                    (key === 'AND') ? this.AND :
-                    (key === 'OR') ? this.OR :
-                    undefined;
+            //     let operator : Function =
+            //         (key === 'AND') ? this.AND :
+            //         (key === 'OR') ? this.OR :
+            //         undefined;
 
-                let promises = query.map((next:{[s:string]:any}):Promise<boolean[]> => {
-                    Log.trace("QueryController::LOGICCOMPARISON( " + JSON.stringify(next))
-                    return this.evaluates(this.getFirstKey(next), this.getFirst(next), datatable, indices);
-                });
+            //     let promises = query.map((next:{[s:string]:any}):Promise<boolean[]> => {
+            //         Log.trace("QueryController::LOGICCOMPARISON( " + JSON.stringify(next))
+            //         return this.evaluates(this.getFirstKey(next), this.getFirst(next), datatable, indices);
+            //     });
 
-                return Promise.all(promises).then((list_of_indices: any[]) => {
-                    let _index = -1;
-                    let displayQuery = "";
-                    return resolve(list_of_indices.reduce((indices:boolean[], next:boolean[]) => {
-                        let counter = 0;
-                        ++_index;
-                        displayQuery += JSON.stringify(query[_index]);
-                        for (let i in indices) {
-                            indices[i] = operator(indices[i], next[i]);
-                            if (indices[i]) ++counter
-                        }
-                        Log.trace('QueryController::evaluates( ' + key + ': ' + displayQuery +' ) ===> ' + counter);
-                        return indices;
-                    }, indices));
-                }).catch((err:any) => {
-                    console.error(err);
-                    reject(err);
-                });
+            //     return Promise.all(promises).then((list_of_indices: any[]) => {
+            //         let _index = -1;
+            //         let displayQuery = "";
+            //         return resolve(list_of_indices.reduce((indices:boolean[], next:boolean[]) => {
+            //             let counter = 0;
+            //             ++_index;
+            //             displayQuery += JSON.stringify(query[_index]);
+            //             for (let i in indices) {
+            //                 indices[i] = operator(indices[i], next[i]);
+            //                 if (indices[i]) ++counter
+            //             }
+            //             Log.trace('QueryController::evaluates( ' + key + ': ' + displayQuery +' ) ===> ' + counter);
+            //             return indices;
+            //         }, indices));
+            //     }).catch((err:any) => {
+            //         console.error(err);
+            //         reject(err);
+            //     });
 
-            } else if (NEGATORS.includes(key)) {
+            // } else if (NEGATORS.includes(key)) {
 
-                return this.evaluates(this.getFirstKey(query), this.getFirst(query), datatable, indices).then((indices:boolean[]) => {
-                    let counter = 0;
-                    for (let i in indices) {
-                        indices[i] = !indices[i];
-                        if (indices[i]) ++counter
-                    }
-                    Log.trace('QueryController::evaluates( ' + key + ': ' + JSON.stringify(query) +' ) ===> ' + counter);
-                    return resolve(indices);
-                }).catch((err:any) => {
-                    console.error(err);
-                    reject(err);
-                });
+            //     return this.evaluates(this.getFirstKey(query), this.getFirst(query), datatable, indices).then((indices:boolean[]) => {
+            //         let counter = 0;
+            //         for (let i in indices) {
+            //             indices[i] = !indices[i];
+            //             if (indices[i]) ++counter
+            //         }
+            //         Log.trace('QueryController::evaluates( ' + key + ': ' + JSON.stringify(query) +' ) ===> ' + counter);
+            //         return resolve(indices);
+            //     }).catch((err:any) => {
+            //         console.error(err);
+            //         reject(err);
+            //     });
 
-            } else {
-                reject('wtf?');
-            }
+            // } else {
+            //     reject('wtf?');
+            // }
         });
     }
 
