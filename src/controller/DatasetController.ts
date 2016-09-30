@@ -85,10 +85,11 @@ export default class DatasetController {
                     }
                     return myZip.loadAsync(data, { base64: true }).then((zip: JSZip) => {
                         Log.trace('DatasetController::process(..) - unzipped');
-                        return JSONParser.parse(zip.files, oDataTable).then((processedMetadata: Datatable) => {
-                            this.save(id, processedMetadata);
-                            fulfill(resCode);
-                        });
+                        return JSONParser.parse(zip.files, oDataTable)
+                    }).then((processedMetadata: Datatable) => {
+                        return this.save(id, processedMetadata);
+                    }).then(() => {
+                        fulfill(resCode);
                     }).catch(function (err) {
                         Log.trace('DatasetController::process(..) - unzip ERROR: ' + err.message);
                         reject(err);
@@ -106,15 +107,16 @@ export default class DatasetController {
     }
 
     public removeDataset(id: string): Promise<any> {
-        return new Promise((resolve, reject) => {
+        return this.readCachedDatasetsInDisk().then(() => {
+            Log.trace('DatasetController::removeDataset(..)');
             let tmp = this.datasets[id];
             if (!tmp) {
                 throw new Error("Dataset does not exist!")
             }
             delete this.datasets[id];
-            return tmp.removeColumns().then(() => {
-                return this.writeCacheIntoDisk();
-            }).then(resolve);
+            return tmp.removeColumns()
+        }).then(() => {
+            return this.writeCacheIntoDisk();
         });
     }
 
@@ -125,12 +127,12 @@ export default class DatasetController {
      * @param id
      * @param processedDataset
      */
-    private save(id: string, processedDataset: Datatable) {
+    private save(id: string, processedDataset: Datatable): Promise<any> {
         // add it to the memory model
         if (typeof processedDataset !== 'object') {
             throw new Error("Processed dataset cannot be saved");
         }
-        this.readCachedDatasetsInDisk().then((datasets) => {
+        return this.readCachedDatasetsInDisk().then((datasets) => {
             this.datasets[id] = processedDataset;
         }).then(() => {
             return this.writeCacheIntoDisk();
