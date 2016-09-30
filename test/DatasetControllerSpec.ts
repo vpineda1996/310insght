@@ -37,10 +37,10 @@ describe("DatasetController", function () {
             compression: 'deflate', compressionOptions: {level: 2}, type: 'base64'
         };
         return zip.generateAsync(opts).then(function (data) {
-            Log.test('Dataset created');
             let controller = DatasetController.getInstance();
             return controller.process('setA', data);
         }).then(function (result) {
+            Log.test('Dataset created');
             Log.test('Dataset processed; result: ' + result);
             expect(!!result).to.equal(true);
             done();

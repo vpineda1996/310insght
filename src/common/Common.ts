@@ -130,14 +130,14 @@ export class Datatable {
         return Promise.all(aPromise);
     }
 
-    public removeColumn(idx: number, splice?: boolean): Promise<boolean> {
+    public removeColumn(idx: number, splice?: boolean, ignoreErr? :boolean): Promise<boolean> {
         return new Promise((resolve, reject) => {
             if (splice) {
                 this.columns.splice(idx, 1);
             }
             Log.trace('Datatable::removeColumn(..) - Deleting column ' + this.columns[idx].name);
             fs.unlink(this.columns[idx].src, (err) => {
-                if (err) {
+                if (err && !ignoreErr) {
                     reject(err);
                 } else {
                     resolve(true);
@@ -147,10 +147,10 @@ export class Datatable {
         });
     }
 
-    public removeColumns(): Promise<any> {
+    public removeColumns(ignoreErr? : boolean): Promise<any> {
         let aPromise: Promise<boolean>[] = [];
         this.columns.forEach((col, idx) => {
-            aPromise.push(this.removeColumn(idx));
+            aPromise.push(this.removeColumn(idx, undefined, ignoreErr));
         });
         return Promise.all(aPromise);
     }

@@ -177,9 +177,9 @@ describe("QueryController", function () {
                     compression: 'deflate', compressionOptions: {level: 2}, type: 'base64'
                 };
                 return zip.generateAsync(opts).then(function (data) {
-                    Log.test('Dataset created');
                     return DS.process('other', data);
                 }).then(function (result) {
+                    Log.test('Dataset created');
                     Log.test('JSON processed; result: ' + result);
                     expect(result).below(500);
                 }).then(() => { 
