@@ -60,8 +60,12 @@ export default class QueryController {
     private GT(a:number, b:number) : boolean { return a > b; }
     private LT(a:number, b:number) : boolean { return a < b; }
     private EQ(a:number, b:number) : boolean { return a === b; }
-    private IS(a:string, b:string|RegExp) : boolean { 
-        return typeof b === 'string' ? new RegExp(b.split("*").join(".*")).test(a) :  b.test(a)
+    private IS(a:string, b:string) : boolean { 
+        let splitVal = b.split("*");
+        if(splitVal.length > 1){
+            return a.includes(splitVal.join(""));
+        }
+        return a === b;
     }
 
     public evaluates(key:string, query:{[s:string]:any}|any, datatable:Datatable, indices:boolean[]): Promise<boolean[]> {
@@ -80,7 +84,7 @@ export default class QueryController {
 
                 let columnName:string = this.getFirstKey(query);
                 let val : any = this.getFirst(query);
-                let value:number|RegExp = this.isNumber(val) ? val : new RegExp(val.replace(convertToValidRegex, '.*'));
+                let value:number|string = val;
 
                 return datatable.getColumn(columnName).getData().then((column:any[]) => {
                     return resolve(column.map((row:string|number) => operator(row, value)));
@@ -245,7 +249,7 @@ export default class QueryController {
                     return this.evaluates(Object.keys(q)[0], q[Object.keys(q)[0]], _datatable, indices);
                 }).then((indices:boolean[]) => {
                     let rowNumbers = this.extractValidRowNumbers(indices);
-                    Log.trace('QueryController::evaluates : valid rows => ' + JSON.stringify(rowNumbers) +' ');
+                    // Log.trace('QueryController::evaluates : valid rows => ' + JSON.stringify(rowNumbers) +' ');
                     return this.getValues(g, rowNumbers, _datatable);
                 }).then((res:{}[]) => {
                     return resolve({ [id]: res });
