@@ -78,13 +78,12 @@ export default class DatasetController {
             try {
                 let myZip = new JSZip();
                 let resCode = 201;
-                this.getDataset(id).then(oDataTable => {
+                this.getDataset(id).then( (oDataTable : Datatable) => {
                     if (!oDataTable) {
                         oDataTable = new Datatable(id, PARENT_DIR + "/" + id, []);
                         resCode = 204;
                         return oDataTable;
                     } else {
-                        Log.trace("Type:" + typeof oDataTable + "  Data: " + oDataTable);
                         return oDataTable.removeColumns(true).then(() => oDataTable);
                     }
                 }).then((oDataTable: Datatable) => {

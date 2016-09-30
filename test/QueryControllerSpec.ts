@@ -206,23 +206,23 @@ describe("QueryController", function () {
                 });
             });
             it('works on LOGICCOMPARISON { PCOMPARATORS }', function (done) {
-                WHERE = { AND: [{LT: { [VALID_KEY]: 50 } }, {EQ: { ['other_id']: 'ssss' } }] };
+                WHERE = { AND: [{LT: { [VALID_KEY]: 50 } }, {EQ: { ['other_id']: '310' } }] };
                 perform_query().then((res:QueryResponse) => {
                     expect(res.result.length).to.be.equal(1)
                     done();
                 })
             });
             it('works on SCOMPARATOR', function (done) {
-                WHERE = { IS: { 'other_id': 'bbbb'} };
+                WHERE = { IS: { 'other_id': '310'} };
                 perform_query().then((res:QueryResponse) => {
-                    expect(res.result.length).to.be.equal(1)
+                    expect(res.result.length).to.be.equal(2)
                     done();
                 });
             });
             it('does query', function (done) {
                 WHERE = { NOT: VALID_MCOMPARISON };
                 perform_query().then((res:QueryResponse) => {
-                    expect(res.result.length).to.be.equal(2)
+                    expect(res.result.length).to.be.equal(1)
                     done();
                 });
             });
