@@ -48,7 +48,7 @@ describe("JSON Parser", function() {
             expect(datatable.columns.length).to.equal(8);
             return datatable.columns[0].getData();
         }).then((col0data) => {
-            expect(col0data[0]).to.be.equal('CPSC');
+            expect(col0data[0]).to.be.equal('cpsc');
             done();
         });
     });

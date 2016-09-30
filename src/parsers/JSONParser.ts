@@ -34,7 +34,7 @@ export default class JSONParser {
         return this.createColumns(datatable).then(() => {
             let aPromiseArray: Promise<any>[] = [];
             for (var i in zipFiles) {
-                if (zipFiles[i] && !zipFiles[i].dir && this.validZipFile(i, zipFiles[i])) {
+                if (zipFiles[i] && !zipFiles[i].dir) {
                     let oPromise = this.parseCourse(zipFiles[i], i, datatable);
                     aPromiseArray.push(oPromise);
                 }
@@ -46,14 +46,6 @@ export default class JSONParser {
                 return e;
             });
         });
-    }
-
-    private static validZipFile(i: string, zipObj: JSZipObject) {
-        if (!i.match(/(list|course)/) && i.length > 3) {
-            Log.trace(i);
-            throw new Error("unknown data structure for zip file");
-        }
-        return true;
     }
 
     private static createColumns(datatable: Datatable) {
@@ -79,8 +71,8 @@ export default class JSONParser {
                     let listOfCourseYears = JSON.parse(res);
                     if (listOfCourseYears.result && listOfCourseYears.result.length) {
                         listOfCourseYears.result.forEach((courseOffering: any) => {
-                            datatable.columns[0].insertCellFast(this.getCourseDept(coursePath));
-                            datatable.columns[1].insertCellFast(this.getCourseId(coursePath));
+                            datatable.columns[0].insertCellFast(this.getCourseDept(courseOffering, coursePath));
+                            datatable.columns[1].insertCellFast(this.getCourseId(courseOffering, coursePath));
                             datatable.columns[2].insertCellFast(this.getCourseAvg(courseOffering));
                             datatable.columns[3].insertCellFast(this.getCourseInstructor(courseOffering));
                             datatable.columns[4].insertCellFast(this.getCourseTitle(courseOffering));
@@ -88,8 +80,8 @@ export default class JSONParser {
                             datatable.columns[6].insertCellFast(this.getCourseFail(courseOffering));
                             datatable.columns[7].insertCellFast(this.getCourseAudit(courseOffering));
                         });
-                    } else if(!listOfCourseYears.result && listOfCourseYears.rank === undefined){
-                        reject("Invalid JSON file");
+                    } else if (!listOfCourseYears.courses && !listOfCourseYears.result && listOfCourseYears.rank === undefined) {
+                        reject("Invalid JSON file: " + coursePath);
                     }
                     resolve((listOfCourseYears.result && listOfCourseYears.result.length) || 0);
                 } catch (e) {
@@ -103,19 +95,25 @@ export default class JSONParser {
         });
     };
 
-    private static getCourseDept(coursePath: string) {
+    private static getCourseDept(courseOffering: any, coursePath: string) {
         try {
+            if(courseOffering && courseOffering.Course !== undefined) {
+                return courseOffering.Subject;
+            }
             let course = coursePath.split(/\//);
-            return course[course.length - 1].substring(0, COURSE_KEY_LEN);
+            return course[course.length - 1].substring(0, COURSE_KEY_LEN).toLocaleLowerCase();
         } catch (err) {
             throw new Error("Unable to parse course dept -- " + coursePath);
         }
     }
 
-    private static getCourseId(coursePath: string) {
+    private static getCourseId(courseOffering: any, coursePath: string) {
         try {
+            if(courseOffering && courseOffering.Course !== undefined) {
+                return courseOffering.Course;
+            }
             let course = coursePath.split(/\//);
-            return course[course.length - 1].substring(COURSE_KEY_LEN);
+            return course[course.length - 1].substring(COURSE_KEY_LEN).toLocaleLowerCase();
         } catch (err) {
             throw new Error("Unable to parse course id -- " + coursePath);
         }
