@@ -52,7 +52,7 @@ export default class JSONParser {
         Log.trace('JSONParser::createColumns( ... )');
         let aPromises: Promise<Column>[] = [];
         COLUMNS.forEach((colName) => {
-            aPromises.push(datatable.createColumn(colName));
+            aPromises.push(datatable.createColumn(datatable.id + "_" + colName));
         });
         return Promise.all(aPromises).then((col) => {
             // Need to load the column data to make it fast

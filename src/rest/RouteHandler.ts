@@ -72,7 +72,6 @@ export default class RouteHandler {
 
             if (isValid === true) {
                 controller.query(query).then((qr: QueryResponse) => {
-                    console.log('done');
                     res.json(200, qr);
                     return next();
                 }).catch((err:Error) => {
