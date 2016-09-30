@@ -67,22 +67,21 @@ export default class RouteHandler {
         Log.trace('RouteHandler::postQuery(..) - params: ' + JSON.stringify(req.params));
         let query: QueryRequest = req.params;
         RouteHandler.datasetController.getDatasets().then((datasets) => {
-            return next()
-//            let controller = new QueryController(datasets);
-//            let isValid = controller.isValid(query);
-//
-//            if (isValid === true) {
-//                controller.query(query).then((qr: QueryResponse) => {
-//                    res.json(200, qr);
-//                    return next();
-//                }).catch((err:Error) => {
-//                    res.json(500, { error: err });
-//                    return next();
-//                });
-//            } else {
-//                res.json(400, {status: 'invalid query'});
-//                return next();
-//            }
+           let controller = new QueryController(datasets);
+           let isValid = controller.isValid(query);
+
+           if (isValid === true) {
+               controller.query(query).then((qr: QueryResponse) => {
+                   res.json(200, qr);
+                   return next();
+               }).catch((err:Error) => {
+                   res.json(500, { error: err });
+                   return next();
+               });
+           } else {
+               res.json(400, {status: 'invalid query'});
+               return next();
+           }
         }).catch((err) => {
             Log.error('RouteHandler::postQuery(..) - ERROR: ' + err);
             res.send(403);
