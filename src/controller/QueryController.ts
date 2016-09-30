@@ -59,10 +59,12 @@ export default class QueryController {
     private OR(a:boolean, b:boolean) : boolean { return a || b; }
     private GT(a:number, b:number) : boolean { return a > b; }
     private LT(a:number, b:number) : boolean { return a < b; }
-    private EQ(a:number|string, b:number|string) : boolean { return a === b; }
+    private EQ(a:number, b:number) : boolean { return a === b; }
+    private IS(a:string, b:RegExp) : boolean { return b.test(a); }
 
     public evaluates(key:string, query:{[s:string]:any}|any, datatable:Datatable, indices:boolean[]): Promise<boolean[]> {
-
+        Log.trace('QueryController::evaluates( ' + key + ': ' + JSON.stringify(query) +' )');
+        const convertToValidRegex = new RegExp('\\*', 'g')
         return new Promise<boolean[]>((resolve, reject) => {
 
             if (MCOMPARATOR.includes(key) || SCOMPARATOR.includes(key)) {
@@ -71,14 +73,18 @@ export default class QueryController {
                     (key === 'GT') ? this.GT :
                     (key === 'LT') ? this.LT :
                     (key === 'EQ') ? this.EQ :
-                    (key === 'IS') ? this.EQ :
+                    (key === 'IS') ? this.IS :
                     undefined;
 
-                let columnName:string = this.getFirstKey(query).split('_')[1];
-                let value:string|number = this.getFirst(query);
+                let columnName:string = this.getFirstKey(query);
+                let val : any = this.getFirst(query);
+                let value:number|RegExp = this.isNumber(val) ? val : new RegExp(val.replace(convertToValidRegex, '.*'));
 
                 return datatable.getColumn(columnName).getData().then((column:any[]) => {
                     return resolve(column.map((row:string|number) => operator(row, value)));
+                }).catch((err:any) => {
+                    console.error(err);
+                    reject(err);
                 });
 
             } else if (LOGICCOMPARISON.includes(key)) {
@@ -89,14 +95,22 @@ export default class QueryController {
                     undefined;
 
                 let promises = query.map((next:{[s:string]:any}):Promise<boolean[]> => {
+                    Log.trace("QueryController::LOGICCOMPARISON( " + JSON.stringify(next))
                     return this.evaluates(this.getFirstKey(next), this.getFirst(next), datatable, indices);
                 });
 
                 return Promise.all(promises).then((list_of_indices: any[]) => {
+                    let _index = -1;
+                    let displayQuery = "";
                     return resolve(list_of_indices.reduce((indices:boolean[], next:boolean[]) => {
+                        let counter = 0;
+                        ++_index;
+                        displayQuery += JSON.stringify(query[_index]);
                         for (let i in indices) {
                             indices[i] = operator(indices[i], next[i]);
+                            if (indices[i]) ++counter
                         }
+                        Log.trace('QueryController::evaluates( ' + key + ': ' + displayQuery +' ) ===> ' + counter);
                         return indices;
                     }, indices));
                 }).catch((err:any) => {
@@ -107,11 +121,15 @@ export default class QueryController {
             } else if (NEGATORS.includes(key)) {
 
                 return this.evaluates(this.getFirstKey(query), this.getFirst(query), datatable, indices).then((indices:boolean[]) => {
+                    let counter = 0;
                     for (let i in indices) {
                         indices[i] = !indices[i];
+                        if (indices[i]) ++counter
                     }
+                    Log.trace('QueryController::evaluates( ' + key + ': ' + JSON.stringify(query) +' ) ===> ' + counter);
                     return resolve(indices);
                 }).catch((err:any) => {
+                    console.error(err);
                     reject(err);
                 });
 
@@ -147,23 +165,20 @@ export default class QueryController {
         });
     }
 
-    private numberASC(a:number, b:number) : number { return b - a }
-    private stringASC(a:string, b:string) : number { return b < a ? -1 : 1 }
+    private numberASC(a:number, b:number) : number { return a - b }
+    private stringASC(a:string, b:string) : number { return a < b ? -1 : 1 }
 
     private orders(res: QueryResponse, id_column: string) : QueryResponse {
         
         let id = id_column.split('_')[0];
-        let column = id_column.split('_')[1];
 
         let array : {[s:string]:any}[] = res.result;
 
-        let operator : Function = array && array[0] && typeof array[0][column] === 'number' ? this.numberASC : this.stringASC;
+        let operator : Function = array && array[0] && typeof array[0][id_column] === 'number' ? this.numberASC : this.stringASC;
         res.result = res.result.sort((a:{[s:string]:string|number}, b:{[s:string]:string|number}) => {
-           return operator(a[column], b[column]);
+           return operator(a[id_column], b[id_column]);
         });
 
-        console.info(res);
-        
         return res;
 
     }
@@ -181,8 +196,11 @@ export default class QueryController {
                 if (query.ORDER) {
                     return resolve(this.orders(results, query.ORDER));
                 } else {
-                    return results;
+                    return resolve(results);
                 }
+            }).catch((err:any) => {
+                console.error(err);
+                reject(err);
             });
         });
     }
@@ -193,25 +211,30 @@ export default class QueryController {
         let q:any = query.WHERE;
         let g:any = query.GET;
         let ids:string[] = [];
-        let columns:string[] = [];
         if (this.isArray(query.GET)) {
             g.forEach((val:string) => {
                 let id_column = val.split('_');
                 ids.push(id_column[0]);
-                columns.push(id_column[1]);
             })
         } else {
             let id_column = g.split('_');
             ids.push(id_column[0]);
-            columns.push(id_column[1]);
         }
+        let unique_ids : {[s:string]:any} = {};
+        ids = ids.filter((id) => {
+            if (unique_ids[id] === true)
+                return false;
+            unique_ids[id] = true;
+            return true;
+        });
+
         let promises = ids.map((id:string, index:number) => {
             return new Promise<{[s:string/*id*/]:{}[]}>((resolve, reject) => {
                 let _datatable : Datatable;
 
                 return DatasetController.getInstance().getDataset(id).then((datatable:Datatable) => {
                     _datatable = datatable;
-                    return datatable.getColumn(columns[index]).getData();
+                    return datatable.getColumn(g[index]).getData();
                 }).then((columnData:string[]|number[]) => {
                     
                     let indices:boolean[] = new Array(columnData.length);
@@ -220,7 +243,7 @@ export default class QueryController {
                     return this.evaluates(Object.keys(q)[0], q[Object.keys(q)[0]], _datatable, indices);
                 }).then((indices:boolean[]) => {
                     let rowNumbers = this.extractValidRowNumbers(indices);
-                    return this.getValues(columns, rowNumbers, _datatable);
+                    return this.getValues(g, rowNumbers, _datatable);
                 }).then((res:{}[]) => {
                     return resolve({ [id]: res });
                 });
