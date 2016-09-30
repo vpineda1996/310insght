@@ -10,13 +10,13 @@ import JSZip = require('jszip');
 
 import {expect} from 'chai';
 describe("QueryController", function () {
-    let GET: string;
+    let GET: string|string[];
     let WHERE: {};
     let ORDER: string;
     let AS: string;
 
-    const VALID_KEY = 'courses_avg';
-    const VALID_MCOMPARISON : {} = { GT: { [VALID_KEY]: 50 } }
+    const VALID_KEY = 'other_avg';
+    const VALID_MCOMPARISON : {} = { GT: { [VALID_KEY]: 30 } }
     const VALID_SCOMPARISON : {} = { IS: { [VALID_KEY]: '50' } }
     const VALID_NEGATION : {} = { NOT: VALID_MCOMPARISON }
     const VALID_LOGICCOMPARISON : {} = { AND: [VALID_MCOMPARISON, VALID_SCOMPARISON] }
@@ -44,14 +44,18 @@ describe("QueryController", function () {
         return controller.isValid(query());
     }
 
-    beforeEach(function () {
-        GET = 'courses_avg';
+    beforeEach(function (done) {
+        GET = ['other_id', 'other_avg'];
         WHERE = {GT: { [VALID_KEY]: 40}};
-        ORDER = 'courses_avg';
+        ORDER = 'other_avg';
         AS = 'TABLE';
 
         QUERY = undefined;
         DATASET = undefined;
+
+        DatasetController.getInstance().getDataset('other').then((odataset) => {
+            return odataset.removeColumns();
+        }).then(()=>done()).catch(()=>done());
     });
 
     afterEach(function () {
@@ -143,24 +147,46 @@ describe("QueryController", function () {
         })
 
         function perform_query() : Promise<any> {
+            let DS = DatasetController.getInstance();
             return new Promise<any>((resolve, reject) =>{
-                let content = {key: 'value'};
+
+
+                Log.test('Creating dataset');
+                let content: any = {
+                    result: [{
+                        Avg: 50,
+                        Professor: "John",
+                        Title: "",
+                        Pass: 1,
+                        Fail: 2,
+                        Audit: 1
+                    }, 
+                    {
+                        Avg: 30,
+                        Professor: "Smith",
+                        Title: "",
+                        Pass: 50,
+                        Fail: 50,
+                        Audit: 30
+                    },
+                    { result: [] }]
+                };
                 let zip = new JSZip();
-                zip.file('courses/content.obj', JSON.stringify(content));
+                zip.file('courses/CPSC310', JSON.stringify(content));
                 const opts = {
                     compression: 'deflate', compressionOptions: {level: 2}, type: 'base64'
                 };
                 return zip.generateAsync(opts).then(function (data) {
-                    return DatasetController.getInstance().process('courses', data);
+                    Log.test('Dataset created');
+                    return DS.process('other', data);
                 }).then(function (result) {
-                    return DatasetController.getInstance().getDatasets();
-                }).then((data:any) => { 
-                    return DatasetController.getInstance().getDataset('courses');
+                    Log.test('JSON processed; result: ' + result);
+                    expect(result).below(500);
+                }).then(() => { 
+                    return DatasetController.getInstance().getDataset('other');
                 }).then((datatable:Datatable) => {
                     let controller = new QueryController(dataset());
                     let q : any = query();
-                    let indices : boolean[] = new Array(5);
-                    for (let i in indices) indices[i] = true;
 
                     return controller.query(q);
                 }).then((data) => {
@@ -169,7 +195,6 @@ describe("QueryController", function () {
             });
         }
         describe('SCOMPARISON', function () {
-            /*
             it('works on PCOMPARATOR', function (done) {
                 WHERE = { GT: { [VALID_KEY]: 40 } };
                 perform_query().then((res:QueryResponse) => {
@@ -181,14 +206,14 @@ describe("QueryController", function () {
                 });
             });
             it('works on LOGICCOMPARISON { PCOMPARATORS }', function (done) {
-                WHERE = { AND: [{LT: { [VALID_KEY]: 50 } }, {EQ: { ['courses_id']: 'ssss' } }] };
+                WHERE = { AND: [{LT: { [VALID_KEY]: 50 } }, {EQ: { ['other_id']: 'ssss' } }] };
                 perform_query().then((res:QueryResponse) => {
                     expect(res.result.length).to.be.equal(1)
                     done();
                 })
             });
             it('works on SCOMPARATOR', function (done) {
-                WHERE = { IS: { 'courses_id': 'bbbb'} };
+                WHERE = { IS: { 'other_id': 'bbbb'} };
                 perform_query().then((res:QueryResponse) => {
                     expect(res.result.length).to.be.equal(1)
                     done();
@@ -201,34 +226,21 @@ describe("QueryController", function () {
                     done();
                 });
             });
-            */
             it('works on NEGATOR', function (done) {
                 WHERE = { NOT: VALID_MCOMPARISON };
-                Log.test('Creating dataset');
-                // this.timeout(1500000);
-                let content = {key: 'value'};
-                let zip = new JSZip();
-                zip.file('courses/content.obj', JSON.stringify(content));
-                const opts = {
-                    compression: 'deflate', compressionOptions: {level: 2}, type: 'base64'
-                };
-                return zip.generateAsync(opts).then(function (data) {
-                    Log.test('Dataset created');
-                    let controller = DatasetController.getInstance();
-                    return controller.process('setA', data);
-                }).then(function (result) {
-                    Log.test('Dataset processed; result: ' + result);
-                    expect(!!result).to.equal(true);
+                perform_query().then((res:QueryResponse) => {
+                    expect(res.result.length).to.be.equal(2)
                     done();
                 }).catch((result) => {
                     Log.test('Dataset processed; result: ' + result);
+                    done();
                 });
             });
         });
 
     });
 
-    it('Should be able to query, although the answer will be empty', function () {
+    xit('Should be able to query, although the answer will be empty', function () {
         // NOTE: this is not actually a valid query for D1, nor is the result correct.
         let query: QueryRequest = {GET: 'food', WHERE: {IS: 'apple'}, ORDER: 'food', AS: 'table'};
         let dataset: Datasets = {};

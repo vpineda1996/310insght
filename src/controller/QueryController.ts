@@ -74,7 +74,7 @@ export default class QueryController {
                     (key === 'IS') ? this.EQ :
                     undefined;
 
-                let columnName:string|number = this.getFirstKey(query);
+                let columnName:string = this.getFirstKey(query).split('_')[1];
                 let value:string|number = this.getFirst(query);
 
                 return datatable.getColumn(columnName).getData().then((column:any[]) => {
@@ -100,6 +100,7 @@ export default class QueryController {
                         return indices;
                     }, indices));
                 }).catch((err:any) => {
+                    console.error(err);
                     reject(err);
                 });
 
@@ -146,31 +147,42 @@ export default class QueryController {
         });
     }
 
-    private orders(rows: number[], datatable: Datatable, columnName: string) : Promise<number[]> {
-        return new Promise((resolve, reject) => {
-            let col = datatable.getColumn(columnName);
-            if (!col) {
-                // FIXME do we want to throw error instead?
-                return resolve(rows);
-            }
-            if (col.datatype === Datatype.STRING) {
+    private numberASC(a:number, b:number) : number { return b - a }
+    private stringASC(a:string, b:string) : number { return b < a ? -1 : 1 }
 
-            } else if (col.datatype === Datatype.NUMBER) {
+    private orders(res: QueryResponse, id_column: string) : QueryResponse {
+        
+        let id = id_column.split('_')[0];
+        let column = id_column.split('_')[1];
 
-            }
-            return resolve(rows.sort());
+        let array : {[s:string]:any}[] = res.result;
+
+        let operator : Function = array && array[0] && typeof array[0][column] === 'number' ? this.numberASC : this.stringASC;
+        res.result = res.result.sort((a:{[s:string]:string|number}, b:{[s:string]:string|number}) => {
+           return operator(a[column], b[column]);
         });
+
+        console.info(res);
+        
+        return res;
+
     }
 
     public query(query: QueryRequest): Promise<QueryResponse> {
         return new Promise<QueryResponse>((resolve, reject) => {
             this.getQuery(query).then((results) => {
                 // TODO rendering as TABLE
-                let json : QueryResponse = results.reduce((json:QueryResponse, res:{[s:string]:{}[]}) => {
+                let json : {} = results.reduce((json:QueryResponse, res:{[s:string]:{}[]}) => {
                     json.result = json.result.concat(res[Object.keys(res)[0]]);
                     return json;
                 }, { render: query.AS, result: [] });
-                return resolve(json);
+                return (json);
+            }).then((results:any) => {
+                if (query.ORDER) {
+                    return resolve(this.orders(results, query.ORDER));
+                } else {
+                    return results;
+                }
             });
         });
     }
@@ -183,7 +195,7 @@ export default class QueryController {
         let ids:string[] = [];
         let columns:string[] = [];
         if (this.isArray(query.GET)) {
-            q.forEach((val:string) => {
+            g.forEach((val:string) => {
                 let id_column = val.split('_');
                 ids.push(id_column[0]);
                 columns.push(id_column[1]);
@@ -201,19 +213,13 @@ export default class QueryController {
                     _datatable = datatable;
                     return datatable.getColumn(columns[index]).getData();
                 }).then((columnData:string[]|number[]) => {
-
+                    
                     let indices:boolean[] = new Array(columnData.length);
                     for (let i=0; i < indices.length; ++i) indices[i] = true;
 
                     return this.evaluates(Object.keys(q)[0], q[Object.keys(q)[0]], _datatable, indices);
                 }).then((indices:boolean[]) => {
                     let rowNumbers = this.extractValidRowNumbers(indices);
-                    if (query.ORDER) {
-                        return this.orders(rowNumbers, _datatable, query.ORDER);
-                    } else {
-                        return rowNumbers;
-                    }
-                }).then((rowNumbers:number[]) => {
                     return this.getValues(columns, rowNumbers, _datatable);
                 }).then((res:{}[]) => {
                     return resolve({ [id]: res });
@@ -240,7 +246,6 @@ export default class QueryController {
             this.isHash(val) &&
             (keys = Object.keys(val)).length === 1 &&
             this.isString(keys[0]) &&
-            this.isValidColumnKey(keys[0]) &&
             (this.isString(val[keys[0]]) || this.isNumber(val[keys[0]]));
     }
 
@@ -251,7 +256,6 @@ export default class QueryController {
             this.isHash(val) &&
             (keys = Object.keys(val)).length === 1 &&
             this.isString(keys[0]) &&
-            this.isValidColumnKey(keys[0]) &&
             this.hasString(val[keys[0]]);
     }
 
@@ -288,19 +292,6 @@ export default class QueryController {
         return key === 'AS' &&
             this.isString(val) &&
             val === 'TABLE';
-    }
-    private isValidColumnKey(name: string) {
-        const VALID_KEYS = [
-            'courses_dept',
-            'courses_id',
-            'courses_avg',
-            'courses_instructor',
-            'courses_title',
-            'courses_pass',
-            'courses_fail',
-            'courses_audit'
-        ];
-        return VALID_KEYS.includes(name);
     }
 
 
