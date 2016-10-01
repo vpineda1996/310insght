@@ -152,37 +152,16 @@ export default class DatasetController {
      */
     private writeCacheIntoDisk(): Promise<Datasets> {
         return new Promise((resolve, reject) => {
-            fs.writeFile(DATASETFILE, JSON.stringify(this.getDatasetsForExport()), (err) => {
+            fs.writeFile(DATASETFILE, JSON.stringify(this.datasets), (err) => {
                 if (err) {
                     Log.trace('DatasetController::writeCacheIntoDisk(..) ' + err);
                     reject();
                 } else {
+                    Log.trace('DatasetController::writeCacheIntoDisk: Writing cache');
                     resolve();
                 }
             });
         });
-    }
-
-    private getDatasetsForExport() {
-        var acc: any = {};
-        for (var i in this.datasets) {
-            if (this.datasets[i]) {
-                var cleanCol: any[] = [];
-                this.datasets[i].columns.forEach((column) => {
-                    cleanCol.push({
-                        name: column.name,
-                        src: column.src,
-                        datatype: column.datatype
-                    });
-                });
-                acc[i] = {
-                    id: this.datasets[i].id,
-                    src: this.datasets[i].src,
-                    columns: cleanCol
-                };
-            }
-        }
-        return acc;
     }
     /**
      * Reads datasets from disk
@@ -198,12 +177,13 @@ export default class DatasetController {
                     return reject();
                 }
                 try {
+                    Log.trace('DatasetController::readCachedDatasetsInDisk: Read file, creating col');
                     let parsedJSON: { [id: string]: Datatable } = JSON.parse(data);
                     this.datasets = {};
                     for (var i in parsedJSON) {
                         if (parsedJSON[i]) {
-                            let cols = (parsedJSON[i].columns || []).map((col: Column) => {
-                                return new Column(col.name, col.src, col.datatype);
+                            let cols = (parsedJSON[i].columns || []).map((col: any) => {
+                                return new Column(col.name, col.src, col.datatype, col.data);
                             });
                             this.datasets[i] = new Datatable(parsedJSON[i].id, parsedJSON[i].src, cols);
                         }

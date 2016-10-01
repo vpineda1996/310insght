@@ -77,7 +77,7 @@ export default class QueryController {
         const convertToValidRegex = new RegExp('\\*', 'g')
         return new Promise<boolean[]>((resolve, reject) => {
 
-            if (MCOMPARATOR.includes(key) || SCOMPARATOR.includes(key)) {
+            if ((MCOMPARATOR.indexOf(key) !== -1) || (SCOMPARATOR.indexOf(key) !== -1)) {
 
                 let operator : Function =
                     (key === 'GT') ? this.GT :
@@ -97,7 +97,7 @@ export default class QueryController {
                     reject(err);
                 });
 
-            } else if (LOGICCOMPARISON.includes(key)) {
+            } else if (LOGICCOMPARISON.indexOf(key) !== -1) {
 
                 let operator : Function =
                     (key === 'AND') ? this.AND :
@@ -128,7 +128,7 @@ export default class QueryController {
                     reject(err);
                 });
 
-            } else if (NEGATORS.includes(key)) {
+            } else if (NEGATORS.indexOf(key) !== -1) {
 
                 return this.evaluates(this.getFirstKey(query), this.getFirst(query), datatable, indices).then((indices:boolean[]) => {
                     let counter = 0;
@@ -302,7 +302,7 @@ export default class QueryController {
         let k : string;
         let values : {[s:string]:any}
 
-        return LOGICCOMPARISON.includes(key) &&
+        return LOGICCOMPARISON.indexOf(key) !== -1 &&
             this.isArray(val) &&
             val.every((v: any) => this.isHash(v) && this.isFilter((k = Object.keys((values = v))[0]), values[k]))
     }
@@ -310,7 +310,7 @@ export default class QueryController {
     private isMComparison(key:string, val:any) : boolean {
         let keys : string[];
 
-        return MCOMPARATOR.includes(key) &&
+        return (MCOMPARATOR.indexOf(key) !== -1) &&
             this.isHash(val) &&
             (keys = Object.keys(val)).length === 1 &&
             this.isString(keys[0]) &&
@@ -320,7 +320,7 @@ export default class QueryController {
     private isSComparison(key:string, val:any) : boolean {
         let keys : string[];
 
-        return SCOMPARATOR.includes(key) &&
+        return SCOMPARATOR.indexOf(key) !== -1 &&
             this.isHash(val) &&
             (keys = Object.keys(val)).length === 1 &&
             this.isString(keys[0]) &&
@@ -329,7 +329,7 @@ export default class QueryController {
 
     private isNegation(key:string, val:any) : boolean {
 
-        return NEGATORS.includes(key) &&
+        return NEGATORS.indexOf(key) !== -1 &&
             this.isHash(val) &&
             this.areFilters(Object.keys(val)[0], val)
     }
@@ -385,12 +385,13 @@ export default class QueryController {
         }
 
         let keys = Object.keys(query);
+        Log.trace(JSON.stringify(keys))
         let q: any = query;
 
         return Object.keys(TOP_LEVEL_REQUIREMENTS).every((req_key: string) => {
-            return keys.includes(req_key) && TOP_LEVEL_REQUIREMENTS[req_key].bind(this)(req_key, q[req_key]);
+            return (keys.indexOf(req_key) !== -1) && TOP_LEVEL_REQUIREMENTS[req_key].bind(this)(req_key, q[req_key]);
         }) && Object.keys(TOP_LEVEL_OPTIONALS).every((opt_key: string) => {
-            return !keys.includes(opt_key) || TOP_LEVEL_OPTIONALS[opt_key].bind(this)(opt_key, q[opt_key]);
+            return keys.indexOf(opt_key) === -1 || TOP_LEVEL_OPTIONALS[opt_key].bind(this)(opt_key, q[opt_key]);
         })
     }
 }

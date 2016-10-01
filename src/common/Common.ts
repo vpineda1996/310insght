@@ -177,25 +177,18 @@ export class Column {
 
     private data: Array<string | number>;
 
-    constructor(name: string, src: string, datatype?: Datatype) {
+    constructor(name: string, src: string, datatype?: Datatype, data? : Array<string | number>) {
         this.name = name;
         this.src = src;
         this.datatype = datatype || Datatype.STRING;
+        Log.trace("Data length : "   + (data && data.length));
+        this.data = data || [];
     }
+    
 
     public getData(): Promise<Array<string | number>> {
         return new Promise<Array<string | number>>((resolve, reject) => {
-            if (this.data) {
-                return resolve(this.data);
-            } else {
-                fs.readFile(this.src, 'utf-8', (err, data) => {
-                    if (!data || err) {
-                        return reject(err);
-                    }
-                    this.data = JSON.parse(data);
-                    resolve(this.data);
-                });
-            }
+            resolve(this.data);
         });
     }
 
@@ -229,16 +222,7 @@ export class Column {
 
     public saveData(): Promise<Column> {
         return new Promise((resolve, reject) => {
-            if (this.data) {
-                fs.writeFile(this.src, JSON.stringify(this.data), (err) => {
-                    if (err) {
-                        reject(err);
-                    } else {
-                        Log.trace("Column " + this.name + " was saved");
-                        resolve(this);
-                    }
-                });
-            }
+            resolve(this);
         });
     }
 };
