@@ -101,22 +101,7 @@ export class Datatable {
         }
 
         Log.trace('Datatable::createColumn(..) - creating files for ' + name + ' in ' + src);
-
-        // Create folders and necesary files for column
-        if (!src) {
-            src = PARENT_DIR + '/' + this.id + '/' + name + '.json';
-            if (!fs.existsSync(PARENT_DIR)) {
-                fs.mkdirSync(PARENT_DIR);
-            }
-            if (!fs.existsSync(PARENT_DIR + '/' + this.id)) {
-                fs.mkdirSync(PARENT_DIR + '/' + this.id);
-            }
-            if (!fs.existsSync(src)) {
-                Log.trace('Datatable::createColumn(..) - creating array for ' + name);
-                fs.writeFileSync(src, '[]');
-            }
-            // TODO: resize new array of column to the current size of datatable
-        }
+        
         // Push new cols to array
         return new Promise(resolve => {
             let newCol = new Column(name, src, datatype);
@@ -137,18 +122,8 @@ export class Datatable {
         return new Promise((resolve, reject) => {
             let localSrc = this.columns[idx].name
             Log.trace('Datatable::removeColumn(..) - Deleting column ' + localSrc);
-
-            fs.unlink(this.columns[idx].src, (err) => {
-                if (err && !ignoreErr) {
-                    Log.trace("Column " + this.columns[idx].src + " could not be deleted!");
-                    reject(err);
-                } else {
-                    Log.trace("Column " + localSrc + " was deleted!");
-                    this.columns.splice(idx, 1);
-                    resolve(true);
-                }
-            });
-
+            this.columns.splice(idx, 1);
+            resolve(true);
         });
     }
 

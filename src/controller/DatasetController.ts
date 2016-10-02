@@ -25,18 +25,7 @@ export default class DatasetController {
 
     constructor() {
         Log.trace('DatasetController::init()');
-
-        if (DatasetController._instance) {
-            throw new Error("Error: Instantiation failed: Use DatasetController.getInstance() instead of new.");
-        }
-
         DatasetController._instance = this;
-        if (!fs.existsSync(PARENT_DIR)) {
-            fs.mkdirSync(PARENT_DIR);
-        }
-        if (!fs.existsSync(DATASETFILE)) {
-            fs.writeFileSync(DATASETFILE, '{}');
-        }
     };
 
     /**
@@ -171,6 +160,14 @@ export default class DatasetController {
             return new Promise<Datasets>((resolve) => resolve(this.datasets));
         }
         return new Promise<Datasets>((resolve, reject) => {
+
+            if (!fs.existsSync(PARENT_DIR)) {
+                fs.mkdirSync(PARENT_DIR);
+            }
+            if (!fs.existsSync(DATASETFILE)) {
+                fs.writeFileSync(DATASETFILE, '{}');
+            }
+
             fs.readFile(DATASETFILE, 'utf8', (err, data) => {
                 if (err) {
                     Log.trace('DatasetController::readCachedDatasetsInDisk(cannot parse json file)');
