@@ -66,26 +66,26 @@ export default class RouteHandler {
     public static postQuery(req: restify.Request, res: restify.Response, next: restify.Next) {
         Log.trace('RouteHandler::postQuery(..) - params: ' + JSON.stringify(req.params));
         let query: QueryRequest = req.params;
-        RouteHandler.datasetController.getDatasets().then((datasets) => {
-           let controller = new QueryController(datasets);
-           let isValid = controller.isValid(query);
+        let controller = new QueryController();
+        let isValid = controller.isValid(query);
 
-           if (isValid === true) {
-               controller.query(query).then((qr: QueryResponse) => {
-                   res.json(200, qr);
-                   return next();
-               }).catch((err:Error) => {
-                   res.json(500, { error: err });
-                   return next();
-               });
-           } else {
-               res.json(400, {status: 'invalid query'});
-               return next();
-           }
-        }).catch((err) => {
-            Log.error('RouteHandler::postQuery(..) - ERROR: ' + err);
-            res.send(403);
-        });
+        if (isValid === true) {
+            controller.query(query).then((qr: QueryResponse) => {
+                console.info(qr);
+                if (qr.missing) {
+                    res.json(424, qr)
+                } else {
+                    res.json(200, qr);
+                }
+                return next();
+            }).catch((err) => {
+                Log.error('RouteHandler::postQuery(..) - ERROR: ' + err);
+                res.json(400, {error: err});
+            });
+        } else {
+            res.json(400, {error: 'invalid query'});
+            return next();
+        }
     }
 
     public static deleteDataset(req: restify.Request, res: restify.Response, next: restify.Next) {
