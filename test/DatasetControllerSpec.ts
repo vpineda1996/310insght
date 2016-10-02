@@ -15,7 +15,41 @@ import fs = require('fs');
 
 const DATASETFILE = './data/datasets.json';
 
-const TEST_DATATABLE_OBJ = { "afasfas": { "id": "afasfas", "src": "./data/afasfas", "columns": [{ "name": "courses_dept", "src": "./data/afasfas/courses_dept.json", "datatype": 0 }, { "name": "courses_id", "src": "./data/afasfas/courses_id.json", "datatype": 0 }, { "name": "courses_avg", "src": "./data/afasfas/courses_avg.json", "datatype": 0 }, { "name": "courses_instructor", "src": "./data/afasfas/courses_instructor.json", "datatype": 0 }, { "name": "courses_title", "src": "./data/afasfas/courses_title.json", "datatype": 0 }, { "name": "courses_pass", "src": "./data/afasfas/courses_pass.json", "datatype": 0 }, { "name": "courses_fail", "src": "./data/afasfas/courses_fail.json", "datatype": 0 }, { "name": "courses_audit", "src": "./data/afasfas/courses_audit.json", "datatype": 0 }] } };
+const TEST_DATATABLE_OBJ : any = { "afasfas": { id: 'afasfas',
+  src: './data/afasfas',
+  columns: 
+   [ { name: 'courses_dept',
+       src: './data/afasfas/courses_dept.json',
+       datatype: 0,
+       data: [] },
+     { name: 'courses_id',
+       src: './data/afasfas/courses_id.json',
+       datatype: 0,
+       data: [] },
+     { name: 'courses_avg',
+       src: './data/afasfas/courses_avg.json',
+       datatype: 0,
+       data: [] },
+     { name: 'courses_instructor',
+       src: './data/afasfas/courses_instructor.json',
+       datatype: 0,
+       data: [] },
+     { name: 'courses_title',
+       src: './data/afasfas/courses_title.json',
+       datatype: 0,
+       data: [] },
+     { name: 'courses_pass',
+       src: './data/afasfas/courses_pass.json',
+       datatype: 0,
+       data: [] },
+     { name: 'courses_fail',
+       src: './data/afasfas/courses_fail.json',
+       datatype: 0,
+       data: [] },
+     { name: 'courses_audit',
+       src: './data/afasfas/courses_audit.json',
+       datatype: 0,
+       data: [] } ] } };
 
 const TEST_DATASET_EMPTY: any = { "EMPTY": { "id": "EMPTY", "src": "./data/EMPTY", "columns":[]}};
 
@@ -67,6 +101,8 @@ describe("DatasetController", function () {
         it("opens the main datasets and selects a specific one", function(done){
             let controller = DatasetController.getInstance();
             controller.getDataset("afasfas").then((res) => {
+                console.log(JSON.parse(JSON.stringify(res)))
+                console.log(JSON.parse(JSON.stringify(TEST_DATATABLE_OBJ.afasfas)))
                 expect(JSON.parse(JSON.stringify(res))).to.be.deep.equal(TEST_DATATABLE_OBJ.afasfas);
                 expect(res instanceof Datatable).to.be.true;
                 done();
