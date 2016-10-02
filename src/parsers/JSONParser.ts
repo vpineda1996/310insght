@@ -83,7 +83,7 @@ export default class JSONParser {
                             }
                         });
                     } else if (!listOfCourseYears.courses && !listOfCourseYears.result && listOfCourseYears.rank === undefined) {
-                        reject("Invalid JSON file: " + coursePath);
+                        return reject("Invalid JSON file: " + coursePath);
                     }
                     resolve((listOfCourseYears.result && listOfCourseYears.result.length) || 0);
                 } catch (e) {
