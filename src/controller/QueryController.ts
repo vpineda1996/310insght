@@ -71,17 +71,10 @@ export default class QueryController {
     private GT(a:number, b:number) : boolean { return a > b; }
     private LT(a:number, b:number) : boolean { return a < b; }
     private EQ(a:number, b:number) : boolean { return a === b; }
-    private IS(a:string, b:string) : boolean { 
-        let splitVal = b.split("*");
-        if(splitVal.length > 1){
-            return a.includes(splitVal.join(""));
-        }
-        return a === b;
-    }
+    private IS(a:string, b:string) : boolean { return new RegExp('^' + b.split('*').join('.*') + '$').test(a); }
 
     public evaluates(key:string, query:{[s:string]:any}|any, datatable:Datatable, indices:boolean[]): Promise<boolean[]> {
         Log.trace('QueryController::evaluates( ' + key + ': ' + JSON.stringify(query) +' )');
-        const convertToValidRegex = new RegExp('\\*', 'g')
 
         return new Promise<boolean[]>((resolve, reject) => {
 

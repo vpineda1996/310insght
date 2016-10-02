@@ -71,7 +71,7 @@ export default class RouteHandler {
 
         if (isValid === true) {
             controller.query(query).then((qr: QueryResponse) => {
-                console.info(qr);
+                fs.writeFile('result' + Math.random() * 100 + '.json', JSON.stringify(qr));
                 if (qr.missing) {
                     res.json(424, qr)
                 } else {
