@@ -31,7 +31,7 @@ export interface QueryResponse {
 }
 
 interface QueryData {
-    [columnName:string] : string[] | number[];
+    [columnName: string] : string[] | number[];
 }
 
 class MissingDatasets extends Error {
@@ -59,22 +59,22 @@ export default class QueryController {
         return false;
     }
 
-    private getFirst(query:{[s:string]:any}):any {
+    private getFirst(query: {[s: string]: any}): any {
         return query[this.getFirstKey(query)];
     }
-    private getFirstKey(query:{[s:string]:any}):string {
+    private getFirstKey(query: {[s: string]: any}): string {
         return Object.keys(query)[0];
     }
 
-    private AND(a:boolean, b:boolean) : boolean { return a && b; }
-    private OR(a:boolean, b:boolean) : boolean { return a || b; }
-    private GT(a:number, b:number) : boolean { return a > b; }
-    private LT(a:number, b:number) : boolean { return a < b; }
-    private EQ(a:number, b:number) : boolean { return a === b; }
-    private IS(a:string, b:string) : boolean { return new RegExp('^' + b.split('*').join('.*') + '$').test(a); }
+    private AND(a: boolean, b: boolean) : boolean { return a && b; }
+    private OR(a: boolean, b: boolean) : boolean { return a || b; }
+    private GT(a: number, b: number) : boolean { return a > b; }
+    private LT(a: number, b: number) : boolean { return a < b; }
+    private EQ(a: number, b: number) : boolean { return a == b; }
+    private IS(a: string, b: string) : boolean { return new RegExp('^' + b.split('*').join('.*') + '$').test(a); }
 
-    public evaluates(key:string, query:{[s:string]:any}|any, datatable:Datatable, indices:boolean[]): Promise<boolean[]> {
-        Log.trace('QueryController::evaluates( ' + key + ': ' + JSON.stringify(query) +' )');
+    public evaluates(key: string, query: {[s: string]: any}|any, datatable: Datatable, indices: boolean[]): Promise<boolean[]> {
+        Log.trace('QueryController::evaluates( ' + key + ': ' + JSON.stringify(query) + ' )');
 
         return new Promise<boolean[]>((resolve, reject) => {
 
@@ -87,15 +87,15 @@ export default class QueryController {
                     (key === 'IS') ? this.IS :
                     undefined;
 
-                let columnName:string = this.getFirstKey(query);
-                let value:number|string = this.getFirst(query);
+                let columnName: string = this.getFirstKey(query);
+                let value: number|string = this.getFirst(query);
 
                 // Retrieve data that match conditions
-                return datatable.getColumn(columnName).getData().then((column:any[]) => {
-                    return column.map((row:string|number) => operator(row, value));
+                return datatable.getColumn(columnName).getData().then((column: any[]) => {
+                    return column.map((row: string|number) => operator(row, value));
                 }).then((data) => {
                     resolve(data);
-                }).catch((err:any) => {
+                }).catch((err: any) => {
                     console.error(err);
                     reject(err);
                 });
@@ -107,41 +107,41 @@ export default class QueryController {
                     (key === 'OR') ? this.OR :
                     undefined;
 
-                let promises = query.map((next:{[s:string]:any}):Promise<boolean[]> => {
-                    Log.trace("QueryController::LOGICCOMPARISON( " + JSON.stringify(next))
+                let promises = query.map((next: {[s: string]: any}): Promise<boolean[]> => {
+                    Log.trace("QueryController::LOGICCOMPARISON( " + JSON.stringify(next));
                     return this.evaluates(this.getFirstKey(next), this.getFirst(next), datatable, indices);
                 });
 
                 return Promise.all(promises).then((list_of_indices: any[]) => {
                     let _index = -1;
                     let displayQuery = "";
-                    return resolve(list_of_indices.reduce((indices:boolean[], next:boolean[]) => {
+                    return resolve(list_of_indices.reduce((indices: boolean[], next: boolean[]) => {
                         let counter = 0;
                         ++_index;
                         displayQuery += JSON.stringify(query[_index]);
                         for (let i in indices) {
                             indices[i] = operator(indices[i], next[i]);
-                            if (indices[i]) ++counter
+                            if (indices[i]) ++counter;
                         }
-                        Log.trace('QueryController::evaluates( ' + key + ': ' + displayQuery +' ) ===> ' + counter);
+                        Log.trace('QueryController::evaluates( ' + key + ': ' + displayQuery + ' ) ===> ' + counter);
                         return indices;
                     }, indices));
-                }).catch((err:any) => {
+                }).catch((err: any) => {
                     console.error(err);
                     reject(err);
                 });
 
             } else if (NEGATORS.indexOf(key) !== -1) {
 
-                return this.evaluates(this.getFirstKey(query), this.getFirst(query), datatable, indices).then((indices:boolean[]) => {
+                return this.evaluates(this.getFirstKey(query), this.getFirst(query), datatable, indices).then((indices: boolean[]) => {
                     let counter = 0;
                     for (let i in indices) {
                         indices[i] = !indices[i];
-                        if (indices[i]) ++counter
+                        if (indices[i]) ++counter;
                     }
-                    Log.trace('QueryController::evaluates( ' + key + ': ' + JSON.stringify(query) +' ) ===> ' + counter);
+                    Log.trace('QueryController::evaluates( ' + key + ': ' + JSON.stringify(query) + ' ) ===> ' + counter);
                     return resolve(indices);
-                }).catch((err:any) => {
+                }).catch((err: any) => {
                     console.error(err);
                     reject(err);
                 });
@@ -155,7 +155,7 @@ export default class QueryController {
     // returns matching index(row numbers)
     private extractValidRowNumbers(indices: boolean[]) : number[] {
         let rowNumbers : number[] = [];
-        indices.forEach((row:boolean, index:number) => {
+        indices.forEach((row: boolean, index: number) => {
             if (row) { rowNumbers.push(index); }
         });
         return rowNumbers;
@@ -167,7 +167,7 @@ export default class QueryController {
     //   {courses_avg: [60, 70, 80]
     // ]
     // O(rc)
-    private getValues(columns:string[], rowNumbers:number[], datatable: Datatable) : Promise<any> {
+    private getValues(columns: string[], rowNumbers: number[], datatable: Datatable) : Promise<any> {
         let promises : Promise<any>[] = [];
 
         columns.forEach((colName) => {
@@ -184,7 +184,7 @@ export default class QueryController {
 
     // order QueryData in O(r^2 + c)
     private orders(queryData: QueryData[], columnName: string) : QueryData[] {
-        
+
         let columnNames : string[] = queryData.map((qd) => Object.keys(qd)[0]);
         let qdCol = queryData[columnNames.indexOf(columnName)];
         let data : any[] = qdCol[Object.keys(qdCol)[0]];
@@ -204,14 +204,14 @@ export default class QueryController {
     }
 
     private renderTable(queryData: QueryData[]) : {}[] {
-        
+
         let i : any;
         let response : {}[] = [];
         let columnNames : string[] = queryData.map((qd) => Object.keys(qd)[0]);
 
         for (i in queryData[0][columnNames[0]]) {
             response.push(
-                columnNames.reduce((responseRow : {[s:string]:any}, cn : string, index : number) => {
+                columnNames.reduce((responseRow : {[s: string]: any}, cn : string, index : number) => {
                     responseRow[cn] = queryData[index][cn][i];
                     return responseRow;
                 }, {})
@@ -226,9 +226,9 @@ export default class QueryController {
             this.hasRequestedIds(query).then((results : boolean[]) => {
                 let missing : string[] = [];
 
-                results.forEach((res:boolean, index:number) => {
+                results.forEach((res: boolean, index: number) => {
                     if (!res) {
-                        missing.push(query.GET[index])
+                        missing.push(query.GET[index]);
                     }
                 });
                 if (missing.length === 0) return true;
@@ -236,7 +236,7 @@ export default class QueryController {
             }).then(() => {
                 return this.getQueryData(query);
             }).then((queryData) => {
-                return [].concat.apply([], queryData)
+                return [].concat.apply([], queryData);
             }).then((queryData : QueryData[]) => {
                 if (query.ORDER) {
                     return this.orders(queryData, query.ORDER);
@@ -247,17 +247,17 @@ export default class QueryController {
                 if (query.AS === 'TABLE') {
                     return this.renderTable(queryData);
                 } else {
-                    throw new Error('Invalid AS -- Unknown render type')
+                    throw new Error('Invalid AS -- Unknown render type');
                 }
             }).then((queryData : any[]) => {
                 return resolve({
                     render: query.AS,
                     result: queryData
-                })
+                });
             }).catch((err) => {
                 console.error(err);
                 if (err instanceof MissingDatasets) {
-                    resolve({ missing : err.missing });    
+                    resolve({ missing : err.missing });
                 } else {
                     reject(err);
                 }
@@ -275,9 +275,9 @@ export default class QueryController {
         ids.forEach((val) => {
             let id_column = val.split('_');
             uniqueIds.push(id_column[0]);
-        })
+        });
 
-        let counter : {[s:string]:any} = {};
+        let counter : {[s: string]: any} = {};
 
         return uniqueIds.filter((id) => {
             if (counter[id] === true)
@@ -300,7 +300,7 @@ export default class QueryController {
                     } else {
                         return resolve(false);
                     }
-                })
+                });
             });
             promises.push(oPromise);
         });
@@ -315,25 +315,25 @@ export default class QueryController {
 
         let ids = this.getUniqueDatasetIds(query.GET);
 
-        let promises = ids.map((id:string, index:number) => {
+        let promises = ids.map((id: string, index: number) => {
             return new Promise<{}[]>((resolve, reject) => {
                 let _datatable : Datatable;
 
-                return DatasetController.getInstance().getDataset(id).then((datatable:Datatable) => {
+                return DatasetController.getInstance().getDataset(id).then((datatable: Datatable) => {
                     _datatable = datatable;
                     return datatable.getColumn(query.GET[index]).getData();
-                }).then((columnData:string[]|number[]) => {
-                    
-                    let indices:boolean[] = new Array(columnData.length);
-                    for (let i=0; i < indices.length; ++i) indices[i] = true;
+                }).then((columnData: string[]|number[]) => {
+
+                    let indices: boolean[] = new Array(columnData.length);
+                    for (let i = 0; i < indices.length; ++i) indices[i] = true;
 
                     return this.evaluates(Object.keys(where)[0], where[Object.keys(where)[0]], _datatable, indices);
-                }).then((indices:boolean[]) => {
+                }).then((indices: boolean[]) => {
                     let rowNumbers = this.extractValidRowNumbers(indices);
                     return this.getValues(query.GET, rowNumbers, _datatable);
-                }).then((res:{}[]) => {
+                }).then((res: {}[]) => {
                     return resolve(res);
-                }).catch((err:Error) => {
+                }).catch((err: Error) => {
                     console.error(err);
                     reject(err);
                 });
@@ -343,16 +343,16 @@ export default class QueryController {
         return Promise.all(promises);
     }
 
-    private isLogicComparison(key:string, val:any) : boolean {
+    private isLogicComparison(key: string, val: any) : boolean {
         let k : string;
-        let values : {[s:string]:any}
+        let values : {[s: string]: any};
 
         return LOGICCOMPARISON.indexOf(key) !== -1 &&
             this.isArray(val) &&
-            val.every((v: any) => this.isHash(v) && this.isFilter((k = Object.keys((values = v))[0]), values[k]))
+            val.every((v: any) => this.isHash(v) && this.isFilter((k = Object.keys((values = v))[0]), values[k]));
     }
 
-    private isMComparison(key:string, val:any) : boolean {
+    private isMComparison(key: string, val: any) : boolean {
         let keys : string[];
 
         return (MCOMPARATOR.indexOf(key) !== -1) &&
@@ -362,7 +362,7 @@ export default class QueryController {
             (this.isString(val[keys[0]]) || this.isNumber(val[keys[0]]));
     }
 
-    private isSComparison(key:string, val:any) : boolean {
+    private isSComparison(key: string, val: any) : boolean {
         let keys : string[];
 
         return SCOMPARATOR.indexOf(key) !== -1 &&
@@ -372,19 +372,19 @@ export default class QueryController {
             this.hasString(val[keys[0]]);
     }
 
-    private isNegation(key:string, val:any) : boolean {
+    private isNegation(key: string, val: any) : boolean {
 
         return NEGATORS.indexOf(key) !== -1 &&
             this.isHash(val) &&
-            this.areFilters(Object.keys(val)[0], val)
+            this.areFilters(Object.keys(val)[0], val);
     }
-    private isStringOrStringArray(key:string, val: any) : boolean {
-        return this.isString(val) || val.constructor === Array && val.every((v:any) => this.isString(v));
+    private isStringOrStringArray(key: string, val: any) : boolean {
+        return this.isString(val) || val.constructor === Array && val.every((v: any) => this.isString(v));
     }
     private isTypeString(val: any) : boolean {
         return typeof val === 'string';
     }
-    private isString(val:string) : boolean {
+    private isString(val: string) : boolean {
         const regex = /^[a-zA-Z0-9_]+$/;
         return this.isTypeString(val) && regex.test(val);
     }
@@ -401,18 +401,18 @@ export default class QueryController {
     private isArray(val: any) : boolean {
         return !!val && val.constructor === Array;
     }
-    private isAsTable(key:string, val:any) : boolean {
+    private isAsTable(key: string, val: any) : boolean {
         return key === 'AS' &&
             this.isString(val) &&
             val === 'TABLE';
     }
 
 
-    private areFilters(key:string, val:{[s:string]:any}) : boolean {
-        return Object.keys(val).every((k:string) => this.isFilter(k, val[k]));
+    private areFilters(key: string, val: {[s: string]: any}) : boolean {
+        return Object.keys(val).every((k: string) => this.isFilter(k, val[k]));
     }
 
-    private isFilter(key:string, val:any) : boolean {
+    private isFilter(key: string, val: any) : boolean {
         return this.isLogicComparison(key, val) ||
             this.isMComparison(key, val) ||
             this.isSComparison(key, val) ||
@@ -424,19 +424,19 @@ export default class QueryController {
             'GET': this.isStringOrStringArray,
             'WHERE': this.areFilters,
             'AS': this.isAsTable
-        }
+        };
         const TOP_LEVEL_OPTIONALS: { [s: string]: Function } = {
             'ORDER': this.isString
-        }
+        };
 
         let keys = Object.keys(query);
-        Log.trace(JSON.stringify(keys))
+        Log.trace(JSON.stringify(keys));
         let q: any = query;
 
         return Object.keys(TOP_LEVEL_REQUIREMENTS).every((req_key: string) => {
             return (keys.indexOf(req_key) !== -1) && TOP_LEVEL_REQUIREMENTS[req_key].bind(this)(req_key, q[req_key]);
         }) && Object.keys(TOP_LEVEL_OPTIONALS).every((opt_key: string) => {
             return keys.indexOf(opt_key) === -1 || TOP_LEVEL_OPTIONALS[opt_key].bind(this)(opt_key, q[opt_key]);
-        })
+        });
     }
 }

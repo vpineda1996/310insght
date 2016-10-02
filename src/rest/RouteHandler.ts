@@ -5,7 +5,6 @@ import restify = require('restify');
 import fs = require('fs');
 
 import DatasetController from '../controller/DatasetController';
-import {Datasets} from '../common/Common';
 import QueryController, { QueryRequest, QueryResponse } from '../controller/QueryController';
 
 import Log from '../Util';
@@ -71,9 +70,8 @@ export default class RouteHandler {
 
         if (isValid === true) {
             controller.query(query).then((qr: QueryResponse) => {
-                fs.writeFile('result' + Math.random() * 100 + '.json', JSON.stringify(qr));
                 if (qr.missing) {
-                    res.json(424, qr)
+                    res.json(424, qr);
                 } else {
                     res.json(200, qr);
                 }
