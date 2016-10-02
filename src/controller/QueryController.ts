@@ -87,6 +87,7 @@ export default class QueryController {
                     (key === 'IS') ? this.IS :
                     undefined;
 
+                // destruct query in form of { 'courses_id':'310' }
                 let columnName: string = this.getFirstKey(query);
                 let value: number|string = this.getFirst(query);
 
@@ -112,20 +113,42 @@ export default class QueryController {
                     return this.evaluates(this.getFirstKey(next), this.getFirst(next), datatable, indices);
                 });
 
+                // list_of_indices hold the results of its descendant conditions in form of
+                // [
+                //   [true, false, true, false],
+                //   [false, true, false, false]
+                // ]
                 return Promise.all(promises).then((list_of_indices: any[]) => {
                     let _index = -1;
                     let displayQuery = "";
+
+                    let baseIndices = indices;
+                    if (baseIndices === null) {
+                        baseIndices = new Array(list_of_indices[0].length);
+                        if (key === 'AND') {
+                            for (let i = 0; i < baseIndices.length; ++i) {
+                                baseIndices[i] = true;
+                            }
+                        }
+                        else if (key === 'OR') {
+                            for (let i = 0; i < baseIndices.length; ++i) {
+                                baseIndices[i] = false;
+                            }
+                        }
+                    }
+
                     return resolve(list_of_indices.reduce((indices: boolean[], next: boolean[]) => {
                         let counter = 0;
                         ++_index;
                         displayQuery += JSON.stringify(query[_index]);
                         for (let i in indices) {
+                            // everything other than this line is just for logging
                             indices[i] = operator(indices[i], next[i]);
                             if (indices[i]) ++counter;
                         }
                         Log.trace('QueryController::evaluates( ' + key + ': ' + displayQuery + ' ) ===> ' + counter);
                         return indices;
-                    }, indices));
+                    }, baseIndices));
                 }).catch((err: any) => {
                     console.error(err);
                     reject(err);
@@ -323,11 +346,7 @@ export default class QueryController {
                     _datatable = datatable;
                     return datatable.getColumn(query.GET[index]).getData();
                 }).then((columnData: string[]|number[]) => {
-
-                    let indices: boolean[] = new Array(columnData.length);
-                    for (let i = 0; i < indices.length; ++i) indices[i] = true;
-
-                    return this.evaluates(Object.keys(where)[0], where[Object.keys(where)[0]], _datatable, indices);
+                    return this.evaluates(this.getFirstKey(where), this.getFirst(where), _datatable, null);
                 }).then((indices: boolean[]) => {
                     let rowNumbers = this.extractValidRowNumbers(indices);
                     return this.getValues(query.GET, rowNumbers, _datatable);
