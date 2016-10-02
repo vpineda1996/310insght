@@ -21,17 +21,21 @@ describe("QueryController", function () {
     function SRC_NAME(n:number) { return ID + '_' + COLUMN_NAMES[n] }
 
     const VALID_MCOMPARISON : {} = { GT: { [SRC_NAME(2)]: 30 } }
+    const VALID_MCOMPARISON_LT : {} = { LT: { [SRC_NAME(2)]: 80 } }
     const VALID_MCOMPARISON_EQ : {} = { EQ: { [SRC_NAME(5)]: 5 } }
-    const VALID_SCOMPARISON : {} = { IS: { [SRC_NAME(4)]: 'intro' } }
+    const VALID_SCOMPARISON : {} = { IS: { [SRC_NAME(4)]: 'intro*' } }
     const VALID_NEGATION : {} = { NOT: VALID_MCOMPARISON }
     const VALID_LOGICCOMPARISON : {} = { AND: [VALID_MCOMPARISON, VALID_SCOMPARISON] }
+    const VALID_LOGICCOMPARISON_OR : {} = { OR: [VALID_SCOMPARISON, VALID_MCOMPARISON_EQ] }
 
-    function ARITH_OPERATION(fn:any)                 { return flatten(JSONS.map(json => basicFilter(json) ? json.result.filter(fn) : [] )) }
-    function ARITH_VALID_MCOMPARISON(jsons:{}[])     { return ARITH_OPERATION((res:{[s:string]:any}) => res[capitalize(COLUMN_NAMES[2])] > 30 ) }
-    function ARITH_VALID_MCOMPARISON_EQ(jsons:{}[])  { return ARITH_OPERATION((res:{[s:string]:any}) => res[capitalize(COLUMN_NAMES[5])] === 5 ) }
-    function ARITH_VALID_SCOMPARISON(jsons:{}[])     { return ARITH_OPERATION((res:{[s:string]:any}) => /intro/.test(res[capitalize(COLUMN_NAMES[4])]) ) }
-    function ARITH_VALID_NEGATION(jsons:{}[])        { return ARITH_OPERATION((res:{[s:string]:any}) => res[capitalize(COLUMN_NAMES[2])] <= 30 ) }
-    function ARITH_VALID_LOGICCOMPARISON(jsons:{}[]) { return ARITH_OPERATION((res:{[s:string]:any}) => res[capitalize(COLUMN_NAMES[2])] > 30 && /intro/.test(res[capitalize(COLUMN_NAMES[4])]) ) }
+    function ARITH_OPERATION(fn:any)                    { return flatten(JSONS.map((json: any) => basicFilter(json) ? json.result.filter(fn) : [] )) }
+    function ARITH_VALID_MCOMPARISON(jsons:{}[])        { return ARITH_OPERATION((res:{[s:string]:any}) => res[capitalize(COLUMN_NAMES[2])] > 30 ) }
+    function ARITH_VALID_MCOMPARISON_LT(jsons:{}[])     { return ARITH_OPERATION((res:{[s:string]:any}) => res[capitalize(COLUMN_NAMES[2])] < 80 ) }
+    function ARITH_VALID_MCOMPARISON_EQ(jsons:{}[])     { return ARITH_OPERATION((res:{[s:string]:any}) => res[capitalize(COLUMN_NAMES[5])] === 5 ) }
+    function ARITH_VALID_SCOMPARISON(jsons:{}[])        { return ARITH_OPERATION((res:{[s:string]:any}) => /^intro.*$/.test(res[capitalize(COLUMN_NAMES[4])]) ) }
+    function ARITH_VALID_NEGATION(jsons:{}[])           { return ARITH_OPERATION((res:{[s:string]:any}) => res[capitalize(COLUMN_NAMES[2])] <= 30 ) }
+    function ARITH_VALID_LOGICCOMPARISON(jsons:{}[])    { return ARITH_OPERATION((res:{[s:string]:any}) => res[capitalize(COLUMN_NAMES[2])] > 30 && /^intro.*$/.test(res[capitalize(COLUMN_NAMES[4])]) ) }
+    function ARITH_VALID_LOGICCOMPARISON_OR(jsons:{}[]) { return ARITH_OPERATION((res:{[s:string]:any}) => res[capitalize(COLUMN_NAMES[5])] === 5 || /^intro.*$/.test(res[capitalize(COLUMN_NAMES[4])]) ) }
 
     function capitalize(str:string) { return str.charAt(0).toUpperCase() + str.slice(1) }
     function basicFilter(json:{[s:string]:any}) { return json['result'] && json['result'][0] }
@@ -41,33 +45,37 @@ describe("QueryController", function () {
 
     function ARITH_ARRAY_EQUAL(arr1:{}[], arr2:{}[]) { return arr1.filter(arr => arr2.includes(arr)) }
 
-    let QUERY : QueryRequest;
-    let JSON_DATA : {[s:string]:any}[];
+    function QUERY_RESPONSE(jsons:{}[]) { return jsons.map((json:any) => GET.reduce((newJson:any, col:string) => { newJson[col] = json[capitalize(col.split('_')[1])]; return newJson }, {})) }
 
-    const JSONS = [{
+    let QUERY : QueryRequest;
+
+    function createDataset(arr:any[]) { return {
+        [capitalize(COLUMN_NAMES[0])]: arr[0],
+        [capitalize(COLUMN_NAMES[1])]: arr[1],
+        [capitalize(COLUMN_NAMES[2])]: arr[2],
+        [capitalize(COLUMN_NAMES[3])]: arr[3],
+        [capitalize(COLUMN_NAMES[4])]: arr[4],
+        [capitalize(COLUMN_NAMES[5])]: arr[5],
+        [capitalize(COLUMN_NAMES[6])]: arr[6],
+        [capitalize(COLUMN_NAMES[7])]: arr[7]
+    }}
+
+    const JSONS : {[s:string]:any[]}[] = [{
         result: []
     }, {
-        result: [{
-            [capitalize(COLUMN_NAMES[0])]: 'cpsc',
-            [capitalize(COLUMN_NAMES[1])]: '310',
-            [capitalize(COLUMN_NAMES[2])]: 70,
-            [capitalize(COLUMN_NAMES[3])]: 'John',
-            [capitalize(COLUMN_NAMES[4])]: '',
-            [capitalize(COLUMN_NAMES[5])]: 5,
-            [capitalize(COLUMN_NAMES[6])]: 3,
-            [capitalize(COLUMN_NAMES[7])]: 4
-        }]
+        result: [
+            createDataset(['cpsc', '110', 70, 'John', '', 5, 3, 4]),
+            createDataset(['cpsc', '110', 30, 'Nick', 'introduction to awesome RACKET', 90, 60, 20])
+        ]
     }, {
-        result: [{
-            [capitalize(COLUMN_NAMES[0])]: 'cpsc',
-            [capitalize(COLUMN_NAMES[1])]: '320',
-            [capitalize(COLUMN_NAMES[2])]: 30,
-            [capitalize(COLUMN_NAMES[3])]: 'Smith',
-            [capitalize(COLUMN_NAMES[4])]: 'intro',
-            [capitalize(COLUMN_NAMES[5])]: 50,
-            [capitalize(COLUMN_NAMES[6])]: 100,
-            [capitalize(COLUMN_NAMES[7])]: 30
-        }]
+        result: [
+            createDataset(['cpsc', '320', 30, 'Smith', 'intro', 50, 100, 30]),
+        ]
+    }, {
+        result: [
+            createDataset(['zool', '300', 50, 'Michael', 'hi', 30, 4, 10]),
+            createDataset(['zool', '300', 60, 'Gregor', 'what is this', 70, 30, 60])
+        ]
     }]
     const ZIP_OPTS= {
         compression: 'deflate', compressionOptions: {level: 2}, type: 'base64'
@@ -88,7 +96,6 @@ describe("QueryController", function () {
         WHERE = VALID_MCOMPARISON;
         ORDER = SRC_NAME(0);
         AS = 'TABLE';
-        JSON_DATA = [JSONS[1], JSONS[2]];
 
         QUERY = undefined;
 
@@ -188,9 +195,9 @@ describe("QueryController", function () {
         function prepopulate() : Promise<boolean> {
             let zip = new JSZip();
 
-            for (let i in JSON_DATA) {
-                if (JSON_DATA[i]['result'][0]) {
-                    zip.file(JSON_DATA[i]['result'][0]['Dept'] + JSON_DATA[i]['result'][0]['Id'], JSON.stringify(JSON_DATA[i]));
+            for (let i in JSONS) {
+                if (JSONS[i]['result'][0]) {
+                    zip.file(JSONS[i]['result'][0]['Dept'] +JSONS[i]['result'][0]['Id'], JSON.stringify(JSONS[i]));
                 }
             }
             return zip.generateAsync(ZIP_OPTS).then((data) => {
@@ -226,44 +233,54 @@ describe("QueryController", function () {
             });
         });
 
-        it('works on MCOMPARATOR', function (done) {
+        it('works on LT', function (done) {
+            WHERE = VALID_MCOMPARISON_LT;
+            perform_query().then((res:QueryResponse) => {
+                expect(res.result).to.be.deep.equal(QUERY_RESPONSE(ARITH_VALID_MCOMPARISON_LT(JSONS)));
+                done();
+            }).catch(console.error)
+        });
+        it('works on EQ', function (done) {
+            WHERE = VALID_MCOMPARISON_EQ;
+            perform_query().then((res:QueryResponse) => {
+                expect(res.result).to.be.deep.equal(QUERY_RESPONSE(ARITH_VALID_MCOMPARISON_EQ(JSONS)));
+                done();
+            }).catch(console.error)
+        });
+        it('works on GT', function (done) {
             WHERE = VALID_MCOMPARISON;
             perform_query().then((res:QueryResponse) => {
-                let result = res.result.length === ARITH_VALID_MCOMPARISON(JSON_DATA).length;
-                expect(result).to.be.equal(true);
-                if (result) done();
-            })
+                expect(res.result).to.be.deep.equal(QUERY_RESPONSE(ARITH_VALID_MCOMPARISON(JSONS)));
+                done();
+            }).catch(console.error)
         });
-        it('works on LOGICCOMPARISON { PCOMPARATORS }', function (done) {
-            WHERE = { AND: [ VALID_MCOMPARISON, VALID_MCOMPARISON_EQ] };
+        it('works on AND { PCOMPARATORS }', function (done) {
+            WHERE = VALID_LOGICCOMPARISON;
             perform_query().then((res:QueryResponse) => {
-                let result = res.result.length === ARITH_EQUAL(ARITH_VALID_MCOMPARISON(JSON_DATA), ARITH_VALID_MCOMPARISON_EQ(JSON_DATA)).length;
-                expect(result).to.be.equal(true);
-                if (result) done();
-            })
+                expect(res.result).to.be.deep.equal(QUERY_RESPONSE(ARITH_VALID_LOGICCOMPARISON(JSONS)));
+                done();
+            }).catch(console.error)
+        });
+        it('works on OR { PCOMPARATORS }', function (done) {
+            WHERE = VALID_LOGICCOMPARISON_OR;
+            perform_query().then((res:QueryResponse) => {
+                expect(res.result).to.be.deep.equal(QUERY_RESPONSE(ARITH_VALID_LOGICCOMPARISON_OR(JSONS)));
+                done();
+            }).catch(console.error)
         });
         it('works on SCOMPARATOR', function (done) {
             WHERE = VALID_SCOMPARISON;
             perform_query().then((res:QueryResponse) => {
-                let result = res.result.length === ARITH_VALID_SCOMPARISON(JSON_DATA).length;
-                expect(result).to.be.equal(true);
-                if (result) done();
-            })
-        });
-        it('does query', function (done) {
-            WHERE = { NOT: VALID_MCOMPARISON };
-            perform_query().then((res:QueryResponse) => {
-                expect(res.result.length).to.be.equal(ARITH_VALID_SCOMPARISON(JSON_DATA).length)
+                expect(res.result).to.be.deep.equal(QUERY_RESPONSE(ARITH_VALID_SCOMPARISON(JSONS)));
                 done();
-            })
+            }).catch(console.error)
         });
         it('works on NEGATOR', function (done) {
             WHERE = { NOT: VALID_MCOMPARISON };
             perform_query().then((res:QueryResponse) => {
-                let result = res.result.length === ARITH_VALID_NEGATION(JSON_DATA).length;
-                expect(result).to.be.equal(true);
-                if (result) done();
-            })
+                expect(res.result).to.be.deep.equal(QUERY_RESPONSE(ARITH_VALID_NEGATION(JSONS)));
+                done();
+            }).catch(console.error)
         });
 
     });
