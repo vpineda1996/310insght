@@ -46,7 +46,7 @@ describe("QueryController", function () {
 
     function ARITH_ARRAY_EQUAL(arr1:{}[], arr2:{}[]) { return arr1.filter(arr => arr2.includes(arr)) }
 
-    function ARITH_ORDER(jsons:{}[]) { return ARITH_GET_INDEX_ORDER(jsons, ORDER).map((i:any) => jsons[i]); }
+    function ARITH_ORDER(jsons:any) { return ARITH_GET_INDEX_ORDER(jsons, capitalize(ORDER.split('_')[1])).map((i:any) => jsons[i]); }
     function ARITH_GET_INDEX_ORDER(jsons:{}[], c:any) { return jsons.map((j,i) => [j,i]).sort((a:any,b:any) => isNumber(a[0][c])&&isNumber(b[0][c]) ? (parseFloat(a[0][c])>parseFloat(b[0][c]) ? 1 : -1) : (a[0][c] > b[0][c] ? 1 : -1)).map((v:any) => v[1]) }
 
     function QUERY_RESPONSE(jsons:{}[]) { return jsons.map((json:any) => GET.reduce((newJson:any, col:string) => { newJson[col] = json[capitalize(col.split('_')[1])]; return newJson }, {})) }
@@ -64,7 +64,7 @@ describe("QueryController", function () {
         [capitalize(COLUMN_NAMES[7])]: arr[7]
     }}
 
-    const JSONS : {[s:string]:any[]}[] = [{
+    const JSONS : {[s:string]:any}[] = [{
         result: []
     }, {
         result: [
@@ -322,8 +322,7 @@ describe("QueryController", function () {
                 }).then(() => {
 
                     if (justdoitFailCount === 0) {
-                        console.log('\x1b[33m[mmocha-super-awesome\x1b[33m]\x1b[37m: \x1b[32m all tests passed!\x1b[0m');
-                        console.log('\x1b[33m[mmocha-super-awesome\x1b[33m]\x1b[37m: \x1b[31mnothing failed... boring...\x1b[0m');
+                        console.log('\x1b[33m[mmocha-super-awesome\x1b[33m]\x1b[37m: \x1b[32mnothing failed... boring...\x1b[0m');
                         resolve();
                     } else {
                         console.log('\x1b[33m[mmocha-super-awesome\x1b[33m]\x1b[37m: \x1b[32m' + justdoitSuccessCount+ ' passed!\x1b[0m');
