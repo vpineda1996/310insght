@@ -45,6 +45,7 @@ describe("QueryController", function () {
 
     function ARITH_ARRAY_EQUAL(arr1:{}[], arr2:{}[]) { return arr1.filter(arr => arr2.includes(arr)) }
 
+    // function ARITH_ORDER(jsons:{}[], col:number) { AITH_GET_INDEX_ORDER(jsons).map(i => {})
     function QUERY_RESPONSE(jsons:{}[]) { return jsons.map((json:any) => GET.reduce((newJson:any, col:string) => { newJson[col] = json[capitalize(col.split('_')[1])]; return newJson }, {})) }
 
     let QUERY : QueryRequest;
@@ -66,6 +67,38 @@ describe("QueryController", function () {
         result: [
             createDataset(['cpsc', '110', 70, 'John', '', 5, 3, 4]),
             createDataset(['cpsc', '110', 30, 'Nick', 'introduction to awesome RACKET', 90, 60, 20])
+        ]
+    }, {
+        result: [
+            createDataset(['arts', '001A', 20, 'Smith', 'intro', 90, 500, 10]),
+        ]
+    }, {
+        result: [
+            createDataset(['arts', '001C', 30, 'Smith', 'intro', 80, 500, 10]),
+        ]
+    }, {
+        result: [
+            createDataset(['arts', '099C', 60, 'Smith', 'intro', 50, 500, 10]),
+        ]
+    }, {
+        result: [
+            createDataset(['arts', '099', 50, 'Smith', 'intro', 60, 500, 10]),
+        ]
+    }, {
+        result: [
+            createDataset(['arts', '001', 10, 'Smith', 'intro', 100, 500, 10]),
+        ]
+    }, {
+        result: [
+            createDataset(['arts', '351B', 80, 'Smith', 'intro', 30, 500, 10]),
+        ]
+    }, {
+        result: [
+            createDataset(['arts', '201', 70, 'Smith', 'intro', 40, 500, 10]),
+        ]
+    }, {
+        result: [
+            createDataset(['arts', '011A', 40, 'Smith', 'intro', 70, 500, 10]),
         ]
     }, {
         result: [
@@ -95,7 +128,7 @@ describe("QueryController", function () {
     beforeEach(function (done) {
         GET = [SRC_NAME(0), SRC_NAME(1), SRC_NAME(2), SRC_NAME(5)];
         WHERE = VALID_MCOMPARISON;
-        ORDER = SRC_NAME(0);
+        ORDER = SRC_NAME(1);
         AS = 'TABLE';
 
         QUERY = undefined;
@@ -294,7 +327,7 @@ describe("QueryController", function () {
             })
         }
 
-        describe.only('regular queries', function () {
+        describe('regular queries', function () {
             it('just works', function (done) {
                 ORDER = null;
                 perform_query_checks().then(res => {
@@ -303,10 +336,10 @@ describe("QueryController", function () {
             });
         })
 
-        describe('ORDER', function () {
+        describe.only('ORDER', function () {
             describe('sring', function () {
                 it('just works, you know, just works', function (done) {
-                    ORDER = SRC_NAME(0);
+                    ORDER = SRC_NAME(1);
                     perform_query_checks().then(res => {
                         done();
                     });
