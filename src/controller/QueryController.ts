@@ -9,6 +9,7 @@ import DatasetController from "../controller/DatasetController";
 import { isString, isStringOrStringArray } from '../util/String'
 import { areFilters, isAsTable } from '../util/Query'
 import { getFirstKey, getFirst } from '../util/Object'
+import { isNumber } from '../util/String'
 import { MissingDatasets } from '../util/Errors'
 import Log from "../Util";
 
@@ -340,10 +341,22 @@ export default class QueryController {
             indexedData.push([data[i], i]);
         }
 
-        indexedData.sort();
+        indexedData.sort((a_arr, b_arr) => {
+            let a = a_arr[0];
+            let b = b_arr[0];
+
+            return tryNumber() || tryString();
+
+            function tryNumber() {
+                return isNumber(a) && isNumber(b) ? (parseInt(a) > parseInt(b)? 1 : -1) : 0;
+            }
+            function tryString(){
+                return a > b ? 1 : -1;
+            }
+        });
 
         let sortedData : any[] = queryData.map((qd, index) => {
-            return { [columnNames[index]] : indexedData.map((id) => qd[columnNames[index]][id[1]]) };
+            return { [columnNames[index]] : indexedData.map((val) => qd[columnNames[index]][val[1]]) };
         });
 
         return sortedData;
