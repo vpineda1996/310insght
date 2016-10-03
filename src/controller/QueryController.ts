@@ -348,9 +348,10 @@ export default class QueryController {
             return tryNumber() || tryString();
 
             function tryNumber() {
-                return isNumber(a) && isNumber(b) ? (parseInt(a) > parseInt(b)? 1 : -1) : 0;
+                return isNumber(a) && isNumber(b) ? (parseFloat(a) > parseFloat(b)? 1 : -1) : 0;
             }
-            function tryString(){
+
+            function tryString() {
                 return a > b ? 1 : -1;
             }
         });

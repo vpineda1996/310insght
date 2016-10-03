@@ -6,6 +6,7 @@ import { Datasets, Datatable } from "../src/common/Common";
 import DatasetController from "../src/controller/DatasetController";
 import QueryController, { QueryRequest, QueryResponse } from "../src/controller/QueryController";
 import Log from "../src/Util";
+import { isNumber } from '../src/util/String'
 import JSZip = require('jszip');
 
 import {expect} from 'chai';
@@ -45,7 +46,9 @@ describe("QueryController", function () {
 
     function ARITH_ARRAY_EQUAL(arr1:{}[], arr2:{}[]) { return arr1.filter(arr => arr2.includes(arr)) }
 
-    // function ARITH_ORDER(jsons:{}[], col:number) { AITH_GET_INDEX_ORDER(jsons).map(i => {})
+    function ARITH_ORDER(jsons:{}[]) { return ARITH_GET_INDEX_ORDER(jsons, ORDER).map((i:any) => jsons[i]); }
+    function ARITH_GET_INDEX_ORDER(jsons:{}[], c:any) { return jsons.map((j,i) => [j,i]).sort((a:any,b:any) => isNumber(a[0][c])&&isNumber(b[0][c]) ? (parseFloat(a[0][c])>parseFloat(b[0][c]) ? 1 : -1) : (a[0][c] > b[0][c] ? 1 : -1)).map((v:any) => v[1]) }
+
     function QUERY_RESPONSE(jsons:{}[]) { return jsons.map((json:any) => GET.reduce((newJson:any, col:string) => { newJson[col] = json[capitalize(col.split('_')[1])]; return newJson }, {})) }
 
     let QUERY : QueryRequest;
@@ -70,15 +73,15 @@ describe("QueryController", function () {
         ]
     }, {
         result: [
-            createDataset(['arts', '001A', 20, 'Smith', 'intro', 90, 500, 10]),
+            createDataset(['arts', '001a', 20, 'Smith', 'intro', 90, 500, 10]),
         ]
     }, {
         result: [
-            createDataset(['arts', '001C', 30, 'Smith', 'intro', 80, 500, 10]),
+            createDataset(['arts', '001c', 30, 'Smith', 'intro', 80, 500, 10]),
         ]
     }, {
         result: [
-            createDataset(['arts', '099C', 60, 'Smith', 'intro', 50, 500, 10]),
+            createDataset(['arts', '099c', 60, 'Smith', 'intro', 50, 500, 10]),
         ]
     }, {
         result: [
@@ -90,7 +93,7 @@ describe("QueryController", function () {
         ]
     }, {
         result: [
-            createDataset(['arts', '351B', 80, 'Smith', 'intro', 30, 500, 10]),
+            createDataset(['arts', '351b', 80, 'Smith', 'intro', 30, 500, 10]),
         ]
     }, {
         result: [
@@ -98,7 +101,7 @@ describe("QueryController", function () {
         ]
     }, {
         result: [
-            createDataset(['arts', '011A', 40, 'Smith', 'intro', 70, 500, 10]),
+            createDataset(['arts', '011a', 40, 'Smith', 'intro', 70, 500, 10]),
         ]
     }, {
         result: [
@@ -128,7 +131,7 @@ describe("QueryController", function () {
     beforeEach(function (done) {
         GET = [SRC_NAME(0), SRC_NAME(1), SRC_NAME(2), SRC_NAME(5)];
         WHERE = VALID_MCOMPARISON;
-        ORDER = SRC_NAME(1);
+        ORDER = SRC_NAME(0);
         AS = 'TABLE';
 
         QUERY = undefined;
@@ -248,59 +251,65 @@ describe("QueryController", function () {
             return new QueryController().query(query())
         }
 
-        function perform_query_checks() : Promise<any> {
+        function ARITH_IDENTITY(val:any) { return val; }
+
+        function perform_query_checks(additionalOperation?: Function) : Promise<any> {
+
+            if (!additionalOperation) additionalOperation = ARITH_IDENTITY;
 
             return new Promise<any>((resolve, reject) => {
                 prepopulate().then((result : boolean) => {
                     if (!result) { return reject('data upload failed'); }
 
                 }).then(() => {
+                    justdoitFailCount = 0;
+                    justdoitSuccessCount = 0;
 
                     WHERE = VALID_MCOMPARISON_LT;
                     return justdoit('works on LT', perform_query, (res:QueryResponse) => {
-                        expect(res.result).to.be.deep.equal(QUERY_RESPONSE(ARITH_VALID_MCOMPARISON_LT(JSONS)));
+                        expect(res.result).to.be.deep.equal(QUERY_RESPONSE(additionalOperation(ARITH_VALID_MCOMPARISON_LT(JSONS))));
                     });
 
                 }).then(() => {
 
                     WHERE = VALID_MCOMPARISON_EQ;
                     return justdoit('works on EQ', perform_query, (res:QueryResponse) => {
-                        expect(res.result).to.be.deep.equal(QUERY_RESPONSE(ARITH_VALID_MCOMPARISON_EQ(JSONS)));
+                        expect(res.result).to.be.deep.equal(QUERY_RESPONSE(additionalOperation(ARITH_VALID_MCOMPARISON_EQ(JSONS))));
                     });
 
                 }).then(() => {
 
                     WHERE = VALID_MCOMPARISON;
                     return justdoit('works on GT', perform_query, (res:QueryResponse) => {
-                        expect(res.result).to.be.deep.equal(QUERY_RESPONSE(ARITH_VALID_MCOMPARISON(JSONS)));
+                        expect(res.result).to.be.deep.equal(QUERY_RESPONSE(additionalOperation(ARITH_VALID_MCOMPARISON(JSONS))));
                     });
 
                 }).then(() => {
 
                     WHERE = VALID_LOGICCOMPARISON;
                     return justdoit('works on AND { MCOMPARATORS }', perform_query, (res:QueryResponse) => {
-                        expect(res.result).to.be.deep.equal(QUERY_RESPONSE(ARITH_VALID_LOGICCOMPARISON(JSONS)));
+                        expect(res.result).to.be.deep.equal(QUERY_RESPONSE(additionalOperation(ARITH_VALID_LOGICCOMPARISON(JSONS))));
                     });
 
                 }).then(() => {
 
                     WHERE = VALID_LOGICCOMPARISON_OR;
                     return justdoit('works on OR { MCOMPARATORS }', perform_query, (res:QueryResponse) => {
-                        expect(res.result).to.be.deep.equal(QUERY_RESPONSE(ARITH_VALID_LOGICCOMPARISON_OR(JSONS)));
+                        expect(res.result).to.be.deep.equal(QUERY_RESPONSE(additionalOperation(ARITH_VALID_LOGICCOMPARISON_OR(JSONS))));
                     })
 
                 }).then(() => {
 
                     WHERE = VALID_SCOMPARISON;
                     return justdoit('works on IS', perform_query, (res:QueryResponse) => {
-                        expect(res.result).to.be.deep.equal(QUERY_RESPONSE(ARITH_VALID_SCOMPARISON(JSONS)));
+                        expect(res.result).to.be.deep.equal(QUERY_RESPONSE(additionalOperation(ARITH_VALID_SCOMPARISON(JSONS))));
                     });
 
                 }).then(() => {
 
                     WHERE = { NOT: VALID_MCOMPARISON };
                     return justdoit('works on NOT { MCOMPARATORS }', perform_query, (res:QueryResponse) => {
-                        expect(res.result).to.be.deep.equal(QUERY_RESPONSE(ARITH_VALID_NEGATION(JSONS)));
+                        expect(res.result).to.be.deep.equal(QUERY_RESPONSE(additionalOperation(ARITH_VALID_NEGATION(JSONS))));
                     });
 
                 }).then(() => {
@@ -310,16 +319,30 @@ describe("QueryController", function () {
                         expect(res.missing).to.be.deep.equal(GET);
                     });
 
-                }).then(resolve);
+                }).then(() => {
+
+                    if (justdoitFailCount === 0) {
+                        console.log('\x1b[33m[mmocha-super-awesome\x1b[33m]\x1b[37m: \x1b[32m all tests passed!\x1b[0m');
+                        console.log('\x1b[33m[mmocha-super-awesome\x1b[33m]\x1b[37m: \x1b[31mnothing failed... boring...\x1b[0m');
+                        resolve();
+                    } else {
+                        console.log('\x1b[33m[mmocha-super-awesome\x1b[33m]\x1b[37m: \x1b[32m' + justdoitSuccessCount+ ' passed!\x1b[0m');
+                        console.log('\x1b[33m[mmocha-super-awesome\x1b[33m]\x1b[37m: \x1b[31m' + justdoitFailCount + ' failed! dumbass \x1b[0m');
+                        reject();
+                    }
+                });
             });
         }
 
+        let justdoitFailCount = 0, justdoitSuccessCount = 0;
         function justdoit(fnname: string, fn: Function, fnerr: Function) : Promise<any> {
             return new Promise<any>((resolve, reject) => {
                 return fn().then(fnerr).then((res: any) => {
+                    ++justdoitSuccessCount;
                     console.log('\x1b[33m[mmocha-super-awesome\x1b[33m]\x1b[37m: \x1b[32m' + fnname + '\x1b[0m');
                     resolve();
                 }).catch((err: Error) => {
+                    ++justdoitFailCount;
                     console.error(err);
                     console.log('\x1b[33m[mmocha-super-awesome\x1b[33m]\x1b[37m: \x1b[31m' + fnname + '\x1b[0m');
                     resolve();
@@ -336,11 +359,11 @@ describe("QueryController", function () {
             });
         })
 
-        describe.only('ORDER', function () {
+        describe('ORDER', function () {
             describe('sring', function () {
                 it('just works, you know, just works', function (done) {
                     ORDER = SRC_NAME(1);
-                    perform_query_checks().then(res => {
+                    perform_query_checks(ARITH_ORDER).then(res => {
                         done();
                     });
                 });
@@ -349,7 +372,7 @@ describe("QueryController", function () {
             describe('number', function () {
                 it('just works, ofcourse, what else?', function (done) {
                     ORDER = SRC_NAME(2);
-                    perform_query_checks().then(res => {
+                    perform_query_checks(ARITH_ORDER).then(res => {
                         done();
                     });
                 });
