@@ -20,7 +20,7 @@ describe("QueryController", function () {
 
     function SRC_NAME(n:number) { return ID + '_' + COLUMN_NAMES[n] }
 
-    const VALID_MCOMPARISON : {} = { GT: { [SRC_NAME(2)]: 30 } }
+    const VALID_MCOMPARISON : {} = { GT: { [SRC_NAME(2)]: 0 } }
     const VALID_MCOMPARISON_LT : {} = { LT: { [SRC_NAME(2)]: 80 } }
     const VALID_MCOMPARISON_EQ : {} = { EQ: { [SRC_NAME(5)]: 5 } }
     const VALID_SCOMPARISON : {} = { IS: { [SRC_NAME(4)]: 'intro*' } }
@@ -29,12 +29,12 @@ describe("QueryController", function () {
     const VALID_LOGICCOMPARISON_OR : {} = { OR: [VALID_SCOMPARISON, VALID_MCOMPARISON_EQ] }
 
     function ARITH_OPERATION(fn:any)                    { return flatten(JSONS.map((json: any) => basicFilter(json) ? json.result.filter(fn) : [] )) }
-    function ARITH_VALID_MCOMPARISON(jsons:{}[])        { return ARITH_OPERATION((res:{[s:string]:any}) => res[capitalize(COLUMN_NAMES[2])] > 30 ) }
+    function ARITH_VALID_MCOMPARISON(jsons:{}[])        { return ARITH_OPERATION((res:{[s:string]:any}) => res[capitalize(COLUMN_NAMES[2])] > 0 ) }
     function ARITH_VALID_MCOMPARISON_LT(jsons:{}[])     { return ARITH_OPERATION((res:{[s:string]:any}) => res[capitalize(COLUMN_NAMES[2])] < 80 ) }
     function ARITH_VALID_MCOMPARISON_EQ(jsons:{}[])     { return ARITH_OPERATION((res:{[s:string]:any}) => res[capitalize(COLUMN_NAMES[5])] === 5 ) }
     function ARITH_VALID_SCOMPARISON(jsons:{}[])        { return ARITH_OPERATION((res:{[s:string]:any}) => /^intro.*$/.test(res[capitalize(COLUMN_NAMES[4])]) ) }
-    function ARITH_VALID_NEGATION(jsons:{}[])           { return ARITH_OPERATION((res:{[s:string]:any}) => res[capitalize(COLUMN_NAMES[2])] <= 30 ) }
-    function ARITH_VALID_LOGICCOMPARISON(jsons:{}[])    { return ARITH_OPERATION((res:{[s:string]:any}) => res[capitalize(COLUMN_NAMES[2])] > 30 && /^intro.*$/.test(res[capitalize(COLUMN_NAMES[4])]) ) }
+    function ARITH_VALID_NEGATION(jsons:{}[])           { return ARITH_OPERATION((res:{[s:string]:any}) => res[capitalize(COLUMN_NAMES[2])] <= 0 ) }
+    function ARITH_VALID_LOGICCOMPARISON(jsons:{}[])    { return ARITH_OPERATION((res:{[s:string]:any}) => res[capitalize(COLUMN_NAMES[2])] > 0 && /^intro.*$/.test(res[capitalize(COLUMN_NAMES[4])]) ) }
     function ARITH_VALID_LOGICCOMPARISON_OR(jsons:{}[]) { return ARITH_OPERATION((res:{[s:string]:any}) => res[capitalize(COLUMN_NAMES[5])] === 5 || /^intro.*$/.test(res[capitalize(COLUMN_NAMES[4])]) ) }
 
     function capitalize(str:string) { return str.charAt(0).toUpperCase() + str.slice(1) }
@@ -82,8 +82,9 @@ describe("QueryController", function () {
     };
 
     function query() : QueryRequest {
-        if (typeof QUERY !== 'undefined') return QUERY;
-        QUERY = {GET: GET, WHERE: WHERE, ORDER: ORDER, AS: AS};
+        if (QUERY === null) return QUERY;
+        QUERY = { GET: GET, WHERE: WHERE, AS: AS };
+        if (ORDER) QUERY.ORDER = ORDER;
         return QUERY;
     }
     function isValid() : boolean {
@@ -211,87 +212,115 @@ describe("QueryController", function () {
         }
 
         function perform_query() : Promise<QueryResponse> {
-            return new Promise<QueryResponse>((resolve, reject) => {
+            return new QueryController().query(query())
+        }
+
+        function perform_query_checks() : Promise<any> {
+
+            return new Promise<any>((resolve, reject) => {
                 prepopulate().then((result : boolean) => {
                     if (!result) { return reject('data upload failed'); }
 
-                    let controller = new QueryController();
-                    controller.query(query()).then((response : any) => {
-                        return resolve(response);
+                }).then(() => {
+
+                    WHERE = VALID_MCOMPARISON_LT;
+                    return justdoit('works on LT', perform_query, (res:QueryResponse) => {
+                        expect(res.result).to.be.deep.equal(QUERY_RESPONSE(ARITH_VALID_MCOMPARISON_LT(JSONS)));
                     });
-                }).catch((err:Error) => {
-                    console.error(err);
-                    return reject(err);
-                });
+
+                }).then(() => {
+
+                    WHERE = VALID_MCOMPARISON_EQ;
+                    return justdoit('works on EQ', perform_query, (res:QueryResponse) => {
+                        expect(res.result).to.be.deep.equal(QUERY_RESPONSE(ARITH_VALID_MCOMPARISON_EQ(JSONS)));
+                    });
+
+                }).then(() => {
+
+                    WHERE = VALID_MCOMPARISON;
+                    return justdoit('works on GT', perform_query, (res:QueryResponse) => {
+                        expect(res.result).to.be.deep.equal(QUERY_RESPONSE(ARITH_VALID_MCOMPARISON(JSONS)));
+                    });
+
+                }).then(() => {
+
+                    WHERE = VALID_LOGICCOMPARISON;
+                    return justdoit('works on AND { MCOMPARATORS }', perform_query, (res:QueryResponse) => {
+                        expect(res.result).to.be.deep.equal(QUERY_RESPONSE(ARITH_VALID_LOGICCOMPARISON(JSONS)));
+                    });
+
+                }).then(() => {
+
+                    WHERE = VALID_LOGICCOMPARISON_OR;
+                    return justdoit('works on OR { MCOMPARATORS }', perform_query, (res:QueryResponse) => {
+                        expect(res.result).to.be.deep.equal(QUERY_RESPONSE(ARITH_VALID_LOGICCOMPARISON_OR(JSONS)));
+                    })
+
+                }).then(() => {
+
+                    WHERE = VALID_SCOMPARISON;
+                    return justdoit('works on IS', perform_query, (res:QueryResponse) => {
+                        expect(res.result).to.be.deep.equal(QUERY_RESPONSE(ARITH_VALID_SCOMPARISON(JSONS)));
+                    });
+
+                }).then(() => {
+
+                    WHERE = { NOT: VALID_MCOMPARISON };
+                    return justdoit('works on NOT { MCOMPARATORS }', perform_query, (res:QueryResponse) => {
+                        expect(res.result).to.be.deep.equal(QUERY_RESPONSE(ARITH_VALID_NEGATION(JSONS)));
+                    });
+
+                }).then(() => {
+
+                    GET = ['courses_id', 'courses_avg']
+                    return justdoit('works on 424', perform_query, (res:QueryResponse) => {
+                        expect(res.missing).to.be.deep.equal(GET);
+                    });
+
+                }).then(resolve);
             });
         }
-        it('returns 424 for unknown id', function(done) {
-            GET = ['courses_id']
-            perform_query().then(res => {
-                expect(res.missing).to.be.deep.equal(GET);
-                done();
+
+        function justdoit(fnname: string, fn: Function, fnerr: Function) : Promise<any> {
+            return new Promise<any>((resolve, reject) => {
+                return fn().then(fnerr).then((res: any) => {
+                    console.log('\x1b[33m[mmocha-super-awesome\x1b[33m]\x1b[37m: \x1b[32m' + fnname + '\x1b[0m');
+                    resolve();
+                }).catch((err: Error) => {
+                    console.error(err);
+                    console.log('\x1b[33m[mmocha-super-awesome\x1b[33m]\x1b[37m: \x1b[31m' + fnname + '\x1b[0m');
+                    resolve();
+                });
+            })
+        }
+
+        describe.only('regular queries', function () {
+            it('just works', function (done) {
+                ORDER = null;
+                perform_query_checks().then(res => {
+                    done();
+                });
+            });
+        })
+
+        describe('ORDER', function () {
+            describe('sring', function () {
+                it('just works, you know, just works', function (done) {
+                    ORDER = SRC_NAME(0);
+                    perform_query_checks().then(res => {
+                        done();
+                    });
+                });
+            });
+
+            describe('number', function () {
+                it('just works, ofcourse, what else?', function (done) {
+                    ORDER = SRC_NAME(2);
+                    perform_query_checks().then(res => {
+                        done();
+                    });
+                });
             });
         });
-
-        it('works on LT', function (done) {
-            WHERE = VALID_MCOMPARISON_LT;
-            perform_query().then((res:QueryResponse) => {
-                expect(res.result).to.be.deep.equal(QUERY_RESPONSE(ARITH_VALID_MCOMPARISON_LT(JSONS)));
-                done();
-            }).catch(console.error)
-        });
-        it('works on EQ', function (done) {
-            WHERE = VALID_MCOMPARISON_EQ;
-            perform_query().then((res:QueryResponse) => {
-                expect(res.result).to.be.deep.equal(QUERY_RESPONSE(ARITH_VALID_MCOMPARISON_EQ(JSONS)));
-                done();
-            }).catch(console.error)
-        });
-        it('works on GT', function (done) {
-            WHERE = VALID_MCOMPARISON;
-            perform_query().then((res:QueryResponse) => {
-                expect(res.result).to.be.deep.equal(QUERY_RESPONSE(ARITH_VALID_MCOMPARISON(JSONS)));
-                done();
-            }).catch(console.error)
-        });
-        it('works on AND { PCOMPARATORS }', function (done) {
-            WHERE = VALID_LOGICCOMPARISON;
-            perform_query().then((res:QueryResponse) => {
-                expect(res.result).to.be.deep.equal(QUERY_RESPONSE(ARITH_VALID_LOGICCOMPARISON(JSONS)));
-                done();
-            }).catch(console.error)
-        });
-        it('works on OR { PCOMPARATORS }', function (done) {
-            WHERE = VALID_LOGICCOMPARISON_OR;
-            perform_query().then((res:QueryResponse) => {
-                expect(res.result).to.be.deep.equal(QUERY_RESPONSE(ARITH_VALID_LOGICCOMPARISON_OR(JSONS)));
-                done();
-            }).catch(console.error)
-        });
-        it('works on SCOMPARATOR', function (done) {
-            WHERE = VALID_SCOMPARISON;
-            perform_query().then((res:QueryResponse) => {
-                expect(res.result).to.be.deep.equal(QUERY_RESPONSE(ARITH_VALID_SCOMPARISON(JSONS)));
-                done();
-            }).catch(console.error)
-        });
-        it('works on NEGATOR', function (done) {
-            WHERE = { NOT: VALID_MCOMPARISON };
-            perform_query().then((res:QueryResponse) => {
-                expect(res.result).to.be.deep.equal(QUERY_RESPONSE(ARITH_VALID_NEGATION(JSONS)));
-                done();
-            }).catch(console.error)
-        });
-
-    });
-
-    xit('Should be able to query, although the answer will be empty', function () {
-        // NOTE: this is not actually a valid query for D1, nor is the result correct.
-        let query: QueryRequest = {GET: ['food'], WHERE: {IS: 'apple'}, ORDER: 'food', AS: 'table'};
-        let controller = new QueryController();
-        let ret = controller.query(query);
-        Log.test('In: ' + JSON.stringify(query) + ', out: ' + JSON.stringify(ret));
-        expect(ret).not.to.be.equal(null);
-        // should check that the value is meaningful
     });
 });
