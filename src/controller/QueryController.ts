@@ -139,11 +139,12 @@ export default class QueryController {
     private hasRequestedIds(query : QueryRequest|any) : Promise<any[]> {
         let promises : Promise<any>[] = [];
 
-        let ids = this.getUniqueDatasetIds(query.GET);
-
-        ids.forEach((id, index) => {
+        // FIXME this is somewhat inefficient
+        // run the check query against this.getUniqueDatasetIds(query.GET)
+        // but if so don't forget to re-expand to original GET values when returning in MissingDatasets
+        query.GET.forEach((id: string, index: number) => {
             let oPromise = new Promise<boolean>((resolve, reject) => {
-                DatasetController.getInstance().getDataset(id).then(datatable => {
+                DatasetController.getInstance().getDataset(id.split('_')[0]).then(datatable => {
                     if (datatable) {
                         return resolve(true);
                     } else {
