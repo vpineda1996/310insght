@@ -413,7 +413,7 @@ describe("QueryController", function () {
         describe('ORDER', function () {
             describe('sring', function () {
                 it('just works, you know, just works', function (done) {
-                    ORDER = SRC_NAME(1);
+                    ORDER = SRC_NAME(0);
                     perform_query_checks(ARITH_ORDER).then(res => {
                         done();
                     });
