@@ -21,22 +21,46 @@ describe("QueryController", function () {
 
     function SRC_NAME(n:number) { return ID + '_' + COLUMN_NAMES[n] }
 
-    const VALID_MCOMPARISON : {} = { GT: { [SRC_NAME(2)]: 0 } }
+    const VALID_MCOMPARISON : {} = { GT: { [SRC_NAME(2)]: 70} }
     const VALID_MCOMPARISON_LT : {} = { LT: { [SRC_NAME(2)]: 80 } }
     const VALID_MCOMPARISON_EQ : {} = { EQ: { [SRC_NAME(5)]: 5 } }
     const VALID_SCOMPARISON : {} = { IS: { [SRC_NAME(4)]: 'intro*' } }
+    const VALID_SCOMPARISON_DEPT : {} = { IS: { [SRC_NAME(0)]: 'zool' } }
     const VALID_NEGATION : {} = { NOT: VALID_MCOMPARISON }
     const VALID_LOGICCOMPARISON : {} = { AND: [VALID_MCOMPARISON, VALID_SCOMPARISON] }
     const VALID_LOGICCOMPARISON_OR : {} = { OR: [VALID_SCOMPARISON, VALID_MCOMPARISON_EQ] }
+    const VALID_LOGICCOMPARISON_OR_AND_AND : {} = { OR: [ { AND: [VALID_MCOMPARISON, VALID_SCOMPARISON] }, { AND: [VALID_SCOMPARISON_DEPT] } ] }
+    const VALID_LOGICCOMPARISON_OR_AND_OR : {} = { OR: [ { AND: [VALID_MCOMPARISON] }, { OR: [VALID_SCOMPARISON_DEPT, VALID_NEGATION] } ] }
+    const VALID_LOGICCOMPARISON_OR_OR_AND : {} = { OR: [ { OR: [VALID_MCOMPARISON, VALID_NEGATION] }, { AND: [VALID_SCOMPARISON_DEPT] } ] }
+    const VALID_LOGICCOMPARISON_OR_OR_OR : {} = { OR: [ { OR: [VALID_MCOMPARISON] }, { OR: [VALID_SCOMPARISON_DEPT] } ] }
+    const VALID_LOGICCOMPARISON_AND_AND_AND : {} = { AND: [ { AND: [VALID_MCOMPARISON] }, { AND: [VALID_SCOMPARISON_DEPT] } ] }
+    const VALID_LOGICCOMPARISON_AND_AND_OR : {} = { AND: [ { AND: [VALID_MCOMPARISON] }, { OR: [VALID_SCOMPARISON_DEPT, VALID_LOGICCOMPARISON] } ] }
+    const VALID_LOGICCOMPARISON_AND_OR_AND : {} = { AND: [ { OR: [VALID_MCOMPARISON, VALID_MCOMPARISON_LT] }, { AND: [VALID_SCOMPARISON_DEPT] } ] }
+    const VALID_LOGICCOMPARISON_AND_OR_OR : {} = { AND: [ { OR: [VALID_MCOMPARISON, VALID_LOGICCOMPARISON_OR] }, { OR: [VALID_SCOMPARISON_DEPT] } ] }
+
+    function MCOMPARISON_GT(res:any) { return res[capitalize(COLUMN_NAMES[2])] > 70; }
+    function MCOMPARISON_LT(res:any) { return res[capitalize(COLUMN_NAMES[2])] < 80; }
+    function MCOMPARISON_EQ(res:any) { return res[capitalize(COLUMN_NAMES[5])] === 5; }
+    function SCOMPARISON_IS(res:any) { return /intro.*/.test(res[capitalize(COLUMN_NAMES[4])]); }
+    function SCOMPARISON_IS_DEPT(res:any) { return /^zool$/.test(res[capitalize(COLUMN_NAMES[0])]); }
 
     function ARITH_OPERATION(fn:any)                    { return flatten(JSONS.map((json: any) => basicFilter(json) ? json.result.filter(fn) : [] )) }
-    function ARITH_VALID_MCOMPARISON(jsons:{}[])        { return ARITH_OPERATION((res:{[s:string]:any}) => res[capitalize(COLUMN_NAMES[2])] > 0 ) }
-    function ARITH_VALID_MCOMPARISON_LT(jsons:{}[])     { return ARITH_OPERATION((res:{[s:string]:any}) => res[capitalize(COLUMN_NAMES[2])] < 80 ) }
-    function ARITH_VALID_MCOMPARISON_EQ(jsons:{}[])     { return ARITH_OPERATION((res:{[s:string]:any}) => res[capitalize(COLUMN_NAMES[5])] === 5 ) }
-    function ARITH_VALID_SCOMPARISON(jsons:{}[])        { return ARITH_OPERATION((res:{[s:string]:any}) => /^intro.*$/.test(res[capitalize(COLUMN_NAMES[4])]) ) }
-    function ARITH_VALID_NEGATION(jsons:{}[])           { return ARITH_OPERATION((res:{[s:string]:any}) => res[capitalize(COLUMN_NAMES[2])] <= 0 ) }
-    function ARITH_VALID_LOGICCOMPARISON(jsons:{}[])    { return ARITH_OPERATION((res:{[s:string]:any}) => res[capitalize(COLUMN_NAMES[2])] > 0 && /^intro.*$/.test(res[capitalize(COLUMN_NAMES[4])]) ) }
-    function ARITH_VALID_LOGICCOMPARISON_OR(jsons:{}[]) { return ARITH_OPERATION((res:{[s:string]:any}) => res[capitalize(COLUMN_NAMES[5])] === 5 || /^intro.*$/.test(res[capitalize(COLUMN_NAMES[4])]) ) }
+    function ARITH_VALID_MCOMPARISON(jsons:{}[])        { return ARITH_OPERATION((res:{[s:string]:any}) => MCOMPARISON_GT(res) ) }
+    function ARITH_VALID_MCOMPARISON_LT(jsons:{}[])     { return ARITH_OPERATION((res:{[s:string]:any}) => MCOMPARISON_LT(res) ) }
+    function ARITH_VALID_MCOMPARISON_EQ(jsons:{}[])     { return ARITH_OPERATION((res:{[s:string]:any}) => MCOMPARISON_EQ(res) ) }
+    function ARITH_VALID_SCOMPARISON(jsons:{}[])        { return ARITH_OPERATION((res:{[s:string]:any}) => SCOMPARISON_IS(res) ) }
+    function ARITH_VALID_NEGATION(jsons:{}[])           { return ARITH_OPERATION((res:{[s:string]:any}) => !MCOMPARISON_GT(res) ) }
+    function ARITH_VALID_LOGICCOMPARISON(jsons:{}[])    { return ARITH_OPERATION((res:{[s:string]:any}) => MCOMPARISON_GT(res) && SCOMPARISON_IS(res) ) }
+    function ARITH_VALID_LOGICCOMPARISON_OR(jsons:{}[])           { return ARITH_OPERATION((res:{[s:string]:any}) => MCOMPARISON_EQ(res) || SCOMPARISON_IS(res) ) }
+
+    function ARITH_VALID_LOGICCOMPARISON_OR_AND_AND(jsons:{}[])   { return ARITH_OPERATION((res:{[s:string]:any}) => (MCOMPARISON_GT(res) && SCOMPARISON_IS(res)) || (SCOMPARISON_IS_DEPT(res)) ) }
+    function ARITH_VALID_LOGICCOMPARISON_OR_AND_OR(jsons:{}[])    { return ARITH_OPERATION((res:{[s:string]:any}) => (MCOMPARISON_GT(res)) || (SCOMPARISON_IS_DEPT(res) || !MCOMPARISON_GT(res)) ) }
+    function ARITH_VALID_LOGICCOMPARISON_OR_OR_AND(jsons:{}[])    { return ARITH_OPERATION((res:{[s:string]:any}) => (MCOMPARISON_GT(res) || !MCOMPARISON_GT(res)) || (SCOMPARISON_IS_DEPT(res)) ) }
+    function ARITH_VALID_LOGICCOMPARISON_OR_OR_OR(jsons:{}[])     { return ARITH_OPERATION((res:{[s:string]:any}) => (MCOMPARISON_GT(res)) || (SCOMPARISON_IS_DEPT(res)) ) }
+    function ARITH_VALID_LOGICCOMPARISON_AND_AND_AND(jsons:{}[])  { return ARITH_OPERATION((res:{[s:string]:any}) => (MCOMPARISON_GT(res)) && (SCOMPARISON_IS_DEPT(res)) ) }
+    function ARITH_VALID_LOGICCOMPARISON_AND_AND_OR(jsons:{}[])   { return ARITH_OPERATION((res:{[s:string]:any}) => (MCOMPARISON_GT(res)) && (SCOMPARISON_IS_DEPT(res) || MCOMPARISON_GT(res) && SCOMPARISON_IS(res)) ) }
+    function ARITH_VALID_LOGICCOMPARISON_AND_OR_AND(jsons:{}[])   { return ARITH_OPERATION((res:{[s:string]:any}) => (MCOMPARISON_GT(res) || MCOMPARISON_LT(res)) && (SCOMPARISON_IS_DEPT(res)) ) }
+    function ARITH_VALID_LOGICCOMPARISON_AND_OR_OR(jsons:{}[])    { return ARITH_OPERATION((res:{[s:string]:any}) => (MCOMPARISON_GT(res) || MCOMPARISON_EQ(res) || SCOMPARISON_IS(res)) && (SCOMPARISON_IS_DEPT(res)) ) }
 
     function capitalize(str:string) { return str.charAt(0).toUpperCase() + str.slice(1) }
     function basicFilter(json:{[s:string]:any}) { return json['result'] && json['result'][0] }
@@ -68,24 +92,24 @@ describe("QueryController", function () {
         result: []
     }, {
         result: [
-            createDataset(['cpsc', '110', 70, 'John', '', 5, 3, 4]),
-            createDataset(['cpsc', '110', 30, 'Nick', 'introduction to awesome RACKET', 90, 60, 20])
+            createDataset(['cpsc', '110', 70.3, 'John', '', 5, 3, 4]),
+            createDataset(['cpsc', '110', 30.2, 'Nick', 'introduction to awesome RACKET', 90, 60, 20])
         ]
     }, {
         result: [
-            createDataset(['arts', '001a', 20, 'Smith', 'intro', 90, 500, 10]),
+            createDataset(['arts', '001a', 20.6, 'Smith', 'intro', 90, 500, 10]),
         ]
     }, {
         result: [
-            createDataset(['arts', '001c', 30, 'Smith', 'intro', 80, 500, 10]),
+            createDataset(['arts', '001c', 30.15, 'Smith', 'intro', 80, 500, 10]),
         ]
     }, {
         result: [
-            createDataset(['arts', '099c', 60, 'Smith', 'intro', 50, 500, 10]),
+            createDataset(['arts', '099c', 50.2, 'Smith', 'intro', 50, 500, 10]),
         ]
     }, {
         result: [
-            createDataset(['arts', '099', 50, 'Smith', 'intro', 60, 500, 10]),
+            createDataset(['arts', '099', 50.6, 'Smith', 'intro', 60, 500, 10]),
         ]
     }, {
         result: [
@@ -93,24 +117,24 @@ describe("QueryController", function () {
         ]
     }, {
         result: [
-            createDataset(['arts', '351b', 80, 'Smith', 'intro', 30, 500, 10]),
+            createDataset(['arts', '351b', 10, 'Smith', 'intro', 30, 500, 10]),
         ]
     }, {
         result: [
-            createDataset(['arts', '201', 70, 'Smith', 'intro', 40, 500, 10]),
+            createDataset(['arts', '201', 70.4, 'Smith', 'intro', 40, 500, 10]),
         ]
     }, {
         result: [
-            createDataset(['arts', '011a', 40, 'Smith', 'intro', 70, 500, 10]),
+            createDataset(['arts', '011a', 40.2, 'Smith', 'intro', 70, 500, 10]),
         ]
     }, {
         result: [
-            createDataset(['cpsc', '320', 30, 'Smith', 'intro', 50, 100, 30]),
+            createDataset(['cpsc', '320', 30.99, 'Smith', 'intro', 50, 100, 30]),
         ]
     }, {
         result: [
-            createDataset(['zool', '300', 50, 'Michael', 'hi', 30, 4, 10]),
-            createDataset(['zool', '300', 60, 'Gregor', 'what is this', 70, 30, 60])
+            createDataset(['zool', '300', 50.12, 'Michael', 'hi', 30, 4, 10]),
+            createDataset(['zool', '300', 60.4, 'Gregor', 'what is this', 70, 30, 60])
         ]
     }]
     const ZIP_OPTS= {
@@ -314,6 +338,34 @@ describe("QueryController", function () {
 
                 }).then(() => {
 
+                    WHERE = VALID_LOGICCOMPARISON_OR_OR_AND;
+                    return justdoit('works on OR [ OR { MCOMPARATORS }, AND { SCOMPARATORS } ]', perform_query, (res:QueryResponse) => {
+                        expect(res.result).to.be.deep.equal(QUERY_RESPONSE(additionalOperation(ARITH_VALID_LOGICCOMPARISON_OR_OR_AND(JSONS))));
+                    });
+
+                }).then(() => {
+
+                    WHERE = VALID_LOGICCOMPARISON_OR_AND_OR;
+                    return justdoit('works on OR [ AND { MCOMPARATORS }, OR { SCOMPARATORS } ]', perform_query, (res:QueryResponse) => {
+                        expect(res.result).to.be.deep.equal(QUERY_RESPONSE(additionalOperation(ARITH_VALID_LOGICCOMPARISON_OR_AND_OR(JSONS))));
+                    });
+
+                }).then(() => {
+
+                    WHERE = VALID_LOGICCOMPARISON_OR_OR_OR;
+                    return justdoit('works on OR [ OR { MCOMPARATORS }, OR { SCOMPARATORS } ]', perform_query, (res:QueryResponse) => {
+                        expect(res.result).to.be.deep.equal(QUERY_RESPONSE(additionalOperation(ARITH_VALID_LOGICCOMPARISON_OR_OR_OR(JSONS))));
+                    });
+
+                }).then(() => {
+
+                    WHERE = VALID_LOGICCOMPARISON_OR_OR_AND;
+                    return justdoit('works on OR [ OR { MCOMPARATORS }, AND { SCOMPARATORS } ]', perform_query, (res:QueryResponse) => {
+                        expect(res.result).to.be.deep.equal(QUERY_RESPONSE(additionalOperation(ARITH_VALID_LOGICCOMPARISON_OR_OR_AND(JSONS))));
+                    });
+
+                }).then(() => {
+
                     GET = ['courses_id', 'courses_avg']
                     return justdoit('works on 424', perform_query, (res:QueryResponse) => {
                         expect(res.missing).to.be.deep.equal(GET);
@@ -322,11 +374,11 @@ describe("QueryController", function () {
                 }).then(() => {
 
                     if (justdoitFailCount === 0) {
-                        console.log('\x1b[33m[mmocha-super-awesome\x1b[33m]\x1b[37m: \x1b[32mnothing failed... boring...\x1b[0m');
+                        console.log('\x1b[33m[mocha-super-awesome\x1b[33m]\x1b[37m: \x1b[32mnothing failed... boring...\x1b[0m');
                         resolve();
                     } else {
-                        console.log('\x1b[33m[mmocha-super-awesome\x1b[33m]\x1b[37m: \x1b[32m' + justdoitSuccessCount+ ' passed!\x1b[0m');
-                        console.log('\x1b[33m[mmocha-super-awesome\x1b[33m]\x1b[37m: \x1b[31m' + justdoitFailCount + ' failed! dumbass \x1b[0m');
+                        console.log('\x1b[33m[mocha-super-awesome\x1b[33m]\x1b[37m: \x1b[32m' + justdoitSuccessCount+ ' passed!\x1b[0m');
+                        console.log('\x1b[33m[mocha-super-awesome\x1b[33m]\x1b[37m: \x1b[31m' + justdoitFailCount + ' failed! dumbass \x1b[0m');
                         reject();
                     }
                 });
