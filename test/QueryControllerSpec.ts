@@ -141,37 +141,16 @@ describe("QueryController", function () {
         compression: 'deflate', compressionOptions: {level: 2}, type: 'base64'
     };
 
-    function prepopulate() : Promise<boolean> {
-        let zip = new JSZip();
-
-        for (let i in JSONS) {
-            if (JSONS[i]['result'][0]) {
-                zip.file(JSONS[i]['result'][0]['Dept'] +JSONS[i]['result'][0]['Id'], JSON.stringify(JSONS[i]));
-            }
-        }
-        return zip.generateAsync(ZIP_OPTS).then((data) => {
-            return DatasetController.getInstance().process(ID, data);
-        }).then((result) => {
-            return result < 400;
-        }).catch((err:Error) => {
-            console.error(err);
-            return false;
-        });
-    }
-
     function query() : QueryRequest {
         if (QUERY === null) return QUERY;
         QUERY = { GET: GET, WHERE: WHERE, AS: AS };
         if (ORDER) QUERY.ORDER = ORDER;
         return QUERY;
     }
-    function isValid(expected: boolean, done: Function) : Promise<any> {
+    function isValid(expected: boolean, done: Function) : Promise<boolean> {
         let controller = new QueryController();
         return controller.isValid(query()).then((res: boolean) => {
             expect(res).to.equal(expected);
-            return done();
-        }).catch((err: any) => {
-            expect(expected).to.be.equal(false);
             return done();
         }).catch((err: any) => {
             console.error(err);
@@ -195,16 +174,6 @@ describe("QueryController", function () {
     });
 
     describe('QUERY BODY', function() {
-
-        beforeEach(function (done) {
-            prepopulate().then((res: boolean) => {
-                if (res) {
-                    done();
-                } else {
-                    throw new Error('prepopulate failed');
-                }
-            });
-        })
 
         describe('SCOMPARISON', function () {
             it('fails on invalid type: string <- json', function (done) {
@@ -290,20 +259,28 @@ describe("QueryController", function () {
             isValid(false, done);
         });
 
-        it('invalidates unknown dataset in WHERE clause', function (done) {
-            WHERE = { AND: [ { NOT: { [ID + '_' + ID]: 'cpsc' }} ] }
-            isValid(false, done);
-        });
-
-        it('invalidates unknown dataset in WHERE clause', function (done) {
-            WHERE = { AND: [ { NOT: { 'courses_dept': 'cpsc' }} ] }
-            isValid(false, done);
-        });
-
     });
     describe('::query()', function() {
         beforeEach(function () {
         })
+
+        function prepopulate() : Promise<boolean> {
+            let zip = new JSZip();
+
+            for (let i in JSONS) {
+                if (JSONS[i]['result'][0]) {
+                    zip.file(JSONS[i]['result'][0]['Dept'] +JSONS[i]['result'][0]['Id'], JSON.stringify(JSONS[i]));
+                }
+            }
+            return zip.generateAsync(ZIP_OPTS).then((data) => {
+                return DatasetController.getInstance().process(ID, data);
+            }).then((result) => {
+                return result < 400;
+            }).catch((err:Error) => {
+                console.error(err);
+                return false;
+            });
+        }
 
         function perform_query() : Promise<QueryResponse> {
             return new QueryController().query(query())

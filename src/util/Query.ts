@@ -1,7 +1,6 @@
 import { MCOMPARATORS, SCOMPARATORS, LOGICCOMPARATORS, NEGATORS } from '../common/Constants'
 
 import DatasetController from '../controller/DatasetController'
-import { Datatable } from '../common/Common'
 
 import { isArray } from './Array'
 import { isHash } from './Object'
@@ -79,8 +78,7 @@ export function queryIdsValidator(query: any) : Promise<boolean> {
         } else {
             // when object
             let key: string = Object.keys(query)[0];
-
-            if (MCOMPARATORS.includes(key) || SCOMPARATORS.includes(key) || LOGICCOMPARATORS.includes(key) || NEGATORS.includes(key)) {
+            if (MCOMPARATORS.includes(key) || SCOMPARATORS.includes(key)) {
                 return queryIdsValidator(query[key]).then((result: any) => {
                     return resolve(result);
                 }).catch((err: any) => {
@@ -89,15 +87,18 @@ export function queryIdsValidator(query: any) : Promise<boolean> {
             } else {
                 // when pair of key/value
                 let id_column: string[] = key.split('_');
-                DatasetController.getInstance().getDataset(id_column[0]).then((datatable: Datatable) => {
+                DatasetController.getInstance().getDataset(id_column[0]).then((datatable: any) => {
                     if (!datatable) {
                         throw new MissingDatasets([key]);
                     }
-                    if (!datatable.getColumn(key)) {
+                    return datatable.getColumn(id_column[1]).then((col: any) => {
+                        if (!col) {
                             throw new MissingDatasets([key]);
-                    } else {
+                        }
                         return resolve(true);
-                    }
+                    }).catch((err: any) => {
+                        throw new Error('Sorry. unknown error happened reading datasets');
+                    });
                 }).catch((err: any) => {
                     throw new Error('Sorry. unknown error happened reading datasets');
                 });
