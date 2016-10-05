@@ -60,7 +60,7 @@ export function isFilter(key: string, val: any) : boolean {
 }
 
 export function queryIdsValidator(query: any) : Promise<boolean> {
-    return new Promise<boolean>((resolve, reject) => {
+    return new Promise<boolean>((resolve, reeject) => {
         if (isArray(query)) {
             // when AND or OR
             let promises: Promise<boolean>[] = [];
@@ -74,7 +74,7 @@ export function queryIdsValidator(query: any) : Promise<boolean> {
                     resolve(false);
                 }
             }).catch((err: any) => {
-                reject(err);
+                throw err;
             });
         } else {
             // when object
@@ -84,23 +84,24 @@ export function queryIdsValidator(query: any) : Promise<boolean> {
                 return queryIdsValidator(query[key]).then((result: any) => {
                     return resolve(result);
                 }).catch((err: any) => {
-                    reject(err);
+                    throw err;
                 });
             } else {
                 // when pair of key/value
                 let id_column: string[] = key.split('_');
                 DatasetController.getInstance().getDataset(id_column[0]).then((datatable: Datatable) => {
                     if (!datatable) {
-                        reject(new MissingDatasets([key]));
+                        throw new MissingDatasets([key]);
                     }
                     if (!datatable.getColumn(key)) {
-                        reject(new MissingDatasets([key]));
+                            throw new MissingDatasets([key]);
+                    } else {
+                        return resolve(true);
                     }
-                    return resolve(true);
                 }).catch((err: any) => {
-                    reject(err);
+                    throw new Error('Sorry. unknown error happened reading datasets');
                 });
             }
         }
-    });
+    })
 }
