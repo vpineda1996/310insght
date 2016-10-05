@@ -62,11 +62,13 @@ export default class QueryController {
             let keys = Object.keys(query);
             let q: any = query;
 
-            return Object.keys(QUERY_REQUIREMENTS).every((req_key: string) => {
-                return (keys.indexOf(req_key) !== -1) && QUERY_REQUIREMENTS[req_key](req_key, q[req_key]);
-            }) && Object.keys(QUERY_OPTIONALS).every((opt_key: string) => {
-                return (keys.indexOf(opt_key) === -1) || QUERY_OPTIONALS[opt_key](opt_key, q[opt_key]);
-            });
+
+            return (!query.ORDER || query.GET.indexOf(query.ORDER) !== -1) &&
+                Object.keys(QUERY_REQUIREMENTS).every((req_key: string) => {
+                    return (keys.indexOf(req_key) !== -1) && QUERY_REQUIREMENTS[req_key](req_key, q[req_key]);
+                }) && Object.keys(QUERY_OPTIONALS).every((opt_key: string) => {
+                    return (keys.indexOf(opt_key) === -1) || QUERY_OPTIONALS[opt_key](opt_key, q[opt_key]);
+                });
         }
         return false;
     }
