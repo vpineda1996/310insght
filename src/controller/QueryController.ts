@@ -7,7 +7,7 @@ import { MCOMPARATORS, SCOMPARATORS, LOGICCOMPARATORS, NEGATORS } from '../commo
 import DatasetController from "../controller/DatasetController";
 
 import { isString, isStringOrStringArray } from '../util/String'
-import { areFilters, isAsTable } from '../util/Query'
+import { areFilters, isAsTable, queryIdsValidator } from '../util/Query'
 import { getFirstKey, getFirst } from '../util/Object'
 import { isNumber } from '../util/String'
 import { MissingDatasets } from '../util/Errors'
@@ -76,7 +76,15 @@ export default class QueryController {
     public query(query: QueryRequest) : Promise<QueryResponse> {
         return new Promise<QueryResponse>((resolve, reject) => {
 
-            this.hasRequestedIds(query).then((results : boolean[]) => {
+            queryIdsValidator(query.WHERE).then((res: any) =>  {
+                if (!res) {
+                    return;
+                } else {
+                    throw new MissingDatasets(res);
+                }
+            }).then(() => {
+                return this.hasRequestedIds(query);
+            }).then((results : boolean[]) => {
                 let missing : string[] = [];
 
                 results.forEach((res: boolean, index: number) => {

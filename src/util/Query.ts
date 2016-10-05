@@ -1,8 +1,12 @@
 import { MCOMPARATORS, SCOMPARATORS, LOGICCOMPARATORS, NEGATORS } from '../common/Constants'
 
+import DatasetController from '../controller/DatasetController'
+import { Datatable } from '../common/Common'
+
 import { isArray } from './Array'
 import { isHash } from './Object'
 import { isStringOrStringArray, isTypeString, isString, hasString, isNumber } from './String'
+import { MissingDatasets } from '../util/Errors'
 
 export function isLogicComparison(key: string, val: any) : boolean {
     let k : string;
@@ -55,3 +59,46 @@ export function isFilter(key: string, val: any) : boolean {
         isNegation(key, val);
 }
 
+export function queryIdsValidator(query: any) : Promise<any> {
+    return new Promise<any>((resolve, reject) => {
+        if (isArray(query)) {
+            // when AND or OR
+            let promises: Promise<boolean>[] = [];
+            for (let i in query) {
+                promises.push(queryIdsValidator(query[i]));
+            }
+            Promise.all(promises).then((results: any) => {
+                let failed: string[] = results.filter((res: any) => !res);
+
+                if (failed && failed.length > 0) {
+                    return resolve(failed);
+                } else {
+                    return resolve(null);
+                }
+            });
+        } else {
+            // when object
+            let key: string = Object.keys(query)[0];
+
+            if (MCOMPARATORS.includes(key) || SCOMPARATORS.includes(key) || LOGICCOMPARATORS.includes(key) || NEGATORS.includes(key)) {
+                return queryIdsValidator(query[key]).then((result: any) => {
+                    return resolve(result);
+                });
+            } else {
+                // when pair of key/value
+                let id_column: string[] = key.split('_');
+                DatasetController.getInstance().getDataset(id_column[0]).then((datatable: Datatable) => {
+                    if (!datatable) {
+                        return resolve(key);
+                    }
+                    if (!datatable.getColumn(key)) {
+                        return resolve(key);
+                    }
+                    return resolve(null);
+                }).catch((err: any) => {
+                    resolve(err);
+                });
+            }
+        }
+    });
+}
