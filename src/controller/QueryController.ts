@@ -192,8 +192,8 @@ export default class QueryController {
 
     private AND(a: boolean, b: boolean) : boolean { return a && b; }
     private OR(a: boolean, b: boolean) : boolean { return a || b; }
-    private GT(a: number, b: number) : boolean { return a > b; }
-    private LT(a: number, b: number) : boolean { return a < b; }
+    private GT(a: any, b: any) : boolean { return parseFloat(a) > parseFloat(b); }
+    private LT(a: any, b: any) : boolean { return parseFloat(a) < parseFloat(b); }
     private EQ(a: number, b: number) : boolean { return a == b; }
     private IS(a: string, b: string) : boolean { return new RegExp('^' + b.split('*').join('.*') + '$').test(a); }
 
