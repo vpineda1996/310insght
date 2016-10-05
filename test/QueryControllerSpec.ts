@@ -7,6 +7,7 @@ import DatasetController from "../src/controller/DatasetController";
 import QueryController, { QueryRequest, QueryResponse } from "../src/controller/QueryController";
 import Log from "../src/Util";
 import { isNumber } from '../src/util/String'
+import { MissingDatasets } from '../src/util/Errors'
 import JSZip = require('jszip');
 
 import {expect} from 'chai';
@@ -141,15 +142,49 @@ describe("QueryController", function () {
         compression: 'deflate', compressionOptions: {level: 2}, type: 'base64'
     };
 
+    function prepopulate() : Promise<boolean> {
+        let zip = new JSZip();
+
+        for (let i in JSONS) {
+            if (JSONS[i]['result'][0]) {
+                zip.file(JSONS[i]['result'][0]['Dept'] +JSONS[i]['result'][0]['Id'], JSON.stringify(JSONS[i]));
+            }
+        }
+        return zip.generateAsync(ZIP_OPTS).then((data) => {
+            return DatasetController.getInstance().process(ID, data);
+        }).then((result) => {
+            return result < 400;
+        }).catch((err:Error) => {
+            console.error(err);
+            return false;
+        });
+    }
+
     function query() : QueryRequest {
         if (QUERY === null) return QUERY;
         QUERY = { GET: GET, WHERE: WHERE, AS: AS };
         if (ORDER) QUERY.ORDER = ORDER;
         return QUERY;
     }
-    function isValid() : boolean {
+    function isValid(expected: boolean|any, done: Function) : Promise<any> {
         let controller = new QueryController();
-        return controller.isValid(query());
+        return controller.isValid(query()).then((res: boolean) => {
+            expect(res).to.equal(expected);
+            return done();
+        }).catch((err: any) => {
+            console.log('caller')
+            if (!!expected.prototype && expected.prototype.name === 'Error') {
+                console.info(err instanceof Error)
+                console.info(err instanceof MissingDatasets)
+                console.info(err);
+                expect(err instanceof expected).to.be.equal(true);
+            } else {
+                expect(expected).to.be.equal(false);
+            }
+            return done();
+        }).catch((err: any) => {
+            console.error(err);
+        });
     }
 
     beforeEach(function (done) {
@@ -170,112 +205,114 @@ describe("QueryController", function () {
 
     describe('QUERY BODY', function() {
 
+        beforeEach(function (done) {
+            prepopulate().then((res: boolean) => {
+                if (res) {
+                    done();
+                } else {
+                    throw new Error('prepopulate failed');
+                }
+            });
+        })
+
         describe('SCOMPARISON', function () {
-            it('fails on invalid type: string <- json', function () {
+            it('fails on invalid type: string <- json', function (done) {
                 WHERE = { IS: SRC_NAME(1) };
-                expect(isValid()).to.equal(false);
+                isValid(false, done);
             });
-            it('fails on invalid type: null', function () {
+            it('fails on invalid type: null', function (done) {
                 WHERE = { IS: { [SRC_NAME(1)]: null } };
-                expect(isValid()).to.equal(false);
+                isValid(false, done);
             });
-            it('fails on invalid type: number', function () {
+            it('fails on invalid type: number', function (done) {
                 WHERE = { IS: { [SRC_NAME(0)]: 5 } };
-                expect(isValid()).to.equal(false);
+                isValid(false, done);
             });
-            it('fails on invalid string ^[*]+$', function () {
+            it('fails on invalid string ^[*]+$', function (done) {
                 WHERE = { IS: { [SRC_NAME(0)]: '*****'} };
-                expect(isValid()).to.equal(false);
+                isValid(false, done);
             });
-            it('succeeds with valid [*]string[*]', function () {
+            it('succeeds with valid [*]string[*]', function (done) {
                 WHERE = { IS: { [SRC_NAME(0)]: '*course_avg*'} };
-                expect(isValid()).to.equal(true);
+                isValid(true, done);
             });
-            it('succeeds with valid json {string : string}', function () {
+            it('succeeds with valid json {string : string}', function (done) {
                 WHERE = { IS: { [SRC_NAME(1)]: SRC_NAME(2)} };
-                expect(isValid()).to.equal(true);
+                isValid(true, done);
             });
         });
 
         describe('MCOMPARISON', function () {
-            it('fails on invalid type: json', function () {
+            it('fails on invalid type: json', function (done) {
                 WHERE = { GT: { GT: { [SRC_NAME(0)]: 5 } } };
-                expect(isValid()).to.equal(false);
+                isValid(false, done);
             });
-            it('fails on invalid type: null', function () {
+            it('fails on invalid type: null', function (done) {
                 WHERE = { GT: null };
-                expect(isValid()).to.equal(false);
+                isValid(false, done);
             });
-            it('succeeds with valid type', function () {
+            it('succeeds with valid type', function (done) {
                 WHERE = { GT: { [SRC_NAME(1)]: 50} };
-                expect(isValid()).to.equal(true);
+                isValid(true, done);
             });
         });
 
         describe('LOGICCOMPARISON', function () {
-            it('fails on invalid type: json', function () {
+            it('fails on invalid type: json', function (done) {
                 WHERE = { AND: VALID_MCOMPARISON };
-                expect(isValid()).to.equal(false);
+                isValid(false, done);
             });
-            it('fails on invalid type: null', function () {
+            it('fails on invalid type: null', function (done) {
                 WHERE = { OR: null };
-                expect(isValid()).to.equal(false);
+                isValid(false, done);
             });
-            it('succeeds with valid type', function () {
+            it('succeeds with valid type', function (done) {
                 WHERE = VALID_LOGICCOMPARISON;
-                expect(isValid()).to.equal(true);
+                isValid(true, done);
             });
         });
 
         describe('NEGATION', function () {
-            it('fails on invalid type: json', function () {
+            it('fails on invalid type: json', function (done) {
                 WHERE = { NOT: VALID_MCOMPARISON };
-                expect(isValid()).to.equal(true);
+                isValid(true, done);
             });
-            it('fails on invalid type: null', function () {
+            it('fails on invalid type: null', function (done) {
                 WHERE = { NOT: null };
-                expect(isValid()).to.equal(false);
+                isValid(false, done);
             });
-            it('succeeds with valid type', function () {
+            it('succeeds with valid type', function (done) {
                 WHERE = VALID_LOGICCOMPARISON;
-                expect(isValid()).to.equal(true);
+                isValid(true, done);
             });
         });
 
-        it('invalidates null query', function () {
+        it('invalidates null query', function (done) {
             QUERY = null;
 
-            expect(isValid()).to.equal(false);
+            isValid(false, done);
         });
 
-        it('invalidates unknown ORDER key', function () {
+        it('invalidates unknown ORDER key', function (done) {
             GET = [SRC_NAME(0), SRC_NAME(1)]
             ORDER = SRC_NAME(3);
-            expect(isValid()).to.equal(false);
+            isValid(false, done);
+        });
+
+        it('invalidates unknown dataset in WHERE clause', function (done) {
+            WHERE = { AND: [ { NOT: { IS: { [ID + '_' + ID]: 'cpsc' }}} ] }
+            isValid(MissingDatasets, done);
+        });
+
+        it('invalidates unknown dataset in WHERE clause', function (done) {
+            WHERE = { NOT: { IS: { 'courses_dept': 'cpsc' } } }
+            isValid(MissingDatasets, done);
         });
 
     });
     describe('::query()', function() {
         beforeEach(function () {
         })
-
-        function prepopulate() : Promise<boolean> {
-            let zip = new JSZip();
-
-            for (let i in JSONS) {
-                if (JSONS[i]['result'][0]) {
-                    zip.file(JSONS[i]['result'][0]['Dept'] +JSONS[i]['result'][0]['Id'], JSON.stringify(JSONS[i]));
-                }
-            }
-            return zip.generateAsync(ZIP_OPTS).then((data) => {
-                return DatasetController.getInstance().process(ID, data);
-            }).then((result) => {
-                return result < 400;
-            }).catch((err:Error) => {
-                console.error(err);
-                return false;
-            });
-        }
 
         function perform_query() : Promise<QueryResponse> {
             return new QueryController().query(query())
