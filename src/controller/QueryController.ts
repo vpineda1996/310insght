@@ -89,11 +89,13 @@ export default class QueryController {
                 return queryIdsValidator(query.WHERE).then((res: boolean) => {
                     return resolve(res);
                 }).catch((err: any) => {
-                    throw err;
+                    reject(err);
                 });
             } else {
                 throw new Error('Empty query received');
             }
+        }).catch((err: any) => {
+            throw err;
         });
     }
 

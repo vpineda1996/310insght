@@ -7,6 +7,7 @@ import DatasetController from "../src/controller/DatasetController";
 import QueryController, { QueryRequest, QueryResponse } from "../src/controller/QueryController";
 import Log from "../src/Util";
 import { isNumber } from '../src/util/String'
+import { MissingDatasets } from '../src/util/Errors'
 import JSZip = require('jszip');
 
 import {expect} from 'chai';
@@ -165,13 +166,21 @@ describe("QueryController", function () {
         if (ORDER) QUERY.ORDER = ORDER;
         return QUERY;
     }
-    function isValid(expected: boolean, done: Function) : Promise<any> {
+    function isValid(expected: boolean|any, done: Function) : Promise<any> {
         let controller = new QueryController();
         return controller.isValid(query()).then((res: boolean) => {
             expect(res).to.equal(expected);
             return done();
         }).catch((err: any) => {
-            expect(expected).to.be.equal(false);
+            console.log('caller')
+            if (!!expected.prototype && expected.prototype.name === 'Error') {
+                console.info(err instanceof Error)
+                console.info(err instanceof MissingDatasets)
+                console.info(err);
+                expect(err instanceof expected).to.be.equal(true);
+            } else {
+                expect(expected).to.be.equal(false);
+            }
             return done();
         }).catch((err: any) => {
             console.error(err);
@@ -291,13 +300,13 @@ describe("QueryController", function () {
         });
 
         it('invalidates unknown dataset in WHERE clause', function (done) {
-            WHERE = { AND: [ { NOT: { [ID + '_' + ID]: 'cpsc' }} ] }
-            isValid(false, done);
+            WHERE = { AND: [ { NOT: { IS: { [ID + '_' + ID]: 'cpsc' }}} ] }
+            isValid(MissingDatasets, done);
         });
 
         it('invalidates unknown dataset in WHERE clause', function (done) {
-            WHERE = { AND: [ { NOT: { 'courses_dept': 'cpsc' }} ] }
-            isValid(false, done);
+            WHERE = { NOT: { IS: { 'courses_dept': 'cpsc' } } }
+            isValid(MissingDatasets, done);
         });
 
     });
