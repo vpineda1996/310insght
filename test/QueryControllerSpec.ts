@@ -248,6 +248,12 @@ describe("QueryController", function () {
             expect(isValid()).to.equal(false);
         });
 
+        it('invalidates unknown ORDER key', function () {
+            GET = [SRC_NAME(0), SRC_NAME(1)]
+            ORDER = SRC_NAME(3);
+            expect(isValid()).to.equal(false);
+        });
+
     });
     describe('::query()', function() {
         beforeEach(function () {
