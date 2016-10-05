@@ -73,14 +73,14 @@ export default class QueryController {
                     if (keys.indexOf(req_key) === -1) {
                         throw new Error('Query must include ' + req_key + ' clause');
                     }
-                    if (QUERY_REQUIREMENTS[req_key](req_key, q[req_key])) {
+                    if (!QUERY_REQUIREMENTS[req_key](req_key, q[req_key])) {
                         throw new Error('Invalid Query in ' + req_key + ' clause');
                     }
                 })
 
                 Object.keys(QUERY_OPTIONALS).forEach((opt_key: string) => {
                     if (keys.indexOf(opt_key) === -1) {
-                        if (QUERY_OPTIONALS[opt_key](opt_key, q[opt_key])) {
+                        if (!QUERY_OPTIONALS[opt_key](opt_key, q[opt_key])) {
                             throw new Error('Invalid Query in ' + opt_key + ' clause');
                         }
                     }
