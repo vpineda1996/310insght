@@ -7,7 +7,7 @@ import { MCOMPARATORS, SCOMPARATORS, LOGICCOMPARATORS, NEGATORS } from '../commo
 import DatasetController from "../controller/DatasetController";
 
 import { isString, isStringOrStringArray } from '../util/String'
-import { areFilters, isAsTable, queryIdsValidator } from '../util/Query'
+import { areFilters, isAsTable } from '../util/Query'
 import { getFirstKey, getFirst } from '../util/Object'
 import { isNumber } from '../util/String'
 import { MissingDatasets } from '../util/Errors'
@@ -57,44 +57,20 @@ const QUERY_OPTIONALS: { [s: string]: Function } = {
 
 export default class QueryController {
 
-    public isValid(query: QueryRequest): Promise<boolean> {
-        return new Promise<boolean>((resolve, reject) => {
-            if (typeof query !== 'undefined' && query !== null && Object.keys(query).length > 0) {
-                let keys = Object.keys(query);
-                let q: any = query;
+    public isValid(query: QueryRequest): boolean {
+        if (typeof query !== 'undefined' && query !== null && Object.keys(query).length > 0) {
+            let keys = Object.keys(query);
+            let q: any = query;
 
-                if (query.ORDER && query.GET.indexOf(query.ORDER) === -1) {
-                    throw new Error('ORDER cannot include keys not included in GET');
-                }
 
-                let promises : Promise<any>[] = [];
-
-                Object.keys(QUERY_REQUIREMENTS).forEach((req_key: string) => {
-                    if (keys.indexOf(req_key) === -1) {
-                        throw new Error('Query must include ' + req_key + ' clause');
-                    }
-                    if (QUERY_REQUIREMENTS[req_key](req_key, q[req_key])) {
-                        throw new Error('Invalid Query in ' + req_key + ' clause');
-                    }
-                })
-
-                Object.keys(QUERY_OPTIONALS).forEach((opt_key: string) => {
-                    if (keys.indexOf(opt_key) === -1) {
-                        if (QUERY_OPTIONALS[opt_key](opt_key, q[opt_key])) {
-                            throw new Error('Invalid Query in ' + opt_key + ' clause');
-                        }
-                    }
+            return (!query.ORDER || query.GET.indexOf(query.ORDER) !== -1) &&
+                Object.keys(QUERY_REQUIREMENTS).every((req_key: string) => {
+                    return (keys.indexOf(req_key) !== -1) && QUERY_REQUIREMENTS[req_key](req_key, q[req_key]);
+                }) && Object.keys(QUERY_OPTIONALS).every((opt_key: string) => {
+                    return (keys.indexOf(opt_key) === -1) || QUERY_OPTIONALS[opt_key](opt_key, q[opt_key]);
                 });
-
-                return queryIdsValidator(query.WHERE).then((res: boolean) => {
-                    return resolve(res);
-                }).catch((err: any) => {
-                    throw err;
-                });
-            } else {
-                throw new Error('Empty query received');
-            }
-        });
+        }
+        return false;
     }
 
     public query(query: QueryRequest) : Promise<QueryResponse> {

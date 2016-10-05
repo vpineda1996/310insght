@@ -147,14 +147,9 @@ describe("QueryController", function () {
         if (ORDER) QUERY.ORDER = ORDER;
         return QUERY;
     }
-    function isValid(expected: boolean, done: Function) : Promise<boolean> {
+    function isValid() : boolean {
         let controller = new QueryController();
-        return controller.isValid(query()).then((res: boolean) => {
-            expect(res).to.equal(expected);
-            return done();
-        }).catch((err: any) => {
-            console.error(err);
-        });
+        return controller.isValid(query());
     }
 
     beforeEach(function (done) {
@@ -176,87 +171,87 @@ describe("QueryController", function () {
     describe('QUERY BODY', function() {
 
         describe('SCOMPARISON', function () {
-            it('fails on invalid type: string <- json', function (done) {
+            it('fails on invalid type: string <- json', function () {
                 WHERE = { IS: SRC_NAME(1) };
-                isValid(false, done);
+                expect(isValid()).to.equal(false);
             });
-            it('fails on invalid type: null', function (done) {
+            it('fails on invalid type: null', function () {
                 WHERE = { IS: { [SRC_NAME(1)]: null } };
-                isValid(false, done);
+                expect(isValid()).to.equal(false);
             });
-            it('fails on invalid type: number', function (done) {
+            it('fails on invalid type: number', function () {
                 WHERE = { IS: { [SRC_NAME(0)]: 5 } };
-                isValid(false, done);
+                expect(isValid()).to.equal(false);
             });
-            it('fails on invalid string ^[*]+$', function (done) {
+            it('fails on invalid string ^[*]+$', function () {
                 WHERE = { IS: { [SRC_NAME(0)]: '*****'} };
-                isValid(false, done);
+                expect(isValid()).to.equal(false);
             });
-            it('succeeds with valid [*]string[*]', function (done) {
+            it('succeeds with valid [*]string[*]', function () {
                 WHERE = { IS: { [SRC_NAME(0)]: '*course_avg*'} };
-                isValid(true, done);
+                expect(isValid()).to.equal(true);
             });
-            it('succeeds with valid json {string : string}', function (done) {
+            it('succeeds with valid json {string : string}', function () {
                 WHERE = { IS: { [SRC_NAME(1)]: SRC_NAME(2)} };
-                isValid(true, done);
+                expect(isValid()).to.equal(true);
             });
         });
 
         describe('MCOMPARISON', function () {
-            it('fails on invalid type: json', function (done) {
+            it('fails on invalid type: json', function () {
                 WHERE = { GT: { GT: { [SRC_NAME(0)]: 5 } } };
-                isValid(false, done);
+                expect(isValid()).to.equal(false);
             });
-            it('fails on invalid type: null', function (done) {
+            it('fails on invalid type: null', function () {
                 WHERE = { GT: null };
-                isValid(false, done);
+                expect(isValid()).to.equal(false);
             });
-            it('succeeds with valid type', function (done) {
+            it('succeeds with valid type', function () {
                 WHERE = { GT: { [SRC_NAME(1)]: 50} };
-                isValid(true, done);
+                expect(isValid()).to.equal(true);
             });
         });
 
         describe('LOGICCOMPARISON', function () {
-            it('fails on invalid type: json', function (done) {
+            it('fails on invalid type: json', function () {
                 WHERE = { AND: VALID_MCOMPARISON };
-                isValid(false, done);
+                expect(isValid()).to.equal(false);
             });
-            it('fails on invalid type: null', function (done) {
+            it('fails on invalid type: null', function () {
                 WHERE = { OR: null };
-                isValid(false, done);
+                expect(isValid()).to.equal(false);
             });
-            it('succeeds with valid type', function (done) {
+            it('succeeds with valid type', function () {
                 WHERE = VALID_LOGICCOMPARISON;
-                isValid(true, done);
+                expect(isValid()).to.equal(true);
             });
         });
 
         describe('NEGATION', function () {
-            it('fails on invalid type: json', function (done) {
+            it('fails on invalid type: json', function () {
                 WHERE = { NOT: VALID_MCOMPARISON };
-                isValid(true, done);
+                expect(isValid()).to.equal(true);
             });
-            it('fails on invalid type: null', function (done) {
+            it('fails on invalid type: null', function () {
                 WHERE = { NOT: null };
-                isValid(false, done);
+                expect(isValid()).to.equal(false);
             });
-            it('succeeds with valid type', function (done) {
+            it('succeeds with valid type', function () {
                 WHERE = VALID_LOGICCOMPARISON;
-                isValid(true, done);
+                expect(isValid()).to.equal(true);
             });
         });
 
-        it('invalidates null query', function (done) {
+        it('invalidates null query', function () {
             QUERY = null;
 
-            isValid(false, done);
+            expect(isValid()).to.equal(false);
         });
 
-        it('invalidates unknown ORDER key', function (done) {
+        it('invalidates unknown ORDER key', function () {
             GET = [SRC_NAME(0), SRC_NAME(1)]
             ORDER = SRC_NAME(3);
-            isValid(false, done);
+            expect(isValid()).to.equal(false);
         });
 
     });
