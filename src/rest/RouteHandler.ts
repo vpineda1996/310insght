@@ -8,7 +8,6 @@ import DatasetController from '../controller/DatasetController';
 import QueryController, { QueryRequest, QueryResponse } from '../controller/QueryController';
 
 import Log from '../Util';
-import { MissingDatasets } from '../util/Errors'
 
 export default class RouteHandler {
 
@@ -67,32 +66,24 @@ export default class RouteHandler {
         Log.trace('RouteHandler::postQuery(..) - params: ' + JSON.stringify(req.params));
         let query: QueryRequest = req.params;
         let controller = new QueryController();
+        let isValid = controller.isValid(query);
 
-        controller.isValid(query).then((result: any) => {
-            if (result === true) {
-                controller.query(query).then((qr: QueryResponse) => {
-                    if (qr.missing) {
-                        res.json(424, qr);
-                    } else {
-                        res.json(200, qr);
-                    }
-                    return next();
-                }).catch((err) => {
-                    Log.error('RouteHandler::postQuery(..) - ERROR: ' + err);
-                    res.json(400, {error: err});
-                });
-            } else {
-                res.json(400, {error: 'invalid query'});
+        if (isValid === true) {
+            controller.query(query).then((qr: QueryResponse) => {
+                if (qr.missing) {
+                    res.json(424, qr);
+                } else {
+                    res.json(200, qr);
+                }
                 return next();
-            }
-        }).catch((err:any) => {
-             if (err instanceof MissingDatasets) {
-                 res.json(424, { missing: err.missing });
-             } else {
-                 res.json(400, { error: err });
-             }
-             return next();
-        });
+            }).catch((err) => {
+                Log.error('RouteHandler::postQuery(..) - ERROR: ' + err);
+                res.json(400, {error: err});
+            });
+        } else {
+            res.json(400, {error: 'invalid query'});
+            return next();
+        }
     }
 
     public static deleteDataset(req: restify.Request, res: restify.Response, next: restify.Next) {

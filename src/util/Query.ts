@@ -59,8 +59,8 @@ export function isFilter(key: string, val: any) : boolean {
         isNegation(key, val);
 }
 
-export function queryIdsValidator(query: any) : Promise<boolean> {
-    return new Promise<boolean>((resolve, reject) => {
+export function queryIdsValidator(query: any) : Promise<any> {
+    return new Promise<any>((resolve, reject) => {
         if (isArray(query)) {
             // when AND or OR
             let promises: Promise<boolean>[] = [];
@@ -68,13 +68,13 @@ export function queryIdsValidator(query: any) : Promise<boolean> {
                 promises.push(queryIdsValidator(query[i]));
             }
             Promise.all(promises).then((results: any) => {
-                if (results.every((res: boolean) => res)) {
-                    resolve(true);
+                let failed: string[] = [].concat.apply([], results.filter((res: any) => !!res));
+
+                if (failed && failed.length > 0) {
+                    return resolve(failed);
                 } else {
-                    resolve(false);
+                    return resolve(null);
                 }
-            }).catch((err: any) => {
-                reject(err);
             });
         } else {
             // when object
@@ -83,22 +83,20 @@ export function queryIdsValidator(query: any) : Promise<boolean> {
             if (MCOMPARATORS.includes(key) || SCOMPARATORS.includes(key) || LOGICCOMPARATORS.includes(key) || NEGATORS.includes(key)) {
                 return queryIdsValidator(query[key]).then((result: any) => {
                     return resolve(result);
-                }).catch((err: any) => {
-                    reject(err);
                 });
             } else {
                 // when pair of key/value
                 let id_column: string[] = key.split('_');
                 DatasetController.getInstance().getDataset(id_column[0]).then((datatable: Datatable) => {
                     if (!datatable) {
-                        reject(new MissingDatasets([key]));
+                        return resolve(key);
                     }
                     if (!datatable.getColumn(key)) {
-                        reject(new MissingDatasets([key]));
+                        return resolve(key);
                     }
-                    return resolve(true);
+                    return resolve(null);
                 }).catch((err: any) => {
-                    reject(err);
+                    resolve(err);
                 });
             }
         }
