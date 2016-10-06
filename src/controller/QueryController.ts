@@ -76,7 +76,7 @@ export default class QueryController {
     public query(query: QueryRequest) : Promise<QueryResponse> {
         return new Promise<QueryResponse>((resolve, reject) => {
 
-            queryIdsValidator(query.WHERE).then((res: any) =>  {
+            return queryIdsValidator(query.WHERE).then((res: any) =>  {
                 if (!res) {
                     return;
                 } else {

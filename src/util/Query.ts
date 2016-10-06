@@ -68,7 +68,7 @@ export function queryIdsValidator(query: any) : Promise<any> {
                 promises.push(queryIdsValidator(query[i]));
             }
             Promise.all(promises).then((results: any) => {
-                let failed: string[] = results.filter((res: any) => !res);
+                let failed: string[] = [].concat.apply([], results.filter((res: any) => !!res));
 
                 if (failed && failed.length > 0) {
                     return resolve(failed);
