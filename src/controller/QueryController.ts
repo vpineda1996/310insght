@@ -87,7 +87,7 @@ export default class QueryController {
                 if (missing.length === 0) return true;
                 else throw new MissingDatasets(missing);
             }).then(() => {
-                queryIdsValidator(query.WHERE);
+                return queryIdsValidator(query.WHERE);
             }).then((res: any) =>  {
                 if (!res) {
                     return;
