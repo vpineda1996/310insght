@@ -76,15 +76,7 @@ export default class QueryController {
     public query(query: QueryRequest) : Promise<QueryResponse> {
         return new Promise<QueryResponse>((resolve, reject) => {
 
-            return queryIdsValidator(query.WHERE).then((res: any) =>  {
-                if (!res) {
-                    return;
-                } else {
-                    throw new MissingDatasets(res);
-                }
-            }).then(() => {
-                return this.hasRequestedIds(query);
-            }).then((results : boolean[]) => {
+            return this.hasRequestedIds(query).then((results : boolean[]) => {
                 let missing : string[] = [];
 
                 results.forEach((res: boolean, index: number) => {
@@ -94,6 +86,14 @@ export default class QueryController {
                 });
                 if (missing.length === 0) return true;
                 else throw new MissingDatasets(missing);
+            }).then(() => {
+                queryIdsValidator(query.WHERE);
+            }).then((res: any) =>  {
+                if (!res) {
+                    return;
+                } else {
+                    throw new MissingDatasets(res);
+                }
             }).then(() => {
                 return this.getQueryData(query);
             }).then((queryData) => {
