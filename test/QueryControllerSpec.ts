@@ -418,7 +418,13 @@ describe("QueryController", function () {
         })
 
         describe('ORDER', function () {
-            describe('sring', function () {
+            describe('keys: [sring]', function () {
+                it('has to work', function (done) {
+                    ORDER_KEYS = [SRC_NAME(0), SRC_NAME(1)];
+                    perform_query_checks(ARITH_ORDER).then(res => {
+                        done();
+                    });
+                });
                 it('just works, you know, just works', function (done) {
                     ORDER_KEYS = [SRC_NAME(0)];
                     perform_query_checks(ARITH_ORDER).then(res => {
@@ -427,8 +433,28 @@ describe("QueryController", function () {
                 });
             });
 
-            describe('number', function () {
+            describe('keys: [number]', function () {
                 it('just works, ofcourse, what else?', function (done) {
+                    ORDER_KEYS = [SRC_NAME(2)];
+                    perform_query_checks(ARITH_ORDER).then(res => {
+                        done();
+                    });
+                });
+            });
+
+            describe('dir: UP', function () {
+                it('just works, ofcourse, what else?', function (done) {
+                    ORDER_DIR = 'UP';
+                    ORDER_KEYS = [SRC_NAME(2)];
+                    perform_query_checks(ARITH_ORDER).then(res => {
+                        done();
+                    });
+                });
+            });
+
+            describe('dir: DOWN', function () {
+                it('just works, ofcourse, what else?', function (done) {
+                    ORDER_DIR = 'DOWN';
                     ORDER_KEYS = [SRC_NAME(2)];
                     perform_query_checks(ARITH_ORDER).then(res => {
                         done();
