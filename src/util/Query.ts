@@ -8,37 +8,30 @@ import { isHash } from './Object'
 import { isStringOrStringArray, isTypeString, isString, hasString, isNumber } from './String'
 import { MissingDatasets } from '../util/Errors'
 
-
 export interface QueryRequest {
     GET: string[];
-    WHERE: {
-        GT?: {
-            [s: string]: number
-        },
-        LT?: {
-            [s: string]: number
-        },
-        EQ?: {
-            [s: string]: number
-        },
-        IS?: string | string[]
-    };
-    ORDER?: string;
+    WHERE: {};
+    ORDER?: QueryOrder;
     GROUP?: string[];
     APPLY?: ApplyElement[];
     AS: string;
 }
 
-export interface ApplyElement { 
-    [colName: string]: { 
-        [applyToken: string]: string 
-    } 
+export interface ApplyElement {
+    [colName: string]: {
+        [applyToken: string]: string
+    }
 }
 
 export interface QueryResponse {
     render?: string;
     missing?: string[];
     result?: {}[];
+}
+
+export interface QueryOrder {
+    dir: string,
+    keys: string[]
 }
 
 // has form of

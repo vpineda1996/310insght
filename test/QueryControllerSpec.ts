@@ -5,16 +5,20 @@
 import { Datasets, Datatable } from "../src/common/Common";
 import DatasetController from "../src/controller/DatasetController";
 import QueryController from "../src/controller/QueryController";
-import { QueryRequest, QueryResponse } from "../src/util/Query";
+import { QueryRequest, QueryResponse, QueryOrder } from '../src/util/Query';
+
 import Log from "../src/Util";
-import { isNumber } from '../src/util/String'
+import { isNumber } from '../src/util/String';
+import { getFirst } from '../src/util/Object';
 import JSZip = require('jszip');
 
 import {expect} from 'chai';
 describe("QueryController", function () {
     let GET: string[];
     let WHERE: {};
-    let ORDER: string;
+    let ORDER: QueryOrder;
+    let ORDER_KEYS: string[];
+    let ORDER_DIR: string;
     let AS: string;
 
     const ID = 'other'
@@ -71,7 +75,8 @@ describe("QueryController", function () {
 
     function ARITH_ARRAY_EQUAL(arr1:{}[], arr2:{}[]) { return arr1.filter(arr => arr2.includes(arr)) }
 
-    function ARITH_ORDER(jsons:any) { return ARITH_GET_INDEX_ORDER(jsons, capitalize(ORDER.split('_')[1])).map((i:any) => jsons[i]); }
+    // HACK ORDER_KEYS need to be iterated over
+    function ARITH_ORDER(jsons:any) { return ARITH_GET_INDEX_ORDER(jsons, capitalize(ORDER_KEYS[0].split('_')[1])).map((i:any) => jsons[i]); }
     function ARITH_GET_INDEX_ORDER(jsons:{}[], c:any) { return jsons.map((j,i) => [j,i]).sort((a:any,b:any) => isNumber(a[0][c])&&isNumber(b[0][c]) ? (parseFloat(a[0][c])>parseFloat(b[0][c]) ? 1 : -1) : (a[0][c] > b[0][c] ? 1 : -1)).map((v:any) => v[1]) }
 
     function QUERY_RESPONSE(jsons:{}[]) { return jsons.map((json:any) => GET.reduce((newJson:any, col:string) => { newJson[col] = json[capitalize(col.split('_')[1])]; return newJson }, {})) }
@@ -145,7 +150,7 @@ describe("QueryController", function () {
     function query() : QueryRequest {
         if (QUERY === null) return QUERY;
         QUERY = { GET: GET, WHERE: WHERE, AS: AS };
-        if (ORDER) QUERY.ORDER = ORDER;
+        if (ORDER_KEYS) QUERY.ORDER = { dir: ORDER_DIR, keys: ORDER_KEYS };
         return QUERY;
     }
     function isValid() : boolean {
@@ -156,7 +161,8 @@ describe("QueryController", function () {
     beforeEach(function (done) {
         GET = [SRC_NAME(0), SRC_NAME(1), SRC_NAME(2), SRC_NAME(5)];
         WHERE = VALID_MCOMPARISON;
-        ORDER = SRC_NAME(0);
+        ORDER_DIR = "UP"
+        ORDER_KEYS = [SRC_NAME(0)];
         AS = 'TABLE';
 
         QUERY = undefined;
@@ -246,12 +252,6 @@ describe("QueryController", function () {
         it('invalidates null query', function () {
             QUERY = null;
 
-            expect(isValid()).to.equal(false);
-        });
-
-        it('invalidates unknown ORDER key', function () {
-            GET = [SRC_NAME(0), SRC_NAME(1)]
-            ORDER = SRC_NAME(3);
             expect(isValid()).to.equal(false);
         });
 
@@ -410,7 +410,7 @@ describe("QueryController", function () {
 
         describe('regular queries', function () {
             it('just works', function (done) {
-                ORDER = null;
+                ORDER_KEYS = null;
                 perform_query_checks().then(res => {
                     done();
                 });
@@ -420,7 +420,7 @@ describe("QueryController", function () {
         describe('ORDER', function () {
             describe('sring', function () {
                 it('just works, you know, just works', function (done) {
-                    ORDER = SRC_NAME(0);
+                    ORDER_KEYS = [SRC_NAME(0)];
                     perform_query_checks(ARITH_ORDER).then(res => {
                         done();
                     });
@@ -429,7 +429,7 @@ describe("QueryController", function () {
 
             describe('number', function () {
                 it('just works, ofcourse, what else?', function (done) {
-                    ORDER = SRC_NAME(2);
+                    ORDER_KEYS = [SRC_NAME(2)];
                     perform_query_checks(ARITH_ORDER).then(res => {
                         done();
                     });
