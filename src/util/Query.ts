@@ -1,4 +1,4 @@
-import { MCOMPARATORS, SCOMPARATORS, LOGICCOMPARATORS, NEGATORS } from '../common/Constants'
+import { MCOMPARATORS, SCOMPARATORS, LOGICCOMPARATORS, NEGATORS, APPLYTOKENS } from '../common/Constants'
 
 import DatasetController from '../controller/DatasetController'
 import { Datatable } from '../common/Common'
@@ -8,16 +8,58 @@ import { isHash } from './Object'
 import { isStringOrStringArray, isTypeString, isString, hasString, isNumber } from './String'
 import { MissingDatasets } from '../util/Errors'
 
-export function isLogicComparison(key: string, val: any) : boolean {
-    let k : string;
+
+export interface QueryRequest {
+    GET: string[];
+    WHERE: {
+        GT?: {
+            [s: string]: number
+        },
+        LT?: {
+            [s: string]: number
+        },
+        EQ?: {
+            [s: string]: number
+        },
+        IS?: string | string[]
+    };
+    ORDER?: string;
+    GROUP?: string[];
+    APPLY?: ApplyElement[];
+    AS: string;
+}
+
+export interface ApplyElement { 
+    [colName: string]: { 
+        [applyToken: string]: string 
+    } 
+}
+
+export interface QueryResponse {
+    render?: string;
+    missing?: string[];
+    result?: {}[];
+}
+
+// has form of
+// [
+//   { 'courses_id': ['310', '300'] },
+//   { 'courses_dept': ['cpsc', 'chem'] }
+// ]
+export interface QueryData {
+    [columnName: string]: string[] | number[];
+}
+
+export function isLogicComparison(key: string, val: any): boolean {
+    let k: string;
 
     return (LOGICCOMPARATORS.indexOf(key) !== -1) &&
         isArray(val) &&
         val.every((v: any) => isHash(v) && isFilter((k = Object.keys(v)[0]), v[k]));
 }
 
-export function isMComparison(key: string, val: any) : boolean {
-    let keys : string[];
+export function isMComparison(key: string, val: any): boolean {
+    let keys: string[];
 
     return (MCOMPARATORS.indexOf(key) !== -1) &&
         isHash(val) &&
@@ -26,8 +68,8 @@ export function isMComparison(key: string, val: any) : boolean {
         (isString(val[keys[0]]) || isNumber(val[keys[0]]));
 }
 
-export function isSComparison(key: string, val: any) : boolean {
-    let keys : string[];
+export function isSComparison(key: string, val: any): boolean {
+    let keys: string[];
 
     return (SCOMPARATORS.indexOf(key) !== -1) &&
         isHash(val) &&
@@ -36,30 +78,30 @@ export function isSComparison(key: string, val: any) : boolean {
         hasString(val[keys[0]]);
 }
 
-export function isNegation(key: string, val: any) : boolean {
+export function isNegation(key: string, val: any): boolean {
     return NEGATORS.indexOf(key) !== -1 &&
         isHash(val) &&
         areFilters(Object.keys(val)[0], val);
 }
 
-export function isAsTable(key: string, val: any) : boolean {
+export function isAsTable(key: string, val: any): boolean {
     return key === 'AS' &&
         isString(val) &&
         val === 'TABLE';
 }
 
-export function areFilters(key: string, val: {[s: string]: any}) : boolean {
+export function areFilters(key: string, val: { [s: string]: any }): boolean {
     return Object.keys(val).every((k: string) => isFilter(k, val[k]));
 }
 
-export function isFilter(key: string, val: any) : boolean {
+export function isFilter(key: string, val: any): boolean {
     return isLogicComparison(key, val) ||
         isMComparison(key, val) ||
         isSComparison(key, val) ||
         isNegation(key, val);
 }
 
-export function queryIdsValidator(query: any) : Promise<any> {
+export function queryIdsValidator(query: any): Promise<any> {
     return new Promise<any>((resolve, reject) => {
         if (isArray(query)) {
             // when AND or OR

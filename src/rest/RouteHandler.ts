@@ -5,7 +5,8 @@ import restify = require('restify');
 import fs = require('fs');
 
 import DatasetController from '../controller/DatasetController';
-import QueryController, { QueryRequest, QueryResponse } from '../controller/QueryController';
+import QueryController from '../controller/QueryController';
+import { QueryRequest, QueryResponse } from '../util/Query'
 
 import Log from '../Util';
 

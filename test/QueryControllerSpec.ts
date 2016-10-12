@@ -4,7 +4,8 @@
 
 import { Datasets, Datatable } from "../src/common/Common";
 import DatasetController from "../src/controller/DatasetController";
-import QueryController, { QueryRequest, QueryResponse } from "../src/controller/QueryController";
+import QueryController from "../src/controller/QueryController";
+import { QueryRequest, QueryResponse } from "../src/util/Query";
 import Log from "../src/Util";
 import { isNumber } from '../src/util/String'
 import JSZip = require('jszip');

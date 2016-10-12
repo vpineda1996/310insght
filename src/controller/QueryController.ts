@@ -7,44 +7,12 @@ import { MCOMPARATORS, SCOMPARATORS, LOGICCOMPARATORS, NEGATORS } from '../commo
 import DatasetController from "../controller/DatasetController";
 
 import { isString, isStringOrStringArray } from '../util/String'
-import { areFilters, isAsTable, queryIdsValidator } from '../util/Query'
+import { areFilters, isAsTable, queryIdsValidator, QueryRequest, QueryResponse, QueryData } from '../util/Query'
 import { getFirstKey, getFirst } from '../util/Object'
 import { isNumber } from '../util/String'
 import { MissingDatasets } from '../util/Errors'
 import Log from "../Util";
-
-export interface QueryRequest {
-    GET: string[];
-    WHERE: {
-        GT?: {
-            [s: string]: number
-        },
-        LT?: {
-            [s: string]: number
-        },
-        EQ?: {
-            [s: string]: number
-        },
-        IS?: string | string[]
-    };
-    ORDER?: string;
-    AS: string;
-}
-
-export interface QueryResponse {
-    render?: string;
-    missing?: string[];
-    result?: {}[];
-}
-
-// has form of
-// [
-//   { 'courses_id': ['310', '300'] },
-//   { 'courses_dept': ['cpsc', 'chem'] }
-// ]
-interface QueryData {
-    [columnName: string] : string[] | number[];
-}
+import GroupQuery from '../queryHelpers/GroupQuery';
 
 const QUERY_REQUIREMENTS: { [s: string]: Function } = {
     'GET': isStringOrStringArray,
@@ -68,7 +36,7 @@ export default class QueryController {
                     return (keys.indexOf(req_key) !== -1) && QUERY_REQUIREMENTS[req_key](req_key, q[req_key]);
                 }) && Object.keys(QUERY_OPTIONALS).every((opt_key: string) => {
                     return (keys.indexOf(opt_key) === -1) || QUERY_OPTIONALS[opt_key](opt_key, q[opt_key]);
-                });
+                }) && GroupQuery.isValidGroupQuery(query);
         }
         return false;
     }
@@ -98,6 +66,8 @@ export default class QueryController {
                 return this.getQueryData(query);
             }).then((queryData) => {
                 return [].concat.apply([], queryData);
+            }).then((queryData : QueryData[]) => {
+                return GroupQuery.groupBy(query, queryData);
             }).then((queryData : QueryData[]) => {
                 if (query.ORDER) {
                     return this.orders(queryData, query.ORDER);
