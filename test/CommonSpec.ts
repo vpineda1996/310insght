@@ -68,6 +68,13 @@ describe("CommonSpec", function () {
             }).then(() => done());
         });
 
+        it("gets rows", function(done){
+            datatable.getRow(0).then((res) => {
+                expect(!!res).to.be.true;
+                done();
+            } )
+        });
+
         it("deletes rows", function(done){
             datatable.removeRow(0).then(() => done());
         });

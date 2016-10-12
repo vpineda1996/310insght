@@ -64,7 +64,7 @@ export default class JSONParser {
         });
     };
 
-    private static parseCourse(courseZip: JSZipObject, coursePath: string, datatable: Datatable): Promise<number> {
+    public static parseCourse(courseZip: JSZipObject, coursePath: string, datatable: Datatable): Promise<number> {
         return new Promise((resolve, reject) => {
             courseZip.async('string').then((res) => {
                 try {
@@ -86,11 +86,11 @@ export default class JSONParser {
                         return reject("Invalid JSON file: " + coursePath);
                     }
                     resolve((listOfCourseYears.result && listOfCourseYears.result.length) || 0);
-                } catch (e) {
-                    Log.trace('JSONParser::pushDataToColumns( ... ) ' + e + " " + res);
-                    reject("Invalid dataset with file: " + res);
-                }
-            }).catch((err) => {
+                } catch(e){
+                    reject(e);
+                    throw e;
+                }    
+        }).catch((err) => {
                 Log.trace(err);
                 return err;
             });
@@ -99,7 +99,7 @@ export default class JSONParser {
 
     private static getCourseDept(courseOffering: any, coursePath: string) {
         try {
-            if (courseOffering && courseOffering.Course !== undefined) {
+            if (courseOffering && courseOffering.Subject !== undefined) {
                 return courseOffering.Subject;
             }
             let course = coursePath.split(/\//);
