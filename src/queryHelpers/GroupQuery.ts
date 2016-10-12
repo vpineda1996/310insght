@@ -5,7 +5,7 @@ import { isString, isStringOrStringArray } from '../util/String'
 import { areFilters, isAsTable, queryIdsValidator, QueryRequest, QueryResponse, QueryData, ApplyElement } from '../util/Query'
 import { getFirstKey, getFirst } from '../util/Object'
 import { isNumber } from '../util/String'
-import { getApplyTargets } from './queryApply'
+import { getApplyTargets, getApplyNames } from './queryApply'
 import { MissingDatasets } from '../util/Errors'
 import Log from "../Util";
 
@@ -37,7 +37,7 @@ export default (() => {
         if(query.GROUP){
             let groupCols: Columns = getGroupCols(query.GROUP, queryData);
             let aggregateCols : Columns = getAggregateCols(query, queryData);
-            Log.trace("groupBy -- aggregateCols " + JSON.stringify(aggregateCols));
+            //Log.trace("groupBy -- aggregateCols " + JSON.stringify(aggregateCols));
 
 
             let curRowIdx : number = 0, 
@@ -48,7 +48,7 @@ export default (() => {
                 let key = getKey(groupCols, i);
                 let aGroupKeys = getGroupKeys(groupCols,i);
                 let aAggVals = getGroupKeys(aggregateCols,i)
-                // Log.trace("groupBy -- aAggVals " + JSON.stringify(aAggVals));
+                //Log.trace("groupBy -- aAggVals " + JSON.stringify(aAggVals));
                 pushValueToAccum(oAcum, key, aGroupKeys, aAggVals);
             }
 
@@ -61,15 +61,15 @@ export default (() => {
                 oAcum[rowKey].aggrSol = aRes;
             }
 
-            let colNames = getColNamesFromQueryData(queryData);
+            let colNames =getColNamesFromQueryData(queryData);
             let colIndecesOfGroup = getIndecesOfGroupByColNames(colNames, groupCols);
             let colIndecesOfAggr = getIndecesOfGroupByColNames(colNames, aggregateCols);
-            let newQueryData = createEmptyQueryData(colNames);
+            let newQueryData = createEmptyQueryData(replaceNamesWithNewAggFiels(colNames, query));
 
             // Return to QueryData[] form from AggregatedRows
             for(var rowKey in oAcum){
                 let oRow = oAcum[rowKey];
-                Log.trace(JSON.stringify(oRow));
+                Log.trace("Key: " + rowKey + " has " + oRow.groupKeys.length + " group keys and " + JSON.stringify(oRow.aggregatedCols));
                 Object.keys(groupCols).forEach((key, idx) => {
                     let colInNewQueryIdx = colIndecesOfGroup[idx];
                     getFirst(newQueryData[colInNewQueryIdx]).push(oRow.groupKeys[idx]); 
@@ -111,6 +111,14 @@ export default (() => {
         }
     }
 
+    function replaceNamesWithNewAggFiels(names: string[], query: QueryRequest) : string[]{
+        var aTargets = getApplyTargets(query);
+        var aNewNames = getApplyNames(query);
+        return names.map((sA) => {
+            return aTargets.indexOf(sA) !== -1 ? aNewNames[aTargets.indexOf(sA)] : sA;
+        });
+    }
+
     function createEmptyQueryData(colNames : string[]) : QueryData[] {
         return colNames.map((name) => {
             let obj :any = {};
@@ -120,9 +128,7 @@ export default (() => {
     }
 
     function aggregateValues(aValues: Array<string|number>, colIndexOfAggCols: number, aggregateCols: Columns, query: QueryRequest): number|string {
-        // TODO: aggregate values!!!!
         var aggregateType = getAggregateType(aggregateCols, colIndexOfAggCols, query);
-        Log.trace("Aggregating type is:" + aggregateType);
         return AGGREGATE_FUNCTIONS[aggregateType](aValues);
     }
 
@@ -151,7 +157,7 @@ export default (() => {
     function getAggregateType(aggregateCols: Columns, colIndexOfAggCols: number, query: QueryRequest) {
         var colName = Object.keys(aggregateCols)[colIndexOfAggCols];
         var res = query.APPLY.find((elem: ApplyElement) => {
-            return getFirst(getFirst(elem)) === colName; //TODO
+            return getFirst(getFirst(elem)) === colName;
         });
         return getFirstKey(getFirst(res));
     }
