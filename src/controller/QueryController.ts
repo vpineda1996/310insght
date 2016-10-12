@@ -6,6 +6,9 @@ import { Datasets, Datatable, Datatype, Column } from "../common/Common";
 import { MCOMPARATORS, SCOMPARATORS, LOGICCOMPARATORS, NEGATORS } from '../common/Constants'
 import DatasetController from "../controller/DatasetController";
 
+import { hasRequestedIds } from '../queryHelpers/querable'
+import { isValidOrder } from '../queryHelpers/queryOrder'
+
 import { isString, isStringOrStringArray } from '../util/String'
 import { areFilters, isAsTable, queryIdsValidator, QueryRequest, QueryResponse, QueryData } from '../util/Query'
 import { getFirstKey, getFirst } from '../util/Object'
@@ -19,9 +22,6 @@ const QUERY_REQUIREMENTS: { [s: string]: Function } = {
     'WHERE': areFilters,
     'AS': isAsTable
 };
-const QUERY_OPTIONALS: { [s: string]: Function } = {
-    'ORDER': isString
-};
 
 export default class QueryController {
 
@@ -30,13 +30,9 @@ export default class QueryController {
             let keys = Object.keys(query);
             let q: any = query;
 
-
-            return (!query.ORDER || query.GET.indexOf(query.ORDER) !== -1) &&
-                Object.keys(QUERY_REQUIREMENTS).every((req_key: string) => {
-                    return (keys.indexOf(req_key) !== -1) && QUERY_REQUIREMENTS[req_key](req_key, q[req_key]);
-                }) && Object.keys(QUERY_OPTIONALS).every((opt_key: string) => {
-                    return (keys.indexOf(opt_key) === -1) || QUERY_OPTIONALS[opt_key](opt_key, q[opt_key]);
-                }) && GroupQuery.isValidGroupQuery(query);
+            return Object.keys(QUERY_REQUIREMENTS).every((req_key: string) => {
+                return (keys.indexOf(req_key) !== -1) && QUERY_REQUIREMENTS[req_key](req_key, q[req_key]);
+            });
         }
         return false;
     }
@@ -44,7 +40,7 @@ export default class QueryController {
     public query(query: QueryRequest) : Promise<QueryResponse> {
         return new Promise<QueryResponse>((resolve, reject) => {
 
-            return this.hasRequestedIds(query).then((results : boolean[]) => {
+            return hasRequestedIds(query).then((results : boolean[]) => {
                 let missing : string[] = [];
 
                 results.forEach((res: boolean, index: number) => {
@@ -63,6 +59,14 @@ export default class QueryController {
                     throw new MissingDatasets(res);
                 }
             }).then(() => {
+                return isValidOrder(query);
+            }).then((res: any) =>  {
+                if (res) {
+                    return;
+                } else {
+                    throw new Error(res);
+                }
+            }).then(() => {
                 return this.getQueryData(query);
             }).then((queryData) => {
                 return [].concat.apply([], queryData);
@@ -70,7 +74,10 @@ export default class QueryController {
                 return GroupQuery.groupBy(query, queryData);
             }).then((queryData : QueryData[]) => {
                 if (query.ORDER) {
-                    return this.orders(queryData, query.ORDER);
+                    return query.ORDER.keys.reduce((res: QueryData[], order: string) => {
+                        res = this.orders(res, order, query.ORDER.dir);
+                        return res;
+                    }, queryData);
                 } else {
                     return queryData;
                 }
@@ -115,28 +122,6 @@ export default class QueryController {
             counter[id] = true;
             return true;
         });
-    }
-
-    private hasRequestedIds(query : QueryRequest|any) : Promise<any[]> {
-        let promises : Promise<any>[] = [];
-
-        // FIXME this is somewhat inefficient
-        // run the check query against this.getUniqueDatasetIds(query.GET)
-        // but if so don't forget to re-expand to original GET values when returning in MissingDatasets
-        query.GET.forEach((id: string, index: number) => {
-            let oPromise = new Promise<boolean>((resolve, reject) => {
-                DatasetController.getInstance().getDataset(id.split('_')[0]).then(datatable => {
-                    if (datatable) {
-                        return resolve(true);
-                    } else {
-                        return resolve(false);
-                    }
-                });
-            });
-            promises.push(oPromise);
-        });
-
-        return Promise.all(promises);
     }
 
     private getQueryData(query: QueryRequest): Promise<any[]> {
@@ -311,7 +296,7 @@ export default class QueryController {
     }
 
     // order QueryData[] in O(r^2 + c)
-    private orders(queryData: QueryData[], columnName: string) : QueryData[] {
+    private orders(queryData: QueryData[], columnName: string, dir: string) : QueryData[] {
         let columnNames : string[] = queryData.map((qd) => Object.keys(qd)[0]);
         let qdCol = queryData[columnNames.indexOf(columnName)];
         let data : any[] = qdCol[Object.keys(qdCol)[0]];
@@ -321,6 +306,8 @@ export default class QueryController {
             indexedData.push([data[i], i]);
         }
 
+        let before: number = (dir === 'UP' ? 1 : -1)
+        let after: number = (dir === 'UP' ? -1 : 1)
         indexedData.sort((a_arr, b_arr) => {
             let a = a_arr[0];
             let b = b_arr[0];
@@ -328,11 +315,11 @@ export default class QueryController {
             return tryNumber() || tryString();
 
             function tryNumber() {
-                return isNumber(a) && isNumber(b) ? (parseFloat(a) > parseFloat(b)? 1 : -1) : 0;
+                return isNumber(a) && isNumber(b) ? (parseFloat(a) > parseFloat(b)? before : after) : 0;
             }
 
             function tryString() {
-                return a > b ? 1 : -1;
+                return a > b ? before : after;
             }
         });
 
