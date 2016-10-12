@@ -98,6 +98,7 @@ describe("DatasetController", function () {
             });
         });
 
+
         it("opens the main datasets and selects a specific one", function(done){
             let controller = DatasetController.getInstance();
             controller.getDataset("afasfas").then((res) => {
@@ -147,6 +148,25 @@ describe("DatasetController", function () {
                 done();
             });
         });
+
+        it("fails", function(done) {
+            DS.process(null,null).catch((e) => {
+                expect(!!e).to.be.true;
+                done();
+            });
+            
+        });
+
+        it("crate folder and file if not present", function(done) {
+            DS.clearCache();
+            fs.unlinkSync('./data/datasets.json');
+            DS.getDataset(null).then((e) => {
+                expect(!!e).to.be.false;
+                done();
+            });
+            
+        });
+
 
 
     });

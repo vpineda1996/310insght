@@ -64,34 +64,29 @@ export default class DatasetController {
     public process(id: string, data: any): Promise<number> {
         Log.trace('DatasetController::process( ' + id + '... )');
         return new Promise((fulfill, reject) => {
-            try {
-                let myZip = new JSZip();
-                let resCode = 201;
-                this.getDataset(id).then( (oDataTable : Datatable) => {
-                    if (!oDataTable) {
-                        oDataTable = new Datatable(id, PARENT_DIR + "/" + id, []);
-                        resCode = 204;
-                        return oDataTable;
-                    } else {
-                        return oDataTable.removeColumns(true).then(() => oDataTable);
-                    }
-                }).then((oDataTable: Datatable) => {
-                    return myZip.loadAsync(data, { base64: true }).then((zip: JSZip) => {
-                        Log.trace('DatasetController::process(..) - unzipped');
-                        return JSONParser.parse(zip.files, oDataTable)
-                    }).then((processedMetadata: Datatable) => {
-                        return this.save(id, processedMetadata);
-                    }).then(() => {
-                        fulfill(resCode);
-                    }).catch(function (err) {
-                        Log.trace('DatasetController::process(..) - unzip ERROR: ' + err.message);
-                        reject(err);
-                    });
+            let myZip = new JSZip();
+            let resCode = 201;
+            this.getDataset(id).then( (oDataTable : Datatable) => {
+                if (!oDataTable) {
+                    oDataTable = new Datatable(id, PARENT_DIR + "/" + id, []);
+                    resCode = 204;
+                    return oDataTable;
+                } else {
+                    return oDataTable.removeColumns(true).then(() => oDataTable);
+                }
+            }).then((oDataTable: Datatable) => {
+                return myZip.loadAsync(data, { base64: true }).then((zip: JSZip) => {
+                    Log.trace('DatasetController::process(..) - unzipped');
+                    return JSONParser.parse(zip.files, oDataTable)
+                }).then((processedMetadata: Datatable) => {
+                    return this.save(id, processedMetadata);
+                }).then(() => {
+                    fulfill(resCode);
+                }).catch(function (err) {
+                    Log.trace('DatasetController::process(..) - unzip ERROR: ' + err.message);
+                    reject(err);
                 });
-            } catch (err) {
-                Log.trace('DatasetController::process(..) - ERROR: ' + err);
-                reject(err);
-            }
+            });
         });
     }
 
@@ -142,10 +137,8 @@ export default class DatasetController {
     private writeCacheIntoDisk(): Promise<Datasets> {
         return new Promise((resolve, reject) => {
             fs.writeFile(DATASETFILE, JSON.stringify(this.datasets), (err) => {
-                if (err) {
-                    Log.trace('DatasetController::writeCacheIntoDisk(..) ' + err);
-                    reject();
-                } else {
+                if (err) reject();
+                else {
                     Log.trace('DatasetController::writeCacheIntoDisk: Writing cache');
                     resolve();
                 }
@@ -169,10 +162,7 @@ export default class DatasetController {
             }
 
             fs.readFile(DATASETFILE, 'utf8', (err, data) => {
-                if (err) {
-                    Log.trace('DatasetController::readCachedDatasetsInDisk(cannot parse json file)');
-                    return reject();
-                }
+                if (err) return reject();
                 try {
                     Log.trace('DatasetController::readCachedDatasetsInDisk: Read file, creating col');
                     let parsedJSON: { [id: string]: Datatable } = JSON.parse(data);
@@ -185,10 +175,7 @@ export default class DatasetController {
                             this.datasets[i] = new Datatable(parsedJSON[i].id, parsedJSON[i].src, cols);
                         }
                     }
-                } catch (err) {
-                    Log.trace('DatasetController::readCachedDatasetsInDisk(cannot parse json file)');
-                    throw err;
-                }
+                } catch (err){ throw err; }
                 resolve(this.datasets);
             });
         });
