@@ -1,7 +1,7 @@
 /**
  * Created by rtholmes on 2016-06-20.
  */
-
+import {LOGENABLE} from "./common/Constants"
 /**
  * Collection of logging methods. Useful for making the output easier to read and understand.
  *
@@ -11,7 +11,7 @@
 export default class Log {
 
     public static trace(msg: string) {
-        console.log("<T> " + new Date().toLocaleString() + ": " + msg);
+        LOGENABLE && console.log("<T> " + new Date().toLocaleString() + ": " + msg);
     }
 
     public static info(msg: string) {
