@@ -122,30 +122,7 @@ function areIdsValid(query: {[s:string]:any}): Promise<any[]> {
             if (isWhereOperator(key)) {
                 promises.push(areIdsValid(query[key]));
             } else {
-<<<<<<< HEAD
-                // when pair of key/value
-                if(key){
-                    let id_column: string[] = key.split('_');
-                    DatasetController.getInstance().getDataset(id_column[0]).then((datatable: Datatable) => {
-                        if (!datatable) {
-                            return resolve(key);
-                        }
-                        if (!datatable.getColumn(key)) {
-                            return resolve(key);
-                        }
-                        return resolve(null);
-                    }).catch((err: any) => {
-                        if (hasIdInApply(query, key)) {
-                            return resolve(key);
-                        }
-                        resolve(err);
-                    });
-                } else {
-                    resolve(key);
-                }
-=======
                 promises.push(isValidId(key));
->>>>>>> origin
             }
         }
         return combineValidIds(promises).then(resolve);
