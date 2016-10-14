@@ -1,7 +1,8 @@
 import { MCOMPARATORS, SCOMPARATORS, LOGICCOMPARATORS, NEGATORS, APPLYTOKENS } from '../common/Constants'
+import { Datatable } from '../common/Common'
 
 import DatasetController from '../controller/DatasetController'
-import { Datatable } from '../common/Common'
+import { isValidDatasetId } from '../queryHelpers/querable'
 
 import { isArray } from './Array'
 import { isHash } from './Object'
@@ -94,46 +95,69 @@ export function isFilter(key: string, val: any): boolean {
         isNegation(key, val);
 }
 
-export function queryIdsValidator(query: any): Promise<any> {
-    return new Promise<any>((resolve, reject) => {
-        if (isArray(query)) {
-            // when AND or OR
-            let promises: Promise<boolean>[] = [];
-            for (let i in query) {
-                promises.push(queryIdsValidator(query[i]));
-            }
-            Promise.all(promises).then((results: any) => {
-                let failed: string[] = [].concat.apply([], results.filter((res: any) => !!res));
-
-                if (failed && failed.length > 0) {
-                    return resolve(failed);
-                } else {
-                    return resolve(null);
-                }
-            });
-        } else {
-            // when object
-            let key: string = Object.keys(query)[0];
-
-            if (MCOMPARATORS.includes(key) || SCOMPARATORS.includes(key) || LOGICCOMPARATORS.includes(key) || NEGATORS.includes(key)) {
-                return queryIdsValidator(query[key]).then((result: any) => {
-                    return resolve(result);
-                });
+export function areValidWhereIds(query: QueryRequest): Promise<boolean> {
+    console.info('areValidWhereIds');
+    return new Promise<boolean>((resolve, reject) => {
+        return areIdsValid(query.WHERE).then((isValid: any[]) => {
+            console.info(isValid);
+            if (isValid[0]) {
+                resolve(true);
             } else {
-                // when pair of key/value
-                let id_column: string[] = key.split('_');
-                DatasetController.getInstance().getDataset(id_column[0]).then((datatable: Datatable) => {
-                    if (!datatable) {
-                        return resolve(key);
-                    }
-                    if (!datatable.getColumn(key)) {
-                        return resolve(key);
-                    }
-                    return resolve(null);
-                }).catch((err: any) => {
-                    resolve(err);
-                });
+                throw new MissingDatasets(isValid[1]);
+            }
+        }).catch((err: Error) => {
+            console.error(err);
+            reject(err);
+        });
+    });
+}
+
+function areIdsValid(query: {[s:string]:any}): Promise<any[]> {
+    return new Promise<any[]>((resolve, reject) => {
+        let promises: Promise<any[]>[] = [];
+
+        for (let key in query) {
+            console.info(key, isWhereOperator(key));
+            if (isWhereOperator(key)) {
+                promises.push(areIdsValid(query[key]));
+            } else {
+                promises.push(isValidId(key));
             }
         }
+        return combineValidIds(promises).then(resolve);
     });
+}
+
+function isValidId(id: string): Promise<any[]> {
+    return new Promise<any[]>((resolve, reject) => {
+        if (isValidDatasetId(id)) {
+            resolve([true, []]);
+        } else {
+            resolve([false, [id]]);
+        }
+    });
+}
+
+function combineValidIds(promises: Promise<any[]>[]): Promise<any[]> {
+    return Promise.all(promises).then((areValid: any[]) => {
+        let missing: string[] = [];
+        areValid.forEach((isValid: any[], index: number) => {
+            if (!isValid[0]) {
+                missing = [].concat(missing, isValid[1]);
+            }
+        });
+
+        if (missing.length > 0) {
+            return [false, missing];
+        } else {
+            return [true, []];
+        }
+    });
+}
+
+function isWhereOperator(key: string): boolean {
+    return MCOMPARATORS.includes(key) ||
+        SCOMPARATORS.includes(key) ||
+        LOGICCOMPARATORS.includes(key) ||
+        NEGATORS.includes(key);
 }

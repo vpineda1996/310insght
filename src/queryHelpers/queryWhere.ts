@@ -1,10 +1,11 @@
 import { MCOMPARATORS, SCOMPARATORS, LOGICCOMPARATORS, NEGATORS } from '../common/Constants'
 
 import DatasetController from "../controller/DatasetController";
-import { Datasets, Datatable, Datatype, Column } from "../common/Common";
+import { Datatable } from "../common/Common";
 
+import { isStringOrStringArray } from '../util/String'
+import { areFilters, isAsTable, QueryRequest } from '../util/Query'
 import { getFirstKey, getFirst } from '../util/Object'
-import { areFilters, isAsTable, queryIdsValidator, QueryRequest, QueryResponse, QueryData } from '../util/Query'
 import Log from '../Util'
 
 
@@ -198,4 +199,23 @@ function getValues(columns: string[], rowNumbers: number[], datatable: Datatable
     });
 
     return Promise.all(promises);
+}
+
+
+const QUERY_REQUIREMENTS: { [s: string]: Function } = {
+    'GET': isStringOrStringArray,
+    'WHERE': areFilters,
+    'AS': isAsTable
+};
+
+export function isValidWhere(query: QueryRequest): boolean {
+    if (typeof query !== 'undefined' && query !== null && Object.keys(query).length > 0) {
+        let keys = Object.keys(query);
+        let q: any = query;
+
+        return Object.keys(QUERY_REQUIREMENTS).every((req_key: string) => {
+            return (keys.indexOf(req_key) !== -1) && QUERY_REQUIREMENTS[req_key](req_key, q[req_key]);
+        });
+    }
+    return false;
 }
