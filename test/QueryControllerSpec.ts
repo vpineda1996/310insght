@@ -7,6 +7,8 @@ import DatasetController from "../src/controller/DatasetController";
 import QueryController from "../src/controller/QueryController";
 import { QueryRequest, QueryResponse, QueryOrder } from '../src/util/Query';
 
+import { isValidWhere } from '../src/queryHelpers/queryWhere';
+
 import Log from "../src/Util";
 import { isNumber } from '../src/util/String';
 import { getFirst } from '../src/util/Object';
@@ -154,8 +156,7 @@ describe("QueryController", function () {
         return QUERY;
     }
     function isValid() : boolean {
-        let controller = new QueryController();
-        return controller.isValid(query());
+        return isValidWhere(query());
     }
 
     beforeEach(function (done) {
@@ -268,9 +269,12 @@ describe("QueryController", function () {
                     zip.file(JSONS[i]['result'][0]['Dept'] +JSONS[i]['result'][0]['Id'], JSON.stringify(JSONS[i]));
                 }
             }
+            console.info('generated zip');
             return zip.generateAsync(ZIP_OPTS).then((data) => {
+                console.info('parsed zip data', data);
                 return DatasetController.getInstance().process(ID, data);
             }).then((result) => {
+                console.info('prepopulate result', result);
                 return result < 400;
             }).catch((err:Error) => {
                 console.error(err);
@@ -413,7 +417,7 @@ describe("QueryController", function () {
                 ORDER_KEYS = null;
                 perform_query_checks().then(res => {
                     done();
-                });
+                }).catch(console.error);
             });
         })
 

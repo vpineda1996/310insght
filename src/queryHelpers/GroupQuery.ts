@@ -2,7 +2,7 @@ import { Datasets, Datatable, Datatype, Column } from "../common/Common";
 import { MCOMPARATORS, SCOMPARATORS, LOGICCOMPARATORS, NEGATORS, APPLYTOKENS } from '../common/Constants'
 
 import { isString, isStringOrStringArray } from '../util/String'
-import { areFilters, isAsTable, queryIdsValidator, QueryRequest, QueryResponse, QueryData, ApplyElement } from '../util/Query'
+import { areFilters, isAsTable, QueryRequest, QueryResponse, QueryData, ApplyElement } from '../util/Query'
 import { getFirstKey, getFirst } from '../util/Object'
 import { isNumber } from '../util/String'
 import { getApplyTargets, getApplyNames } from './queryApply'
@@ -40,7 +40,7 @@ export default (() => {
             //Log.trace("groupBy -- aggregateCols " + JSON.stringify(aggregateCols));
 
 
-            let curRowIdx : number = 0, 
+            let curRowIdx : number = 0,
                 colLength : number = queryData[0][getFirstKey(queryData[0])].length;
             let oAcum : AggregatedRows = {}
             for(var i = 0; i < colLength; i++){
@@ -72,11 +72,11 @@ export default (() => {
                 Log.trace("Key: " + rowKey + " has " + oRow.groupKeys.length + " group keys and " + JSON.stringify(oRow.aggregatedCols));
                 Object.keys(groupCols).forEach((key, idx) => {
                     let colInNewQueryIdx = colIndecesOfGroup[idx];
-                    getFirst(newQueryData[colInNewQueryIdx]).push(oRow.groupKeys[idx]); 
+                    getFirst(newQueryData[colInNewQueryIdx]).push(oRow.groupKeys[idx]);
                 });
                 Object.keys(aggregateCols).forEach((key, idx) => {
                     let colInNewQueryIdx = colIndecesOfAggr[idx];
-                    getFirst(newQueryData[colInNewQueryIdx]).push(oRow.aggrSol[idx]); 
+                    getFirst(newQueryData[colInNewQueryIdx]).push(oRow.aggrSol[idx]);
                 })
             }
 

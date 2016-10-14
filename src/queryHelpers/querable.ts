@@ -1,33 +1,60 @@
-import { QueryRequest, QueryResponse } from '../util/Query'
+import DatasetController from '../controller/DatasetController'
 import { getApplyNames } from '../queryHelpers/queryApply'
 
-import DatasetController from '../controller/DatasetController'
+import { QueryRequest } from '../util/Query'
+import { MissingDatasets } from '../util/Errors'
 
-export function hasRequestedIds(query : QueryRequest|any) : Promise<any[]> {
-    let promises : Promise<any>[] = [];
+// check ids against datasets & query.APPLY
+export function areValidIds(query: QueryRequest, queryIds: string[]): Promise<boolean> {
+    let applyIds: string[] = getApplyNames(query);
 
-    query.GET.forEach((id: string, index: number) => {
-        let oPromise = new Promise<boolean>((resolve, reject) => {
-            if (hasIdInApply(query, id)) {
-                return resolve(true);
+    let datasetIds: string[] = queryIds.filter((id: string) => !applyIds.includes(id));
+
+    return areValidDatasetIds(datasetIds);
+}
+
+export function areValidDatasetIds(queryIds: string[]) : Promise<boolean> {
+    let promises = queryIds.map((id: string) => isValidDatasetId(id));
+
+    return new Promise<boolean>((resolve, reject) => {
+        Promise.all(promises).then((res: any[]) => {
+            let missing: string[] = collectMissingIds(queryIds, res);
+
+            if (!missing || missing.length == 0) {
+                resolve(true);
+            } else {
+                throw new MissingDatasets(missing);
             }
-            DatasetController.getInstance().getDataset(id.split('_')[0]).then(datatable => {
-                if (datatable) {
-                    return resolve(true);
-                } else {
-                    return resolve(false);
-                }
-            });
+        }).catch((err: Error) => {
+            reject(err);
         });
-        promises.push(oPromise);
     });
-
-    return Promise.all(promises);
 }
 
-function hasIdInApply(query: QueryRequest, id: string) : boolean {
-    return getApplyNames(query).includes(id);
+export function isValidDatasetId(queryId: string): Promise<boolean> {
+    return new Promise<boolean>((resolve, reject) => {
+        DatasetController.getInstance().getDataset(queryId.split('_')[0]).then(datatable => {
+            if (!datatable) {
+                return resolve(false);
+            }
+            return datatable.getColumn(queryId);
+        }).then((col) => {
+            if (col) {
+                return resolve(true);
+            } else {
+                return resolve(false);
+            }
+        });
+    });
 }
 
+function collectMissingIds(ids: string[], exists: any[]): string[] {
+    let missing : string[] = [];
 
-
+    exists.forEach((exist: boolean, index: number) => {
+        if (!exist) {
+            missing.push(ids[index]);
+        }
+    });
+    return missing;
+}

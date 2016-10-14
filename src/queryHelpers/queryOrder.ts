@@ -1,4 +1,4 @@
-import { hasRequestedIds } from '../queryHelpers/querable'
+import { areValidIds } from '../queryHelpers/querable'
 
 import { MissingDatasets } from '../util/Errors'
 
@@ -25,16 +25,8 @@ export function isValidOrder(query: QueryRequest) : Promise<boolean> {
             return reject(new Error('"keys" is not array in ORDER'));
         }
 
-        return hasRequestedIds(query).then((results: boolean[]) => {
-            let missing : string[] = [];
-
-            results.forEach((res: boolean, index: number) => {
-                if (!res) {
-                    missing.push(query.GET[index]);
-                }
-            });
-            if (missing.length === 0) return resolve(true);
-            else throw new MissingDatasets(missing);
+        return areValidIds(query, getOrderNames(query.ORDER)).then(() => {
+            return resolve(true);
         }).catch((err) => {
             reject(err);
         });
@@ -43,6 +35,10 @@ export function isValidOrder(query: QueryRequest) : Promise<boolean> {
 
 // order QueryData[] in O(rlog(r) + c)
 export function orders(queryData: QueryData[], order: QueryOrder) : QueryData[] {
+    if (!order) {
+        return queryData;
+    }
+
     let columnNames : string[] = queryData.map((qd) => Object.keys(qd)[0]);
     let columnNumbers: number[] = order.keys.map((k) => columnNames.indexOf(k));
 
@@ -94,4 +90,12 @@ export function orders(queryData: QueryData[], order: QueryOrder) : QueryData[] 
             }
         }
     }
+}
+
+export function getOrderNames(order: QueryOrder): string[] {
+    // if (isString(order)) {
+    //    return [order];
+    //} else {
+        return order.keys;
+    //}
 }
