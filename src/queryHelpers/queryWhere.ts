@@ -5,6 +5,7 @@ import { Datasets, Datatable, Datatype, Column } from "../common/Common";
 
 import { getFirstKey, getFirst } from '../util/Object'
 import { areFilters, isAsTable, queryIdsValidator, QueryRequest, QueryResponse, QueryData } from '../util/Query'
+import { getApplyNames, getApplyTargets } from './queryApply'
 import Log from '../Util'
 
 
@@ -13,7 +14,7 @@ export function getQueryData(query: QueryRequest): Promise<any[]> {
 
     let where : any = query.WHERE;
 
-    let ids = getUniqueDatasetIds(query.GET);
+    let ids = getUniqueDatasetIds(query.GET, query);
 
     let promises = ids.map((id: string, index: number) => {
         return new Promise<{}[]>((resolve, reject) => {
@@ -26,7 +27,7 @@ export function getQueryData(query: QueryRequest): Promise<any[]> {
                 return evaluates(getFirstKey(where), getFirst(where), _datatable, null);
             }).then((indices: boolean[]) => {
                 let rowNumbers = extractValidRowNumbers(indices);
-                return getValues(query.GET, rowNumbers, _datatable);
+                return getValues(query, rowNumbers, _datatable);
             }).then((res: {}[]) => {
                 return resolve(res);
             }).catch((err: Error) => {
@@ -151,12 +152,14 @@ function evaluates(key: string, query: {[s: string]: any}|any, datatable: Datata
 // Extracts unique ids from strins in form of ${id}_${column}
 // ids = ['courses_ids', 'courses_title', 'others_id']
 // ==> uniqueIds = ['courses', 'others']
-function getUniqueDatasetIds(ids : string[]) : string[] {
+function getUniqueDatasetIds(ids : string[], query: QueryRequest) : string[] {
     let uniqueIds : string[] = [];
 
     ids.forEach((val) => {
         let id_column = val.split('_');
-        uniqueIds.push(id_column[0]);
+        if(id_column.length > 1){ // TODO: figure out if it doesnt belong to apply ids even if it has a underscore
+             uniqueIds.push(id_column[0]);
+        }
     });
 
     let counter : {[s: string]: any} = {};
@@ -185,11 +188,29 @@ function extractValidRowNumbers(indices: boolean[]) : number[] {
 //   {courses_id: [2, 1, 3],
 //   {courses_avg: [60, 70, 80]
 // ] in O(r * c)
-function getValues(columns: string[], rowNumbers: number[], datatable: Datatable) : Promise<any> {
+function getValues(query: QueryRequest, rowNumbers: number[], datatable: Datatable) : Promise<any> {
     let promises : Promise<any>[] = [];
-
-    columns.forEach((colName) => {
-        promises.push(new Promise<{}>((resolve, reject) => {
+    let applyVals = getApplyNames(query);
+    let applyTargs = getApplyTargets(query);
+    let usedTargs : any= {};
+    Log.trace("applyVals: " + JSON.stringify(applyVals) + "; applyTargs: " + JSON.stringify(applyTargs));
+    
+    query.GET.map((colName) => {
+        var sRet = colName;
+        var indexOfApplyVals = applyVals.indexOf(colName);
+        Log.trace("Column: " + colName + ";");
+        if(indexOfApplyVals !== -1){
+            if(!usedTargs[applyTargs[indexOfApplyVals]]){
+                Log.trace("Column apply: " +  applyTargs[indexOfApplyVals] + ";");
+                sRet = applyTargs[indexOfApplyVals] ;
+            } else {
+                return null;
+            }
+        }
+        usedTargs[applyTargs[indexOfApplyVals]] = true;
+        return sRet;
+    }).filter((v) => v !== null).forEach((colName) => {
+        promises.push(new Promise<any>((resolve, reject) => {
             datatable.getColumn(colName).getData().then((data: string[]|number[]) => {
                 let filteredData = rowNumbers.map((rn) => data[rn]);
                 return resolve({ [colName] : filteredData });

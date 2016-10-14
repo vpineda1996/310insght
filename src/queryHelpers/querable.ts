@@ -25,7 +25,7 @@ export function hasRequestedIds(query : QueryRequest|any) : Promise<any[]> {
     return Promise.all(promises);
 }
 
-function hasIdInApply(query: QueryRequest, id: string) : boolean {
+export function hasIdInApply(query: QueryRequest, id: string) : boolean {
     return getApplyNames(query).includes(id);
 }
 

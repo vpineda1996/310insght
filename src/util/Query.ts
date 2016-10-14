@@ -7,6 +7,7 @@ import { isArray } from './Array'
 import { isHash } from './Object'
 import { isStringOrStringArray, isTypeString, isString, hasString, isNumber } from './String'
 import { MissingDatasets } from '../util/Errors'
+import { hasIdInApply} from '../queryHelpers/querable'
 
 export interface QueryRequest {
     GET: string[];
@@ -121,18 +122,25 @@ export function queryIdsValidator(query: any): Promise<any> {
                 });
             } else {
                 // when pair of key/value
-                let id_column: string[] = key.split('_');
-                DatasetController.getInstance().getDataset(id_column[0]).then((datatable: Datatable) => {
-                    if (!datatable) {
-                        return resolve(key);
-                    }
-                    if (!datatable.getColumn(key)) {
-                        return resolve(key);
-                    }
-                    return resolve(null);
-                }).catch((err: any) => {
-                    resolve(err);
-                });
+                if(key){
+                    let id_column: string[] = key.split('_');
+                    DatasetController.getInstance().getDataset(id_column[0]).then((datatable: Datatable) => {
+                        if (!datatable) {
+                            return resolve(key);
+                        }
+                        if (!datatable.getColumn(key)) {
+                            return resolve(key);
+                        }
+                        return resolve(null);
+                    }).catch((err: any) => {
+                        if (hasIdInApply(query, key)) {
+                            return resolve(key);
+                        }
+                        resolve(err);
+                    });
+                } else {
+                    resolve(key);
+                }
             }
         }
     });

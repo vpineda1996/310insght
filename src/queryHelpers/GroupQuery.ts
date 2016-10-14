@@ -19,7 +19,7 @@ interface AggregateColumns {
 
 interface AggregatedRows {
     [idJoinedByUnd: string]: {
-        groupKeys: Array<string | number>;                               // Push in the values that we joined on
+        groupKeys: Array<string | number>;                   // Push in the values that we joined on
         aggregatedCols: Array<Array<string | number>>;       // Push values per column that we are going to agreggate on
         aggrSol?: Array<string | number>
     }
@@ -53,8 +53,8 @@ export default (() => {
                 // grab cols that we are going to group by and create AggregatedRows
                 let key = getKey(groupCols, i);
                 let aGroupKeys = getGroupKeys(groupCols, i);
-                let aAggVals = getAggKeys(aggregateCols, i)
-                Log.trace("GroupQuery::groupBy -- aAggVals " + JSON.stringify(aAggVals));
+                let aAggVals = getAggKeys(aggregateCols, i);
+                //Log.trace("GroupQuery::groupBy -- aAggVals " + JSON.stringify(aAggVals));
                 pushValueToAccum(oAcum, key, aGroupKeys, aAggVals);
             }
 
