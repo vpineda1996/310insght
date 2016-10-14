@@ -3,7 +3,7 @@ import { MCOMPARATORS, SCOMPARATORS, LOGICCOMPARATORS, NEGATORS, APPLYTOKENS }
 from '../common/Constants'
 
 import { isString, isStringOrStringArray } from '../util/String'
-import { areFilters, isAsTable, queryIdsValidator, QueryRequest, QueryResponse, QueryData, ApplyElement } from '../util/Query'
+import { areFilters, isAsTable, QueryRequest, QueryResponse, QueryData, ApplyElement } from '../util/Query'
 import { getFirstKey, getFirst } from '../util/Object'
 import { isNumber } from '../util/String'
 import { getApplyTargets, getApplyNames } from './queryApply'
