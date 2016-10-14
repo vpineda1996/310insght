@@ -6,7 +6,7 @@ import { Datatable } from "../common/Common";
 import { isStringOrStringArray } from '../util/String'
 import { areFilters, isAsTable, QueryRequest } from '../util/Query'
 import { getFirstKey, getFirst } from '../util/Object'
-import { getApplyNames, getApplyTargets } from './queryApply'
+import { getAllColumnTargetIds } from './queryApply'
 import Log from '../Util'
 
 
@@ -15,7 +15,7 @@ export function getQueryData(query: QueryRequest): Promise<any[]> {
 
     let where : any = query.WHERE;
 
-    let ids = getUniqueDatasetIds(query.GET, query);
+    let ids = getUniqueDatasetIds(getAllColumnTargetIds(query), query);
 
     let promises = ids.map((id: string, index: number) => {
         return new Promise<{}[]>((resolve, reject) => {
@@ -28,7 +28,7 @@ export function getQueryData(query: QueryRequest): Promise<any[]> {
                 return evaluates(getFirstKey(where), getFirst(where), _datatable, null);
             }).then((indices: boolean[]) => {
                 let rowNumbers = extractValidRowNumbers(indices);
-                return getValues(query, rowNumbers, _datatable);
+                return getValues(getAllColumnTargetIds(query), rowNumbers, _datatable);
             }).then((res: {}[]) => {
                 return resolve(res);
             }).catch((err: Error) => {
@@ -158,9 +158,7 @@ function getUniqueDatasetIds(ids : string[], query: QueryRequest) : string[] {
 
     ids.forEach((val) => {
         let id_column = val.split('_');
-        if(id_column.length > 1){ // TODO: figure out if it doesnt belong to apply ids even if it has a underscore
-             uniqueIds.push(id_column[0]);
-        }
+        uniqueIds.push(id_column[0]);
     });
 
     let counter : {[s: string]: any} = {};
@@ -189,28 +187,9 @@ function extractValidRowNumbers(indices: boolean[]) : number[] {
 //   {courses_id: [2, 1, 3],
 //   {courses_avg: [60, 70, 80]
 // ] in O(r * c)
-function getValues(query: QueryRequest, rowNumbers: number[], datatable: Datatable) : Promise<any> {
-    let promises : Promise<any>[] = [];
-    let applyVals = getApplyNames(query);
-    let applyTargs = getApplyTargets(query);
-    let usedTargs : any= {};
-    Log.trace("applyVals: " + JSON.stringify(applyVals) + "; applyTargs: " + JSON.stringify(applyTargs));
-    
-    query.GET.map((colName) => {
-        var sRet = colName;
-        var indexOfApplyVals = applyVals.indexOf(colName);
-        Log.trace("Column: " + colName + ";");
-        if(indexOfApplyVals !== -1){
-            if(!usedTargs[applyTargs[indexOfApplyVals]]){
-                Log.trace("Column apply: " +  applyTargs[indexOfApplyVals] + ";");
-                sRet = applyTargs[indexOfApplyVals] ;
-            } else {
-                return null;
-            }
-        }
-        usedTargs[applyTargs[indexOfApplyVals]] = true;
-        return sRet;
-    }).filter((v) => v !== null).forEach((colName) => {
+function getValues(queryColums: string[], rowNumbers: number[], datatable: Datatable) : Promise<any> {
+    let promises : Promise<any>[] = [];  
+    queryColums.forEach((colName) => {
         promises.push(new Promise<any>((resolve, reject) => {
             datatable.getColumn(colName).getData().then((data: string[]|number[]) => {
                 let filteredData = rowNumbers.map((rn) => data[rn]);
@@ -218,7 +197,6 @@ function getValues(query: QueryRequest, rowNumbers: number[], datatable: Datatab
             });
         }));
     });
-
     return Promise.all(promises);
 }
 
