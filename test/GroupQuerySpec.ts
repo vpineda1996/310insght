@@ -1,4 +1,4 @@
-import GroupQuery from '../src/queryHelpers/GroupQuery';
+import { groupBy } from '../src/queryHelpers/GroupQuery';
 import {expect} from 'chai';
 
 describe("GroupQuery", function () {
@@ -21,7 +21,7 @@ describe("GroupQuery", function () {
             "APPLY": [{ "courseAverage": { "AVG": "course_avg" } }]
         }
 
-        var res = GroupQuery.groupBy(query, aQueryData);
+        var res = groupBy(query, aQueryData);
         expect(res).to.be.deep.equal([
             { course_id: [310, 320] },
             { courseAverage: [75, 100] }
@@ -36,7 +36,7 @@ describe("GroupQuery", function () {
             "APPLY": [{ "courseAverage": { "MAX": "course_avg" } }]
         }
 
-        var res = GroupQuery.groupBy(query, aQueryData);
+        var res = groupBy(query, aQueryData);
         expect(res).to.be.deep.equal([
             { course_id: [310, 320] },
             { courseAverage: [100, 100] }
@@ -51,7 +51,7 @@ describe("GroupQuery", function () {
             "APPLY": [{ "courseAverage": { "MIN": "course_avg" } }]
         }
 
-        var res = GroupQuery.groupBy(query, aQueryData);
+        var res = groupBy(query, aQueryData);
         expect(res).to.be.deep.equal([
             { course_id: [310, 320] },
             { courseAverage: [50, 100] }
@@ -66,7 +66,7 @@ describe("GroupQuery", function () {
             "APPLY": [{ "courseAverage": { "COUNT": "course_avg" } }]
         }
 
-        var res = GroupQuery.groupBy(query, aQueryData);
+        var res = groupBy(query, aQueryData);
         expect(res).to.be.deep.equal([
             { course_id: [310, 320] },
             { courseAverage: [2, 1] }
@@ -88,7 +88,7 @@ describe("GroupQuery", function () {
                 "APPLY": [{ "courseAverage": { "COUNT": "course_avg" } }]
             }
 
-            var res = GroupQuery.groupBy(query, aQueryData);
+            var res = groupBy(query, aQueryData);
             expect(res).to.be.deep.equal([
                 { course_id: [310, 320, 310] },
                 { course_dept: ['cpsc', 'cpsc', 'biol'] },
@@ -107,7 +107,7 @@ describe("GroupQuery", function () {
                 ]
             }
 
-            var res = GroupQuery.groupBy(query, aQueryData);
+            var res = groupBy(query, aQueryData);
             expect(res).to.be.deep.equal([
                 { course_id: [310, 320] },
                 { dept: [3, 1] },
@@ -124,7 +124,7 @@ describe("GroupQuery", function () {
                 ]
             }
 
-            var res = GroupQuery.groupBy(query, aQueryData);
+            var res = groupBy(query, aQueryData);
             expect(res).to.be.deep.equal([
                 { courseAverage: [78, 100] },
                 { course_id: [310, 320] }

@@ -15,7 +15,7 @@ export function getQueryData(query: QueryRequest): Promise<any[]> {
 
     let where : any = query.WHERE;
 
-    let ids = getUniqueDatasetIds(getAllColumnTargetIds(query), query);
+    let ids = getUniqueDatasetIds(getAllColumnTargetIds(query));
 
     let promises = ids.map((id: string, index: number) => {
         return new Promise<{}[]>((resolve, reject) => {
@@ -153,7 +153,7 @@ function evaluates(key: string, query: {[s: string]: any}|any, datatable: Datata
 // Extracts unique ids from strins in form of ${id}_${column}
 // ids = ['courses_ids', 'courses_title', 'others_id']
 // ==> uniqueIds = ['courses', 'others']
-function getUniqueDatasetIds(ids : string[], query: QueryRequest) : string[] {
+function getUniqueDatasetIds(ids : string[]) : string[] {
     let uniqueIds : string[] = [];
 
     ids.forEach((val) => {
