@@ -13,19 +13,21 @@ export function isValidOrder(query: QueryRequest) : Promise<boolean> {
             return resolve(true);
         }
 
-        if (!isString(query.ORDER.dir)) {
+        let order = standardizeOrder(query.ORDER);
+
+        if (!isString(order.dir)) {
             return reject(new Error('"dir" is missing in ORDER'));
         }
 
-        if (query.ORDER.dir !== "UP" && query.ORDER.dir !== "DOWN") {
+        if (order.dir !== "UP" && order.dir !== "DOWN") {
             return reject(new Error('"dir" in ORDER must be either "UP" or "DOWN"'));
         }
 
-        if (!isArray(query.ORDER.keys)) {
+        if (!isArray(order.keys)) {
             return reject(new Error('"keys" is not array in ORDER'));
         }
 
-        return areValidIds(query, getOrderNames(query.ORDER)).then(() => {
+        return areValidIds(query, order.keys).then(() => {
             return resolve(true);
         }).catch((err) => {
             reject(err);
@@ -92,10 +94,10 @@ export function orders(queryData: QueryData[], order: QueryOrder) : QueryData[] 
     }
 }
 
-export function getOrderNames(order: QueryOrder): string[] {
-    // if (isString(order)) {
-    //    return [order];
-    //} else {
-        return order.keys;
-    //}
+export function standardizeOrder(order: any /*QueryOrder|string */): QueryOrder {
+    if (isString(order)) {
+        return { dir: "UP", keys: [order] };
+    } else {
+        return order;
+    }
 }

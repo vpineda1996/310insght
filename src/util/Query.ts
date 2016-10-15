@@ -13,7 +13,7 @@ import { hasIdInApply} from '../queryHelpers/querable'
 export interface QueryRequest {
     GET: string[];
     WHERE: {};
-    ORDER?: QueryOrder;
+    ORDER?: QueryOrder|string;
     GROUP?: string[];
     APPLY?: ApplyElement[];
     AS: string;
