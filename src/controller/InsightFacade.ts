@@ -58,12 +58,12 @@ export default class InsightFacade implements IInsightFacade {
         };
         return new Promise((resolve, reject) => {
             DatasetController.getInstance().process(id, content).then(function (result) {
-                Log.trace('RouteHandler::postDataset(..) - processed');
+                Log.trace('InsightFacade::postDataset(..) - processed');
                 res.code = result;
                 res.body = { success: true };
                 resolve(res);
             }).catch(function (error: Error) {
-                Log.trace('RouteHandler::postDataset(..) - ERROR: ' + error.message);
+                Log.trace('InsightFacade::postDataset(..) - ERROR: ' + error.message);
                 res.body = error;
                 reject(res);
             });
@@ -77,9 +77,9 @@ export default class InsightFacade implements IInsightFacade {
         };
         return DatasetController.getInstance().getDatasets().then((oDatasets) => {
             if (oDatasets[id]) {
-                Log.trace('RouteHandler::deleteDataset(..) - found dataset, deleting: ');
+                Log.trace('InsightFacade::deleteDataset(..) - found dataset, deleting: ');
                 return DatasetController.getInstance().removeDataset(id).then(() => {
-                    Log.trace('RouteHandler::deleteDataset(..) - deletion successful ');
+                    Log.trace('InsightFacade::deleteDataset(..) - deletion successful ');
                     return 204;
                 });
             } else return 404;
@@ -93,7 +93,7 @@ export default class InsightFacade implements IInsightFacade {
             res.body = { success: true };
             return res;
         }).catch(function (error: Error) {
-            Log.trace('RouteHandler::deleteDataset(..) - ERROR: ' + error.message);
+            Log.trace('InsightFacade::deleteDataset(..) - ERROR: ' + error.message);
             res.body = { error: error.message };
             throw res;
         });
@@ -118,7 +118,7 @@ export default class InsightFacade implements IInsightFacade {
                     }
                     resolve(res);
                 }).catch((err) => {
-                    Log.error('RouteHandler::postQuery(..) - ERROR: ' + err);
+                    Log.error('InsightFacade::postQuery(..) - ERROR: ' + err);
                     res.code = 400;
                     res.body = { error: err };
                     reject(res);

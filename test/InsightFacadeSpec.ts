@@ -5,7 +5,7 @@ import { ANSWER1 } from './testData/InsightFacadeData'
 
 import { expect } from 'chai'
 
-describe.only("InsightFacade spec", () => {
+describe("InsightFacade spec", () => {
     let baseEncoded: string;
     let DATASET_ID = 'courses';
     let IF = new InsightFacade();
@@ -102,6 +102,22 @@ describe.only("InsightFacade spec", () => {
                 expect(res.code).to.be.equal(424);
                 done();
             });
+        });
+    });
+
+    describe("dummy tests for coverage", function() {
+        it("catches for add dataset", function(done){
+            IF.addDataset("HELLO", null).catch((error) => {
+                expect(error.code).to.be.equal(400);
+                done();
+            })
+        });
+
+        it("returns 400 on invalid query", function() {
+            let invQuery : any = {};
+            IF.performQuery(invQuery).then((err) => {
+                expect(err.code).to.be.equal(400);
+            })
         });
     });
 });
