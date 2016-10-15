@@ -269,12 +269,9 @@ describe("QueryController", function () {
                     zip.file(JSONS[i]['result'][0]['Dept'] +JSONS[i]['result'][0]['Id'], JSON.stringify(JSONS[i]));
                 }
             }
-            console.info('generated zip');
             return zip.generateAsync(ZIP_OPTS).then((data) => {
-                console.info('parsed zip data', data);
                 return DatasetController.getInstance().process(ID, data);
             }).then((result) => {
-                console.info('prepopulate result', result);
                 return result < 400;
             }).catch((err:Error) => {
                 console.error(err);
