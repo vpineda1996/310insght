@@ -58,14 +58,14 @@ export default class InsightFacade implements IInsightFacade {
         };
         return new Promise((resolve, reject) => {
             DatasetController.getInstance().process(id, content).then(function (result) {
-                Log.trace('RouteHandler::postDataset(..) - processed');
+                Log.trace('InsightFacade::postDataset(..) - processed');
                 res.code = result;
                 res.body = { success: true };
                 resolve(res);
             }).catch(function (error: Error) {
-                Log.trace('RouteHandler::postDataset(..) - ERROR: ' + error.message);
+                Log.trace('InsightFacade::postDataset(..) - ERROR: ' + error.message);
                 res.body = error;
-                resolve(res);
+                reject(res);
             });
         });
     }
@@ -77,9 +77,9 @@ export default class InsightFacade implements IInsightFacade {
         };
         return DatasetController.getInstance().getDatasets().then((oDatasets) => {
             if (oDatasets[id]) {
-                Log.trace('RouteHandler::deleteDataset(..) - found dataset, deleting: ');
+                Log.trace('InsightFacade::deleteDataset(..) - found dataset, deleting: ');
                 return DatasetController.getInstance().removeDataset(id).then(() => {
-                    Log.trace('RouteHandler::deleteDataset(..) - deletion successful ');
+                    Log.trace('InsightFacade::deleteDataset(..) - deletion successful ');
                     return 204;
                 });
             } else return 404;
@@ -87,16 +87,15 @@ export default class InsightFacade implements IInsightFacade {
             if (code === 404) {
                 res.code = code;
                 res.body = { error: "dataset could not be found" };
-            } else {
-                res.code = code;
-                res.body = { success: true };
+                throw res;
             }
+            res.code = code;
+            res.body = { success: true };
             return res;
         }).catch(function (error: Error) {
-            Log.trace('RouteHandler::deleteDataset(..) - ERROR: ' + error.message);
-            res.code = 400;
+            Log.trace('InsightFacade::deleteDataset(..) - ERROR: ' + error.message);
             res.body = { error: error.message };
-            return res;
+            throw res;
         });
     }
 
@@ -113,20 +112,21 @@ export default class InsightFacade implements IInsightFacade {
                     res.body = qr;
                     if (qr.missing) {
                         res.code = 424;
+                        return reject(res);
                     } else {
                         res.code = 200;
                     }
                     resolve(res);
                 }).catch((err) => {
-                    Log.error('RouteHandler::postQuery(..) - ERROR: ' + err);
+                    Log.error('InsightFacade::postQuery(..) - ERROR: ' + err);
                     res.code = 400;
                     res.body = { error: err };
-                    resolve(res);
+                    reject(res);
                 });
             } else {
                 res.code = 400;
                 res.body = { error: 'invalid query' };
-                resolve(res);
+                reject(res);
             }
         });
     }

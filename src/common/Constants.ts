@@ -5,7 +5,7 @@ export const MCOMPARATORS = ['LT', 'GT', 'EQ'];
 export const SCOMPARATORS = ['IS'];
 export const LOGICCOMPARATORS = ['AND', 'OR'];
 export const NEGATORS = ['NOT'];
-export const LOGENABLE = false;
+export const LOGENABLE = true;
 export enum APPLYTOKENS {
     MAX,
     MIN,
