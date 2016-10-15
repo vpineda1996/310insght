@@ -88,14 +88,13 @@ describe("JSON Parser", function() {
         });
     });
 
-    it("saved the dataset", function(done) {
-        DS.getDataset('myData').then((datatable) => {
-            expect(datatable.columns.length).to.equal(8);
+    it("saved the dataset", function() {
+        return DS.getDataset('myData').then((datatable) => {
+            expect(datatable.columns.length).to.equal(9);
             return datatable.columns[0].getData();
         }).then((col0data) => {
             expect(col0data[0]).to.be.equal('cpsc');
             expect(col0data.length).to.be.equal(1);
-            done();
         });
     });
 
