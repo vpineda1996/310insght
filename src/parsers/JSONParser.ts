@@ -13,7 +13,8 @@ const COLUMNS: string[] = [
     'title',
     'pass',
     'fail',
-    'audit'
+    'audit',
+    'uuid'
 ];
 const COURSE_KEY_LEN = 4;
 
@@ -80,6 +81,7 @@ export default class JSONParser {
                                 datatable.columns[5].insertCellFast(this.getCoursePass(courseOffering));
                                 datatable.columns[6].insertCellFast(this.getCourseFail(courseOffering));
                                 datatable.columns[7].insertCellFast(this.getCourseAudit(courseOffering));
+                                datatable.columns[8].insertCellFast(this.getCourseUUID(courseOffering));
                             }
                         });
                     } else if (!listOfCourseYears.courses && !listOfCourseYears.result && listOfCourseYears.rank === undefined) {
@@ -137,5 +139,9 @@ export default class JSONParser {
     }
     private static getCourseAudit(courseOffering: any) {
         return courseOffering.Audit || 0;
+    }
+
+    private static getCourseUUID(courseOffering: any) {
+        return courseOffering.id || Math.floor(Math.random() * 100000000);
     }
 };
