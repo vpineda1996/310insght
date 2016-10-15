@@ -82,7 +82,7 @@ export default class RouteHandler {
                 return next();
             }).catch((err) => {
                 Log.error('RouteHandler::postQuery(..) - ERROR: ' + err);
-                res.json(400, {error: err});
+                res.json(400, {error: err.message});
             });
         } else {
             res.json(400, {error: 'invalid query'});

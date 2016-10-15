@@ -1,4 +1,4 @@
-import { areValidIds } from '../queryHelpers/querable'
+import { idsExistInGet } from '../queryHelpers/queryGet'
 
 import { MissingDatasets } from '../util/Errors'
 
@@ -27,11 +27,10 @@ export function isValidOrder(query: QueryRequest) : Promise<boolean> {
             return reject(new Error('"keys" is not array in ORDER'));
         }
 
-        return areValidIds(query, order.keys).then(() => {
-            return resolve(true);
-        }).catch((err) => {
-            reject(err);
-        });
+        if (!idsExistInGet(query, order.keys)) {
+            return reject(new Error(order.keys + ' includes unknown name'));
+        }
+        return resolve(true);
     });
 }
 
