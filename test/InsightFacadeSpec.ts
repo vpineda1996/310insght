@@ -5,7 +5,7 @@ import { ANSWER1, ANSWER2 } from './testData/InsightFacadeData'
 
 import { expect } from 'chai'
 
-describe.only("InsightFacade spec", function() {
+describe("InsightFacade spec", function() {
     let baseEncoded: string;
     let DATASET_ID = 'courses';
     let IF = new InsightFacade();
