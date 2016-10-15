@@ -65,7 +65,7 @@ export default class InsightFacade implements IInsightFacade {
             }).catch(function (error: Error) {
                 Log.trace('RouteHandler::postDataset(..) - ERROR: ' + error.message);
                 res.body = error;
-                resolve(res);
+                reject(res);
             });
         });
     }
@@ -87,16 +87,15 @@ export default class InsightFacade implements IInsightFacade {
             if (code === 404) {
                 res.code = code;
                 res.body = { error: "dataset could not be found" };
-            } else {
-                res.code = code;
-                res.body = { success: true };
+                throw res;
             }
+            res.code = code;
+            res.body = { success: true };
             return res;
         }).catch(function (error: Error) {
             Log.trace('RouteHandler::deleteDataset(..) - ERROR: ' + error.message);
-            res.code = 400;
             res.body = { error: error.message };
-            return res;
+            throw res;
         });
     }
 
@@ -113,6 +112,7 @@ export default class InsightFacade implements IInsightFacade {
                     res.body = qr;
                     if (qr.missing) {
                         res.code = 424;
+                        return reject(res);
                     } else {
                         res.code = 200;
                     }
@@ -121,12 +121,12 @@ export default class InsightFacade implements IInsightFacade {
                     Log.error('RouteHandler::postQuery(..) - ERROR: ' + err);
                     res.code = 400;
                     res.body = { error: err };
-                    resolve(res);
+                    reject(res);
                 });
             } else {
                 res.code = 400;
                 res.body = { error: 'invalid query' };
-                resolve(res);
+                reject(res);
             }
         });
     }
