@@ -144,6 +144,8 @@ function evaluates(key: string, query: {[s: string]: any}|any, datatable: Datata
                 reject(err);
             });
 
+        } else if (typeof key === 'undefined' && indices === null) {
+            resolve(null);
         } else {
             reject('wtf?');
         }
@@ -175,6 +177,9 @@ function getUniqueDatasetIds(ids : string[]) : string[] {
 // indices = [true, false, false, false, true]
 // ==> rowNumbers = [0, 4]
 function extractValidRowNumbers(indices: boolean[]) : number[] {
+    if (!indices) {
+        return null;
+    }
     let rowNumbers : number[] = [];
     indices.forEach((row: boolean, index: number) => {
         if (row) { rowNumbers.push(index); }
@@ -188,11 +193,11 @@ function extractValidRowNumbers(indices: boolean[]) : number[] {
 //   {courses_avg: [60, 70, 80]
 // ] in O(r * c)
 function getValues(queryColums: string[], rowNumbers: number[], datatable: Datatable) : Promise<any> {
-    let promises : Promise<any>[] = [];  
+    let promises : Promise<any>[] = [];
     queryColums.forEach((colName) => {
         promises.push(new Promise<any>((resolve, reject) => {
             datatable.getColumn(colName).getData().then((data: string[]|number[]) => {
-                let filteredData = rowNumbers.map((rn) => data[rn]);
+                let filteredData = rowNumbers ? rowNumbers.map((rn) => data[rn]) : data;
                 return resolve({ [colName] : filteredData });
             });
         }));
