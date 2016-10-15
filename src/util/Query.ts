@@ -8,6 +8,7 @@ import { isArray } from './Array'
 import { isHash } from './Object'
 import { isStringOrStringArray, isTypeString, isString, hasString, isNumber } from './String'
 import { MissingDatasets } from '../util/Errors'
+import { hasIdInApply} from '../queryHelpers/querable'
 
 export interface QueryRequest {
     GET: string[];

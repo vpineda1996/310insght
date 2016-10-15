@@ -31,6 +31,9 @@ export function areValidDatasetIds(queryIds: string[]) : Promise<boolean> {
     });
 }
 
+export function hasIdInApply(query: QueryRequest, id: string) : boolean {
+    return getApplyNames(query).includes(id);
+}
 export function isValidDatasetId(queryId: string): Promise<boolean> {
     return new Promise<boolean>((resolve, reject) => {
         DatasetController.getInstance().getDataset(queryId.split('_')[0]).then(datatable => {

@@ -5,7 +5,7 @@ import { renderTable } from '../queryHelpers/queryAs'
 
 import { areValidWhereIds, QueryRequest, QueryResponse, QueryData } from '../util/Query'
 import { MissingDatasets } from '../util/Errors'
-import GroupQuery from '../queryHelpers/GroupQuery';
+import { groupBy } from '../queryHelpers/GroupQuery';
 
 export default class QueryController {
 
@@ -21,7 +21,7 @@ export default class QueryController {
             }).then((queryData) => {
                 return [].concat.apply([], queryData);
             }).then((queryData : QueryData[]) => {
-                return GroupQuery.groupBy(query, queryData);
+                return groupBy(query, queryData);
             }).then((queryData : QueryData[]) => {
                 return orders(queryData, query.ORDER);
             }).then((queryData : QueryData[]) => {

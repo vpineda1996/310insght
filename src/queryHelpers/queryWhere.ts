@@ -6,6 +6,7 @@ import { Datatable } from "../common/Common";
 import { isStringOrStringArray } from '../util/String'
 import { areFilters, isAsTable, QueryRequest } from '../util/Query'
 import { getFirstKey, getFirst } from '../util/Object'
+import { getAllColumnTargetIds } from './queryApply'
 import Log from '../Util'
 
 
@@ -14,7 +15,7 @@ export function getQueryData(query: QueryRequest): Promise<any[]> {
 
     let where : any = query.WHERE;
 
-    let ids = getUniqueDatasetIds(query.GET);
+    let ids = getUniqueDatasetIds(getAllColumnTargetIds(query));
 
     let promises = ids.map((id: string, index: number) => {
         return new Promise<{}[]>((resolve, reject) => {
@@ -27,7 +28,7 @@ export function getQueryData(query: QueryRequest): Promise<any[]> {
                 return evaluates(getFirstKey(where), getFirst(where), _datatable, null);
             }).then((indices: boolean[]) => {
                 let rowNumbers = extractValidRowNumbers(indices);
-                return getValues(query.GET, rowNumbers, _datatable);
+                return getValues(getAllColumnTargetIds(query), rowNumbers, _datatable);
             }).then((res: {}[]) => {
                 return resolve(res);
             }).catch((err: Error) => {
@@ -186,18 +187,16 @@ function extractValidRowNumbers(indices: boolean[]) : number[] {
 //   {courses_id: [2, 1, 3],
 //   {courses_avg: [60, 70, 80]
 // ] in O(r * c)
-function getValues(columns: string[], rowNumbers: number[], datatable: Datatable) : Promise<any> {
-    let promises : Promise<any>[] = [];
-
-    columns.forEach((colName) => {
-        promises.push(new Promise<{}>((resolve, reject) => {
+function getValues(queryColums: string[], rowNumbers: number[], datatable: Datatable) : Promise<any> {
+    let promises : Promise<any>[] = [];  
+    queryColums.forEach((colName) => {
+        promises.push(new Promise<any>((resolve, reject) => {
             datatable.getColumn(colName).getData().then((data: string[]|number[]) => {
                 let filteredData = rowNumbers.map((rn) => data[rn]);
                 return resolve({ [colName] : filteredData });
             });
         }));
     });
-
     return Promise.all(promises);
 }
 
