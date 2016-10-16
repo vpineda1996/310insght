@@ -7,7 +7,7 @@ import fs = require('fs');
 import DatasetController from '../controller/DatasetController';
 import QueryController from '../controller/QueryController';
 
-import { isValidWhere } from '../queryHelpers/queryWhere';
+import { isFormatValid } from '../queryHelpers/querable';
 
 import { QueryRequest, QueryResponse } from '../util/Query';
 
@@ -70,7 +70,7 @@ export default class RouteHandler {
         Log.trace('RouteHandler::postQuery(..) - params: ' + JSON.stringify(req.params));
         let query: QueryRequest = req.params;
         let controller = new QueryController();
-        let isValid = isValidWhere(query);
+        let isValid = isFormatValid(query);
 
         if (isValid === true) {
             controller.query(query).then((qr: QueryResponse) => {

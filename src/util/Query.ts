@@ -97,10 +97,8 @@ export function isFilter(key: string, val: any): boolean {
 }
 
 export function areValidWhereIds(query: QueryRequest): Promise<boolean> {
-    console.info('areValidWhereIds');
     return new Promise<boolean>((resolve, reject) => {
         return areIdsValid(query.WHERE).then((isValid: any[]) => {
-            console.info(isValid);
             if (isValid[0]) {
                 resolve(true);
             } else {
@@ -118,11 +116,10 @@ function areIdsValid(query: {[s:string]:any}): Promise<any[]> {
         let promises: Promise<any[]>[] = [];
 
         for (let key in query) {
-            console.info(key, isWhereOperator(key));
-            if (isWhereOperator(key)) {
-                promises.push(areIdsValid(query[key]));
-            } else {
+            if ((isString(query[key]) || isNumber(query[key])) && !isWhereOperator(key)) {
                 promises.push(isValidId(key));
+            } else {
+                promises.push(areIdsValid(query[key]));
             }
         }
         return combineValidIds(promises).then(resolve);
@@ -131,11 +128,13 @@ function areIdsValid(query: {[s:string]:any}): Promise<any[]> {
 
 function isValidId(id: string): Promise<any[]> {
     return new Promise<any[]>((resolve, reject) => {
-        if (isValidDatasetId(id)) {
-            resolve([true, []]);
-        } else {
-            resolve([false, [id]]);
-        }
+        isValidDatasetId(id).then((isValid) => {
+            if (isValid) {
+                resolve([true, []]);
+            } else {
+                resolve([false, [id]]);
+            }
+        });
     });
 }
 

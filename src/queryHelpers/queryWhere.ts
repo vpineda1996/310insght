@@ -3,8 +3,7 @@ import { MCOMPARATORS, SCOMPARATORS, LOGICCOMPARATORS, NEGATORS } from '../commo
 import DatasetController from "../controller/DatasetController";
 import { Datatable } from "../common/Common";
 
-import { isStringOrStringArray } from '../util/String'
-import { areFilters, isAsTable, QueryRequest } from '../util/Query'
+import { QueryRequest } from '../util/Query'
 import { getFirstKey, getFirst } from '../util/Object'
 import { getAllColumnTargetIds } from './queryApply'
 import Log from '../Util'
@@ -23,8 +22,6 @@ export function getQueryData(query: QueryRequest): Promise<any[]> {
 
             return DatasetController.getInstance().getDataset(id).then((datatable: Datatable) => {
                 _datatable = datatable;
-                return datatable.getColumn(query.GET[index]).getData();
-            }).then((columnData: string[]|number[]) => {
                 return evaluates(getFirstKey(where), getFirst(where), _datatable, null);
             }).then((indices: boolean[]) => {
                 let rowNumbers = extractValidRowNumbers(indices);
@@ -205,21 +202,3 @@ function getValues(queryColums: string[], rowNumbers: number[], datatable: Datat
     return Promise.all(promises);
 }
 
-
-const QUERY_REQUIREMENTS: { [s: string]: Function } = {
-    'GET': isStringOrStringArray,
-    'WHERE': areFilters,
-    'AS': isAsTable
-};
-
-export function isValidWhere(query: QueryRequest): boolean {
-    if (typeof query !== 'undefined' && query !== null && Object.keys(query).length > 0) {
-        let keys = Object.keys(query);
-        let q: any = query;
-
-        return Object.keys(QUERY_REQUIREMENTS).every((req_key: string) => {
-            return (keys.indexOf(req_key) !== -1) && QUERY_REQUIREMENTS[req_key](req_key, q[req_key]);
-        });
-    }
-    return false;
-}
