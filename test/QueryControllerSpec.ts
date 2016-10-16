@@ -78,8 +78,33 @@ describe("QueryController", function () {
     function ARITH_ARRAY_EQUAL(arr1:{}[], arr2:{}[]) { return arr1.filter(arr => arr2.includes(arr)) }
 
     // HACK ORDER_KEYS need to be iterated over
-    function ARITH_ORDER(jsons:any) { return ARITH_GET_INDEX_ORDER(jsons, capitalize(ORDER_KEYS[0].split('_')[1])).map((i:any) => jsons[i]); }
-    function ARITH_GET_INDEX_ORDER(jsons:{}[], c:any) { return jsons.map((j,i) => [j,i]).sort((a:any,b:any) => isNumber(a[0][c])&&isNumber(b[0][c]) ? (parseFloat(a[0][c])>parseFloat(b[0][c]) ? 1 : -1) : (a[0][c] > b[0][c] ? 1 : -1)).map((v:any) => v[1]) }
+    function ARITH_ORDER(jsons:any) { let flat = flatten(jsons); return flat.map((v: any,i: any) => i).sort((a: any, b: any) => sort(jsons, a, b, ORDER_KEYS, ORDER_DIR)).map((i:any) => flat[i]); }
+
+    function sort(jsons: {[s:string]:any}[], a_index: any, b_index: any, col: string[], dir: string) {
+        if (col.length == 0) return 0;
+
+        let a = jsons[a_index][capitalize(col[0].split('_')[1])];
+        let b = jsons[b_index][capitalize(col[0].split('_')[1])];
+        let before = dir === "UP" ? 1 : -1;
+        let after = dir === "DOWN" ? -1 : 1;
+
+        return tryNumber();
+
+        function tryNumber(): number {
+          if (isNumber(a) && isNumber(b)) {
+              if (parseFloat(a) > parseFloat(b)) return before;
+              else if (parseFloat(a) < parseFloat(b)) return after;
+              else return sort(jsons, a_index, b_index, col.slice(1, col.length), dir);
+          } else {
+              return tryString();
+          }
+        }
+        function tryString(): number {
+            if (a > b) return before;
+            else if (a < b) return after;
+            else return sort(jsons, a_index, b_index, col.slice(1, col.length), dir);
+        }
+    }
 
     function QUERY_RESPONSE(jsons:{}[]) { return jsons.map((json:any) => GET.reduce((newJson:any, col:string) => { newJson[col] = json[capitalize(col.split('_')[1])]; return newJson }, {})) }
 
