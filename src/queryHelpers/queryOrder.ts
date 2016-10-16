@@ -74,7 +74,7 @@ export function orders(queryData: QueryData[], order: QueryOrder) : QueryData[] 
                 } else if (d < 0) {
                     return after;
                 } else {
-                    return sort(a, b, sortBy.slice(1, sortBy.length));
+                    return sort(x1, x2, sortBy.slice(1, sortBy.length));
                 }
             } else {
                 return tryString();
@@ -87,7 +87,7 @@ export function orders(queryData: QueryData[], order: QueryOrder) : QueryData[] 
             } else if (a < b) {
                 return after;
             } else {
-                return sort(a, b, sortBy.slice(1, sortBy.length));
+                return sort(x1, x2, sortBy.slice(1, sortBy.length));
             }
         }
     }
