@@ -7,7 +7,7 @@ import DatasetController from "../src/controller/DatasetController";
 import QueryController from "../src/controller/QueryController";
 import { QueryRequest, QueryResponse, QueryOrder } from '../src/util/Query';
 
-import { isValidWhere } from '../src/queryHelpers/queryWhere';
+import { isFormatValid } from '../src/queryHelpers/querable';
 
 import Log from "../src/Util";
 import { isNumber } from '../src/util/String';
@@ -181,7 +181,7 @@ describe("QueryController", function () {
         return QUERY;
     }
     function isValid() : boolean {
-        return isValidWhere(query());
+        return isFormatValid(query());
     }
 
     beforeEach(function (done) {
