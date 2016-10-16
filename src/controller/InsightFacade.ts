@@ -4,7 +4,7 @@
 import QueryController from '../controller/QueryController';
 import DatasetController from './DatasetController'
 
-import { isValidWhere } from '../queryHelpers/queryWhere';
+import { isFormatValid } from '../queryHelpers/querable';
 import { QueryRequest, QueryResponse } from '../util/Query';
 
 import Log from "../Util";
@@ -105,7 +105,7 @@ export default class InsightFacade implements IInsightFacade {
             body: { error: "unknown error happened" }
         };
         let controller = new QueryController();
-        let isValid = isValidWhere(query);
+        let isValid = isFormatValid(query);
         return new Promise((resolve, reject) => {
             if (isValid === true) {
                 controller.query(query).then((qr: QueryResponse) => {
