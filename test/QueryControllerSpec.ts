@@ -78,31 +78,47 @@ describe("QueryController", function () {
     function ARITH_ARRAY_EQUAL(arr1:{}[], arr2:{}[]) { return arr1.filter(arr => arr2.includes(arr)) }
 
     // HACK ORDER_KEYS need to be iterated over
-    function ARITH_ORDER(jsons:any) { let flat = flatten(jsons); return flat.map((v: any,i: any) => i).sort((a: any, b: any) => sort(jsons, a, b, ORDER_KEYS, ORDER_DIR)).map((i:any) => flat[i]); }
+    function ARITH_ORDER(jsons:any) {
+        let flat: any[];
+        return (flat = flatten(jsons)).
+            map((v: any,i: any) => i).
+            sort((a: any, b: any) => sort(jsons,a,b,ORDER_KEYS.map(k => capitalize(k.split('_')[1])),ORDER_DIR)).
+            map((i:any) => flat[i]);
+    }
 
     function sort(jsons: {[s:string]:any}[], a_index: any, b_index: any, col: string[], dir: string) {
         if (col.length == 0) return 0;
 
-        let a = jsons[a_index][capitalize(col[0].split('_')[1])];
-        let b = jsons[b_index][capitalize(col[0].split('_')[1])];
+        let a = jsons[a_index][col[0]];
+        let b = jsons[b_index][col[0]];
         let before = dir === "UP" ? 1 : -1;
-        let after = dir === "DOWN" ? -1 : 1;
+        let after = dir === "UP" ? -1 : 1;
 
         return tryNumber();
 
-        function tryNumber(): number {
-          if (isNumber(a) && isNumber(b)) {
-              if (parseFloat(a) > parseFloat(b)) return before;
-              else if (parseFloat(a) < parseFloat(b)) return after;
-              else return sort(jsons, a_index, b_index, col.slice(1, col.length), dir);
-          } else {
-              return tryString();
-          }
+        function tryNumber():number {
+            if (isNumber(a) && isNumber(b)) {
+                let d = parseFloat(a) - parseFloat(b);
+                if (d > 0) {
+                    return before;
+                } else if (d < 0) {
+                    return after;
+                } else {
+                    return sort(jsons, a_index, b_index,col.slice(1,col.length), dir);
+                }
+            } else {
+                return tryString();
+            }
         }
-        function tryString(): number {
-            if (a > b) return before;
-            else if (a < b) return after;
-            else return sort(jsons, a_index, b_index, col.slice(1, col.length), dir);
+
+        function tryString():number {
+            if (a > b) {
+                return before;
+            } else if (a < b) {
+                return after;
+            } else {
+                return sort(jsons, a_index, b_index,col.slice(1,col.length), dir);
+            }
         }
     }
 

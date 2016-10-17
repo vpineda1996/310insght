@@ -116,12 +116,14 @@ function areIdsValid(query: {[s:string]:any}): Promise<any[]> {
         let promises: Promise<any[]>[] = [];
 
         for (let key in query) {
-            if ((isString(query[key]) || isNumber(query[key])) && !isWhereOperator(key)) {
-                promises.push(isValidId(key));
-            } else if (isHash(query[key])) {
+            if (isHash(query[key])) {
                 promises.push(areIdsValid(query[key]));
             } else {
-                promises.push(new Promise<any[]>((resolve, reject) => resolve([false, query[key]])));
+                if (!isWhereOperator(key)) {
+                    promises.push(isValidId(key));
+                } else {
+                    promises.push(new Promise<any[]>((resolve, reject) => resolve([false, query[key]])));
+                }
             }
         }
         return combineValidIds(promises).then(resolve);
