@@ -36,9 +36,10 @@ interface Columns {
 }
 
 export function isValidGroupQuery(q: QueryRequest): Promise<boolean> {
-    if(q.GROUP || q.APPLY){
-            validateExistanceOfBoth();
-            validateAtLeastOneGroup();
+    if (q.GROUP || q.APPLY) {
+        validateExistanceOfBoth();
+        validateAtLeastOneGroup();
+        validateUniquenessOfApply();
         return validateColsInApplyValid().then(() => {
             return validateColsInGroup();
         }).then(() => {
@@ -48,17 +49,29 @@ export function isValidGroupQuery(q: QueryRequest): Promise<boolean> {
     return Promise.resolve(true);
 
     function validateExistanceOfBoth() {
-        if(!q.APPLY || !q.GROUP) throw new Error ("Both need to exist");
+        if (!q.APPLY || !q.GROUP) throw new Error("Both need to exist");
     }
     function validateAtLeastOneGroup() {
-        if(!q.GROUP.length) throw new Error ("You need at least one group by!");
+        if (!q.GROUP.length) throw new Error("You need at least one group by!");
     }
     function validateColsInApplyValid() {
         let targs = getApplyTargets(q);
         return areValidDatasetIds(targs);
     }
-    function validateColsInGroup () {
-         return areValidDatasetIds(q.GROUP);
+    function validateColsInGroup() {
+        return areValidDatasetIds(q.GROUP);
+    }
+
+    function validateUniquenessOfApply() {
+        let applyNames = getApplyNames(q);
+        let monkey: { [key: string]: number } = {};
+        applyNames.reduce((map, name) => {
+            map[name] = map[name] === undefined ? 1 : map[name] + 1;
+            return map;
+        }, monkey);
+        for(let donkey in monkey){
+            if(monkey[donkey] !== 1) throw new Error("Uniqueness of apply violated!");
+        }
     }
 
     function validateAllElemInGetInGroupOrApply() {
@@ -68,12 +81,12 @@ export function isValidGroupQuery(q: QueryRequest): Promise<boolean> {
 
         Log.trace("GroupQuery::validateAllElemInGetInGroupOrApply == " + JSON.stringify(get) + " " + JSON.stringify(targs))
 
-        if(get.length !== targs.length) {
+        if (get.length !== targs.length) {
             Log.trace("Throwing missmatch");
             throw new Error("Mismatch in get and target columns");
         }
         get.forEach(getString => {
-            if(!targs.includes(getString)) {
+            if (!targs.includes(getString)) {
                 Log.trace("Throwing get");
                 throw new Error(getString + " column is not in either group or apply");
             }
@@ -115,7 +128,7 @@ export function groupBy(query: QueryRequest, queryData: QueryData[]): Promise<Qu
         let colNames = query.GET;
         let colIndecesOfGroup = getIndecesOfGroupByColNames(colNames, groupCols);
         let colIndecesOfAggr = getIndecesOfAggByColNames(colNames, aggregateCols);
-        let newQueryData = createEmptyQueryData(replaceNamesWithNewAggFiels(colNames, query));
+        let newQueryData = createEmptyQueryData(colNames);
 
         // Return to QueryData[] form from AggregatedRows
         for (var rowKey in oAcum) {
@@ -171,14 +184,6 @@ export function groupBy(query: QueryRequest, queryData: QueryData[]): Promise<Qu
     function getKey(groupCols: Columns, i: number): string {
         return getGroupKeys(groupCols, i).join("_");
     }
-}
-
-function replaceNamesWithNewAggFiels(names: string[], query: QueryRequest): string[] {
-    var aTargets = getApplyTargets(query);
-    var aNewNames = getApplyNames(query);
-    return names.map((sA) => {
-        return aTargets.indexOf(sA) !== -1 ? aNewNames[aTargets.indexOf(sA)] : sA;
-    });
 }
 
 function createEmptyQueryData(colNames: string[]): QueryData[] {
