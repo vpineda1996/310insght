@@ -109,10 +109,11 @@ export default class InsightFacade implements IInsightFacade {
             res.body = qr;
             if (qr.missing) {
                 res.code = 424;
+                throw res;
             } else {
                 res.code = 200;
+                return res;
             }
-            return res;
         }).catch((err) => {
             Log.error('InsightFacade::postQuery(..) - ERROR: ' + err);
             res.code = 400;
