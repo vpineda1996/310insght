@@ -5,7 +5,7 @@ import { renderTable } from '../queryHelpers/queryAs'
 
 import { areValidWhereIds, QueryRequest, QueryResponse, QueryData } from '../util/Query'
 import { MissingDatasets } from '../util/Errors'
-import { groupBy } from '../queryHelpers/GroupQuery';
+import { groupBy, isValidGroupQuery } from '../queryHelpers/GroupQuery';
 
 export default class QueryController {
 
@@ -18,6 +18,8 @@ export default class QueryController {
 
             return areValidIds(query, query.GET).then(() => {
                 return areValidWhereIds(query);
+            }).then(() => {
+                return isValidGroupQuery(query);
             }).then(() => {
                 return isValidOrder(query);
             }).then(() => {

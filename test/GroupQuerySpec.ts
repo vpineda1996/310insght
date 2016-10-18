@@ -1,4 +1,4 @@
-import { groupBy } from '../src/queryHelpers/GroupQuery';
+import { groupBy, isValidGroupQuery } from '../src/queryHelpers/GroupQuery';
 import {expect} from 'chai';
 
 describe("GroupQuery", function () {
@@ -129,6 +129,64 @@ describe("GroupQuery", function () {
                 { courseAverage: [78, 100] },
                 { course_id: [310, 320] }
             ]);
+        });
+    });
+
+    describe("throws on invalid queries", function() {
+
+        it("fails for invalid ids", function(done) {
+            let query: any = {
+                "GET": [ "course_id"],
+                "GROUP": ["course_id"],
+                "APPLY": []
+            }
+            isValidGroupQuery(query).catch((e) => {
+                expect(e.missing).to.exist;
+                done();
+            });
+        });
+        
+        it("fails if group emmpty", function(done) {
+            let query: any = {
+                "GET": [ "course_id"],
+                "GROUP": [],
+                "APPLY": []
+            }
+
+            try{
+                isValidGroupQuery(query);
+            } catch(e) {
+                expect(e).to.exist;
+                done();
+            }
+        });
+
+        it("fails if apply not present", function(done) {
+            let query: any = {
+                "GET": [ "course_id"],
+                "GROUP": []
+            }
+
+            try{
+                isValidGroupQuery(query);
+            } catch(e) {
+                expect(e).to.exist;
+                done();
+            }
+        });
+
+        it("fails if group not present but apply is", function(done) {
+            let query: any = {
+                "GET": [ "course_id"],
+                "APPLY": []
+            }
+
+            try{
+                isValidGroupQuery(query);
+            } catch(e) {
+                expect(e).to.exist;
+                done();
+            }
         });
     });
 

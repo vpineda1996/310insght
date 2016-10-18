@@ -7,6 +7,7 @@ import { areFilters, isAsTable, QueryRequest, QueryResponse, QueryData, ApplyEle
 import { getFirstKey, getFirst } from '../util/Object'
 import { isNumber } from '../util/String'
 import { getApplyTargets, getApplyNames, AGGREGATE_FUNCTIONS } from './queryApply'
+import { areValidDatasetIds } from './querable'
 import { MissingDatasets } from '../util/Errors'
 import Log from "../Util";
 
@@ -34,8 +35,53 @@ interface Columns {
     };
 }
 
-export function isValidGroupQuery(q: QueryRequest): boolean {
-    return true;
+export function isValidGroupQuery(q: QueryRequest): Promise<boolean> {
+    if(q.GROUP || q.APPLY){
+            validateExistanceOfBoth();
+            validateAtLeastOneGroup();
+        return validateColsInApplyValid().then(() => {
+            return validateColsInGroup();
+        }).then(() => {
+            return validateAllElemInGetInGroupOrApply();
+        });
+    }
+    return Promise.resolve(true);
+
+    function validateExistanceOfBoth() {
+        if(!q.APPLY || !q.GROUP) throw new Error ("Both need to exist");
+    }
+    function validateAtLeastOneGroup() {
+        if(!q.GROUP.length) throw new Error ("You need at least one group by!");
+    }
+    function validateColsInApplyValid() {
+        let targs = getApplyTargets(q);
+        return areValidDatasetIds(targs);
+    }
+    function validateColsInGroup () {
+         return areValidDatasetIds(q.GROUP);
+    }
+
+    function validateAllElemInGetInGroupOrApply() {
+        let get = q.GET;
+        let targs = getApplyNames(q);
+        Array.prototype.push.apply(targs, q.GROUP);
+
+        Log.trace("GroupQuery::validateAllElemInGetInGroupOrApply == " + JSON.stringify(get) + " " + JSON.stringify(targs))
+
+        if(get.length !== targs.length) {
+            Log.trace("Throwing missmatch");
+            throw new Error("Mismatch in get and target columns");
+        }
+        get.forEach(getString => {
+            if(!targs.includes(getString)) {
+                Log.trace("Throwing get");
+                throw new Error(getString + " column is not in either group or apply");
+            }
+        })
+        return true;
+    }
+
+
 };
 
 export function groupBy(query: QueryRequest, queryData: QueryData[]): Promise<QueryData[]> | QueryData[] {
