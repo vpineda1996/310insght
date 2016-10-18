@@ -12,6 +12,10 @@ export default class QueryController {
     public query(query: QueryRequest) : Promise<QueryResponse> {
         return new Promise<QueryResponse>((resolve, reject) => {
 
+            if (!isFormatValid(query)) {
+                throw new Error('invalid format of WHERE');
+            }
+
             return areValidIds(query, query.GET).then(() => {
                 return areValidWhereIds(query);
             }).then(() => {
