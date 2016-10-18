@@ -1,7 +1,7 @@
 import InsightFacade from '../src/controller/InsightFacade'
 
 import fs = require('fs');
-import { ANSWER1, ANSWER2 } from './testData/InsightFacadeData'
+import { ANSWER1, ANSWER2, ANS4 } from './testData/InsightFacadeData'
 
 import { expect } from 'chai'
 
@@ -42,10 +42,10 @@ describe("InsightFacade spec", function() {
                     "render": "TABLE",
                     "result": [
                         {
-                            "courses_dept": "cpsc",
-                            "courseAverage": 77.60108387096773,
-                            "courseMax": 95,
-                            "courseCount": 53
+                        "courses_dept": "cpsc",
+                        "courseAverage": 77.6,
+                        "courseMax": 95,
+                        "courseCount": 53
                         }
                     ]
                 });
@@ -84,6 +84,54 @@ describe("InsightFacade spec", function() {
                 expect(res.code).to.be.equal(200);
             });
         });
+
+        it("supports fancy conditions 1", function() {
+            let query: any = {
+                "GET": ["courses_fail", "numSections", "average"],
+                "WHERE": {"AND": [
+                        {"LT" : {"courses_id" : 499}},
+                        {"GT" : {"courses_id" : 200}},
+                        {"OR" : [
+                            {"IS" : {"courses_dept" : "math"}},
+                            {"IS" : {"courses_dept" : "cpsc"}}
+                        ]}
+                    ]},
+                "GROUP": [ "courses_fail" ],
+                "APPLY": [ {"numSections": {"COUNT": "courses_uuid"}}, {"average": {"AVG": "courses_avg"}} ],
+                "ORDER": { "dir": "DOWN", "keys": [ "numSections" ,"average"]},
+                "AS":"TABLE"
+            }
+
+            return IF.performQuery(query).then((res) => {
+                expect(res.body).to.be.deep.equal(ANS4);
+                expect(res.code).to.be.equal(200);
+            });
+        });
+
+        it("supports fancy conditions 2", function() {
+            let query: any = {  
+            "GET":[ "courses_id","coursesAvg"],
+            "WHERE":{"AND":[  
+                        {"IS":{  "courses_dept":"cpsc"}},
+                        {"GT":{"courses_avg":80}}
+                    ]
+            },
+            "GROUP":[ "courses_id" ],
+            "APPLY":[ 
+                { "coursesAvg":{ "AVG":"courses_id" }}
+            ],
+            "ORDER":{ "dir":"UP",
+                "keys":[ "courses_id" ]
+            },
+            "AS":"TABLE"
+            }
+
+            return IF.performQuery(query).then((res) => {
+                expect(res.code).to.be.equal(200);
+            });
+        });
+
+        
 
         it("removes the dataset", function () {
             return IF.removeDataset(DATASET_ID).then((res) => {
