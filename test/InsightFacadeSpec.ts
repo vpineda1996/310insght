@@ -43,7 +43,7 @@ describe("InsightFacade spec", function() {
                     "result": [
                         {
                         "courses_dept": "cpsc",
-                        "courseAverage": "77.60",
+                        "courseAverage": 77.6,
                         "courseMax": 95,
                         "courseCount": 53
                         }
@@ -189,13 +189,34 @@ describe("InsightFacade spec", function() {
 
             it("fails if column nmae fore apply is invalid", function(){
                 let query: any = {
-                    "GET": ["coursesDept", "courseAverage", "course_Max", "courseCount"],
+                    "GET": ["courses_dept", "courseAverage", "course_Max", "courseCount"],
                     "WHERE": { "IS": { "courses_dept": "cpsc" } },
-                    "GROUP": ["coursesDept"],
+                    "GROUP": ["courses_dept"],
                     "APPLY": [
                         { "courseAverage": { "AVG": "courses_avg" } },
                         { "coursesDept": { "AVG": "courses_avg" } },
                         { "course_Max": { "MAX": "courses_avg" } }, 
+                        { "courseCount": { "COUNT": "courses_id" } }
+                    ],
+                    "ORDER": { "dir": "DOWN", "keys": ["courseAverage"] },
+                    "AS": "TABLE"
+                }
+
+                return IF.performQuery(query).catch((res) => {
+                    expect(res.error).to.be.equal("Invalid column name in apply, dont use undescores!");
+                    expect(res.code).to.be.equal(400);
+                });
+            });
+
+            it("fails if column nmae fore apply is invalid with double underscore", function(){
+                let query: any = {
+                    "GET": ["courses_dept", "courseAverage", "__Max", "courseCount"],
+                    "WHERE": { "IS": { "courses_dept": "cpsc" } },
+                    "GROUP": ["courses_dept"],
+                    "APPLY": [
+                        { "courseAverage": { "AVG": "courses_avg" } },
+                        { "coursesDept": { "AVG": "courses_avg" } },
+                        { "__Max": { "MAX": "courses_avg" } }, 
                         { "courseCount": { "COUNT": "courses_id" } }
                     ],
                     "ORDER": { "dir": "DOWN", "keys": ["courseAverage"] },

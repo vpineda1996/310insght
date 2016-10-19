@@ -63,7 +63,7 @@ export function isValidGroupQuery(q: QueryRequest): Promise<boolean> {
             ac[next] = true;
             return ac;
         }, oMagicMap);
-        q.GET.filter((str) => str.split("_").length !== 2).forEach((str) => {
+        q.GET.filter((str) => !str.includes("_")).forEach((str) => {
             if(oMagicMap[str]) delete oMagicMap[str];
             else throw new Error("Repeated cols in apply names!" + str);
         });
@@ -73,7 +73,8 @@ export function isValidGroupQuery(q: QueryRequest): Promise<boolean> {
 
     function validateColsInGroup() {
         q.GROUP.forEach((str) => {
-            if(str.split("_").length !== 2) throw new Error("Invalid column name!");
+            let arrSplit = str.split("_");
+            if( arrSplit.length !== 2 || arrSplit[0].length < 1 || arrSplit[1].length < 1 ) throw new Error("Invalid column name!");
         });
         return areValidDatasetIds(q.GROUP);
     }

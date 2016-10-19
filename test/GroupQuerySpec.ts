@@ -24,7 +24,7 @@ describe("GroupQuery", function () {
         var res = groupBy(query, aQueryData);
         expect(res).to.be.deep.equal([
             { course_id: [310, 320] },
-            { courseAverage: ["75.00", "100.00"] }
+            { courseAverage: [75 , 100] }
         ]);
     });
 
@@ -111,7 +111,7 @@ describe("GroupQuery", function () {
             expect(res).to.be.deep.equal([
                 { course_id: [310, 320] },
                 { dept: [3, 1] },
-                { courseAverage: ["78.00", "100.00"] }
+                { courseAverage: [78, 100] }
             ]);
         });
 
@@ -126,7 +126,7 @@ describe("GroupQuery", function () {
 
             var res = groupBy(query, aQueryData);
             expect(res).to.be.deep.equal([
-                { courseAverage: ["78.00", "100.00"] },
+                { courseAverage: [78, 100] },
                 { course_id: [310, 320] }
             ]);
         });
