@@ -105,20 +105,29 @@ export default class InsightFacade implements IInsightFacade {
             body: { error: "unknown error happened" }
         };
         let controller = new QueryController();
-        return controller.query(query).then((qr: QueryResponse) => {
-            res.body = qr;
-            if (qr.missing) {
-                res.code = 424;
-                throw res;
+        let isValid = isFormatValid(query);
+        return new Promise((resolve, reject) => {
+            if (isValid === true) {
+                controller.query(query).then((qr: QueryResponse) => {
+                    res.body = qr;
+                    if (qr.missing) {
+                        res.code = 424;
+                        return reject(res);
+                    } else {
+                        res.code = 200;
+                    }
+                    resolve(res);
+                }).catch((err) => {
+                    Log.error('InsightFacade::postQuery(..) - ERROR: ' + err);
+                    res.code = 400;
+                    res.body = { error: err };
+                    reject(res);
+                });
             } else {
-                res.code = 200;
-                return res;
+                res.code = 400;
+                res.body = { error: 'invalid query' };
+                reject(res);
             }
-        }).catch((err) => {
-            Log.error('InsightFacade::postQuery(..) - ERROR: ' + err);
-            res.code = 400;
-            res.body = { error: err };
-            throw res;
         });
     }
 }
