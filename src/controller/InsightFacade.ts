@@ -11,7 +11,8 @@ import Log from "../Util";
 
 export interface InsightResponse {
     code: number;
-    body: {}; // this is what you would return to a requestee in the REST body
+    body?: {}; // this is what you would return to a requestee in the REST body
+    error?: string|{}; // this is what you would return to a requestee in the REST body
 }
 
 export interface IInsightFacade {
@@ -53,8 +54,7 @@ export default class InsightFacade implements IInsightFacade {
 
     public addDataset(id: string, content: string): Promise<InsightResponse> {
         let res: InsightResponse = {
-            code: 400,
-            body: { error: "unknown error happened" }
+            code: 400
         };
         return new Promise((resolve, reject) => {
             DatasetController.getInstance().process(id, content).then(function (result) {
@@ -64,7 +64,7 @@ export default class InsightFacade implements IInsightFacade {
                 resolve(res);
             }).catch(function (error: Error) {
                 Log.trace('InsightFacade::postDataset(..) - ERROR: ' + error.message);
-                res.body = error;
+                res.error = error.message;
                 reject(res);
             });
         });
@@ -72,8 +72,7 @@ export default class InsightFacade implements IInsightFacade {
 
     public removeDataset(id: string): Promise<InsightResponse> {
         let res: InsightResponse = {
-            code: 400,
-            body: { error: "unknown error happened" }
+            code: 400
         };
         return DatasetController.getInstance().getDatasets().then((oDatasets) => {
             if (oDatasets[id]) {
@@ -86,7 +85,7 @@ export default class InsightFacade implements IInsightFacade {
         }).then((code: number) => {
             if (code === 404) {
                 res.code = code;
-                res.body = { error: "dataset could not be found" };
+                res.error = "dataset could not be found";
                 throw res;
             }
             res.code = code;
@@ -94,38 +93,38 @@ export default class InsightFacade implements IInsightFacade {
             return res;
         }).catch(function (error: Error) {
             Log.trace('InsightFacade::deleteDataset(..) - ERROR: ' + error.message);
-            res.body = { error: error.message };
+            res.error = error.message;
             throw res;
         });
     }
 
     public performQuery(query: QueryRequest): Promise<InsightResponse> {
         let res: InsightResponse = {
-            code: 400,
-            body: { error: "unknown error happened" }
+            code: 400
         };
         let controller = new QueryController();
         let isValid = isFormatValid(query);
         return new Promise((resolve, reject) => {
             if (isValid === true) {
                 controller.query(query).then((qr: QueryResponse) => {
-                    res.body = qr;
                     if (qr.missing) {
                         res.code = 424;
+                        res.error = { missing: qr.missing };
                         return reject(res);
                     } else {
                         res.code = 200;
+                        res.body = qr;
+                        return resolve(res);
                     }
-                    resolve(res);
                 }).catch((err) => {
                     Log.error('InsightFacade::postQuery(..) - ERROR: ' + err);
                     res.code = 400;
-                    res.body = { error: err };
+                    res.error = err.message;
                     reject(res);
                 });
             } else {
                 res.code = 400;
-                res.body = { error: 'invalid query' };
+                res.error = 'invalid query';
                 reject(res);
             }
         });
