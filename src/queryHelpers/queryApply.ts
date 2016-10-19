@@ -36,13 +36,13 @@ export const AGGREGATE_FUNCTIONS: any = {
     COUNT: COUNT
 }
 
-function AVG(arr: Array<number>): number {
-    if(arr.length === 0 ) return 0;
+function AVG(arr: Array<number>): string {
+    if(arr.length === 0 ) return "0";
     let avg = arr.reduce((iAccum, curVal) => {
         iAccum += curVal;
         return iAccum;
     }, 0.0) / arr.length;
-    return Number(avg.toFixed(2));
+    return avg.toFixed(2);
 }
 
 function COUNT(arr: Array<string | number>) {

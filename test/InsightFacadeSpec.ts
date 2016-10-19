@@ -1,7 +1,7 @@
 import InsightFacade from '../src/controller/InsightFacade'
 
 import fs = require('fs');
-import { ANSWER1, ANSWER2, ANS4 } from './testData/InsightFacadeData'
+import { ANSWER1, ANSWER2, ANS4, ANS5, ANS6, ANS7 } from './testData/InsightFacadeData'
 
 import { expect } from 'chai'
 
@@ -43,7 +43,7 @@ describe("InsightFacade spec", function() {
                     "result": [
                         {
                         "courses_dept": "cpsc",
-                        "courseAverage": 77.6,
+                        "courseAverage": "77.60",
                         "courseMax": 95,
                         "courseCount": 53
                         }
@@ -131,9 +131,93 @@ describe("InsightFacade spec", function() {
             });
         });
 
-        
+        describe("group by failures", () => {
+            it("fails if empty group", function(){
+                let query: any = {
+                    "GET": ["courses_dept", "courseAverage", "courseMax", "courseCount"],
+                    "WHERE": { "IS": { "courses_dept": "cpsc" } },
+                    "GROUP": [],
+                    "APPLY": [
+                        { "courseAverage": { "AVG": "courses_avg" } },
+                        { "courseMax": { "MAX": "courses_avg" } }, 
+                        { "courseCount": { "COUNT": "courses_id" } }
+                    ],
+                    "ORDER": { "dir": "DOWN", "keys": ["courseAverage"] },
+                    "AS": "TABLE"
+                }
 
-        it("removes the dataset", function () {
+                return IF.performQuery(query).catch((res) => {
+                    expect(res.code).to.be.equal(400);
+                });
+            });
+
+            it("fails if elements in get not specified", function(){
+                let query: any = {
+                    "GET": ["courses_dept", "courseAverage", "courseMax", "courseCount"],
+                    "WHERE": { "IS": { "courses_dept": "cpsc" } },
+                    "GROUP": ["courses_dept"],
+                    "APPLY": [],
+                    "ORDER": { "dir": "DOWN", "keys": ["courseAverage"] },
+                    "AS": "TABLE"
+                }
+
+                return IF.performQuery(query).catch((res) => {
+                    expect(res.code).to.be.equal(424);
+                });
+            });
+
+        });
+
+        describe("tests that were given to us", function() {
+
+            it("test 1", function() {
+                let query: any = {
+                    "GET": ["courses_id", "courseAverage"],
+                    "WHERE": {"IS": {"courses_dept": "cpsc"}} ,
+                    "GROUP": [ "courses_id" ],
+                    "APPLY": [ {"courseAverage": {"AVG": "courses_avg"}} ],
+                    "ORDER": { "dir": "UP", "keys": ["courseAverage", "courses_id"]},
+                    "AS":"TABLE"
+                };
+                return IF.performQuery(query).then((res) => {
+                    expect(res.body).to.be.deep.equal(ANS5);
+                    expect(res.code).to.be.equal(200);
+                });
+            });
+
+            it("test 2", function() {
+                let query: any = {
+                    "GET": ["courses_dept", "courses_id", "courseAverage", "maxFail"],
+                    "WHERE": {},
+                    "GROUP": [ "courses_dept", "courses_id" ],
+                    "APPLY": [ {"courseAverage": {"AVG": "courses_avg"}}, {"maxFail": {"MAX": "courses_fail"}} ],
+                    "ORDER": { "dir": "UP", "keys": ["courseAverage", "maxFail", "courses_dept", "courses_id"]},
+                    "AS":"TABLE"
+                };
+                return IF.performQuery(query).then((res) => {
+                    expect(res.body).to.be.deep.equal(ANS6);
+                    expect(res.code).to.be.equal(200);
+                });
+            });
+
+            it("test 3", function() {
+                let query: any = {
+                    "GET": ["courses_dept", "courses_id", "numSections"],
+                    "WHERE": {},
+                    "GROUP": [ "courses_dept", "courses_id" ],
+                    "APPLY": [ {"numSections": {"COUNT": "courses_uuid"}} ],
+                    "ORDER": { "dir": "UP", "keys": ["numSections", "courses_dept", "courses_id"]},
+                    "AS":"TABLE"
+                };
+                return IF.performQuery(query).then((res) => {
+                    expect(res.body).to.be.deep.equal(ANS7);
+                    expect(res.code).to.be.equal(200);
+                });
+            });
+
+        });
+        
+        after(function () {
             return IF.removeDataset(DATASET_ID).then((res) => {
                 expect(res.code).to.be.equal(204);
             })
