@@ -6,7 +6,6 @@ import fs = require('fs');
 
 import DatasetController from '../controller/DatasetController';
 import QueryController from '../controller/QueryController';
-import InsightFacade from '../controller/InsightFacade';
 
 import { isFormatValid } from '../queryHelpers/querable';
 
@@ -50,14 +49,16 @@ export default class RouteHandler {
                 req.body = concated.toString('base64');
                 Log.trace('RouteHandler::postDataset(..) on end; total length: ' + req.body.length);
 
-                return new InsightFacade().addDataset(id, req.body).then(response => {
-                    res.json(response.code, response.body);
-                    return next();
-                }).catch(err => {
-                    res.json(err.code, err.body);
-                    return next();
+                let controller = RouteHandler.datasetController;
+                controller.process(id, req.body).then(function (result) {
+                    Log.trace('RouteHandler::postDataset(..) - processed');
+                    res.json(result, {success: true});
+                }).catch(function (error: Error) {
+                    Log.trace('RouteHandler::postDataset(..) - ERROR: ' + error.message);
+                    res.json(400, {error: error.message});
                 });
             });
+
         } catch (err) {
             Log.error('RouteHandler::postDataset(..) - ERROR: ' + err.message);
             res.send(400, {error: err.message});
@@ -66,24 +67,51 @@ export default class RouteHandler {
     }
 
     public static postQuery(req: restify.Request, res: restify.Response, next: restify.Next) {
-
+        Log.trace('RouteHandler::postQuery(..) - params: ' + JSON.stringify(req.params));
         let query: QueryRequest = req.params;
-        return new InsightFacade().performQuery(query).then(response => {
-            res.json(response.code, response.body);
+        let controller = new QueryController();
+        controller.query(query).then((qr: QueryResponse) => {
+            if (qr.missing) {
+                res.json(424, qr);
+            } else {
+                res.json(200, qr);
+            }
             return next();
-        }).catch(err => {
-            res.json(err.code, err.body);
-            return next();
+        }).catch((err) => {
+            Log.error('RouteHandler::postQuery(..) - ERROR: ' + err);
+            res.json(400, {error: err.message});
         });
     }
 
     public static deleteDataset(req: restify.Request, res: restify.Response, next: restify.Next) {
-        return new InsightFacade().removeDataset(req.params.id).then(response => {
-            res.json(response.code, response.body);
-            return next();
-        }).catch(err => {
-            res.json(err.code, err.body);
-            return next();
-        });
+        try {
+            Log.trace('RouteHandler::deleteDataset(..) - params: ' + JSON.stringify(req.params));
+            var id: string = req.params.id;
+            var DC = DatasetController.getInstance();
+            DC.getDatasets().then((oDatasets) => {
+                if (oDatasets[id]) {
+                    Log.trace('RouteHandler::deleteDataset(..) - found dataset, deleting: ');
+                    return DC.removeDataset(id).then(() => {
+                        Log.trace('RouteHandler::deleteDataset(..) - deletion successful ');
+                        return 204;
+                    });
+                } else {
+                    return 404;
+                }
+            }).then((code: number) => {
+                if (code === 404) {
+                    res.json(code, {error: "dataset could not be found"});
+                } else {
+                    res.json(code, {success: true});
+                }
+            }).catch(function (error: Error) {
+                Log.trace('RouteHandler::deleteDataset(..) - ERROR: ' + error.message);
+                res.json(400, {error: error.message});
+            });
+        } catch (error) {
+            Log.error('RouteHandler::deleteDataset(..) - ERROR: ' + error.message);
+            res.send(400, {error: error.message});
+        }
+        return next();
     }
 }
