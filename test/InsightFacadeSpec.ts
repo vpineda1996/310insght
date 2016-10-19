@@ -166,6 +166,48 @@ describe("InsightFacade spec", function() {
                 });
             });
 
+            it("fails if elements in get not specified", function(){
+                let query: any = {
+                    "GET": ["coursesDept", "courseAverage", "courseMax", "courseCount"],
+                    "WHERE": { "IS": { "courses_dept": "cpsc" } },
+                    "GROUP": ["coursesDept"],
+                    "APPLY": [
+                        { "courseAverage": { "AVG": "courses_avg" } },
+                        { "coursesDept": { "AVG": "courses_avg" } },
+                        { "courseMax": { "MAX": "courses_avg" } }, 
+                        { "courseCount": { "COUNT": "courses_id" } }
+                    ],
+                    "ORDER": { "dir": "DOWN", "keys": ["courseAverage"] },
+                    "AS": "TABLE"
+                }
+
+                return IF.performQuery(query).catch((res) => {
+                    expect(res.error).to.be.equal('Invalid column name!');
+                    expect(res.code).to.be.equal(400);
+                });
+            });
+
+            it("fails if column nmae fore apply is invalid", function(){
+                let query: any = {
+                    "GET": ["coursesDept", "courseAverage", "course_Max", "courseCount"],
+                    "WHERE": { "IS": { "courses_dept": "cpsc" } },
+                    "GROUP": ["coursesDept"],
+                    "APPLY": [
+                        { "courseAverage": { "AVG": "courses_avg" } },
+                        { "coursesDept": { "AVG": "courses_avg" } },
+                        { "course_Max": { "MAX": "courses_avg" } }, 
+                        { "courseCount": { "COUNT": "courses_id" } }
+                    ],
+                    "ORDER": { "dir": "DOWN", "keys": ["courseAverage"] },
+                    "AS": "TABLE"
+                }
+
+                return IF.performQuery(query).catch((res) => {
+                    expect(res.error).to.be.equal("Invalid column name in apply, dont use undescores!");
+                    expect(res.code).to.be.equal(400);
+                });
+            });
+
         });
 
         describe("tests that were given to us", function() {
@@ -246,7 +288,7 @@ describe("InsightFacade spec", function() {
             }
 
             return IF.performQuery(query).catch((res) => {
-                expect(res.body.missing).to.be.deep.equal(['courses_dept']);
+                expect(res.error.missing).to.be.deep.equal(['courses_dept']);
                 expect(res.code).to.be.equal(424);
             });
         });
