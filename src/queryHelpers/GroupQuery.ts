@@ -51,14 +51,30 @@ export function isValidGroupQuery(q: QueryRequest): Promise<boolean> {
     function validateExistanceOfBoth() {
         if (!q.APPLY || !q.GROUP) throw new Error("Both need to exist");
     }
+
     function validateAtLeastOneGroup() {
         if (!q.GROUP.length) throw new Error("You need at least one group by!");
     }
+
     function validateColsInApplyValid() {
         let targs = getApplyTargets(q);
+        let oMagicMap: any = {};
+        getApplyNames(q).reduce((ac, next) => {
+            ac[next] = true;
+            return ac;
+        }, oMagicMap);
+        q.GET.filter((str) => str.split("_").length !== 2).forEach((str) => {
+            if(oMagicMap[str]) delete oMagicMap[str];
+            else throw new Error("Repeated cols in apply names!" + str);
+        });
+        if(Object.keys(oMagicMap).length !== 0) throw new Error("Invalid column name in apply, dont use undescores!");
         return areValidDatasetIds(targs);
     }
+
     function validateColsInGroup() {
+        q.GROUP.forEach((str) => {
+            if(str.split("_").length !== 2) throw new Error("Invalid column name!");
+        });
         return areValidDatasetIds(q.GROUP);
     }
 
