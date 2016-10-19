@@ -5,7 +5,7 @@ import { ANSWER1, ANSWER2, ANS4, ANS5, ANS6, ANS7 } from './testData/InsightFaca
 
 import { expect } from 'chai'
 
-describe.only("InsightFacade spec", function() {
+describe("InsightFacade spec", function() {
     let baseEncoded: string;
     let DATASET_ID = 'courses';
     let IF = new InsightFacade();
@@ -64,7 +64,6 @@ describe.only("InsightFacade spec", function() {
             }
 
             return IF.performQuery(query).then((res) => {
-                console.log(JSON.stringify(res.body));
                 expect(res.body).to.be.deep.equal(ANSWER1);
                 expect(res.code).to.be.equal(200);
             });
@@ -81,7 +80,6 @@ describe.only("InsightFacade spec", function() {
             }
 
             return IF.performQuery(query).then((res) => {
-                console.log(JSON.stringify(res.body));
                 expect(res.body).to.be.deep.equal(ANSWER2);
                 expect(res.code).to.be.equal(200);
             });
@@ -105,7 +103,6 @@ describe.only("InsightFacade spec", function() {
             }
 
             return IF.performQuery(query).then((res) => {
-                console.log(JSON.stringify(res.body));
                 expect(res.body).to.be.deep.equal(ANS4);
                 expect(res.code).to.be.equal(200);
             });
