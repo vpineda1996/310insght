@@ -43,7 +43,7 @@ describe("InsightFacade spec", function() {
                     "result": [
                         {
                         "courses_dept": "cpsc",
-                        "courseAverage": "77.60",
+                        "courseAverage": 77.6,
                         "courseMax": 95,
                         "courseCount": 53
                         }
