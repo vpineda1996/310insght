@@ -24,11 +24,19 @@ export function isFormatValid(query: QueryRequest): boolean {
 }
 // check ids against datasets & query.APPLY
 export function areValidIds(query: QueryRequest, queryIds: string[]): Promise<boolean> {
-    let applyIds: string[] = getApplyNames(query);
+    let applyNamesInApply = getApplyNames(query);
+    let applyNamesInGet = queryIds.filter(id => id.split('_').length !== 2);
+    if (!applyNamesInGet.every(id => applyNamesInApply.includes(id))) {
+        throw new Error('GET ids without underscore must appear in APPLY');
+    }
 
-    let datasetIds: string[] = queryIds.filter((id: string) => !applyIds.includes(id));
+    let datasetNamesInGet = queryIds.filter(id => id.split('_').length === 2);
+    let datasetNamesInGroup = query.GROUP;
+    if (!!datasetNamesInGroup && !datasetNamesInGet.every(id => datasetNamesInGroup.includes(id))) {
+        throw new Error('GET ids with underscore must appear in GROUP');
+    }
 
-    return areValidDatasetIds(datasetIds);
+    return areValidDatasetIds(datasetNamesInGet);
 }
 
 export function areValidDatasetIds(queryIds: string[]) : Promise<boolean> {
