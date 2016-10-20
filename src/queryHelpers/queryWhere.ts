@@ -29,7 +29,6 @@ export function getQueryData(query: QueryRequest): Promise<any[]> {
             }).then((res: {}[]) => {
                 return resolve(res);
             }).catch((err: Error) => {
-                console.error(err);
                 reject(err);
             });
         });
@@ -69,7 +68,6 @@ function evaluates(key: string, query: {[s: string]: any}|any, datatable: Datata
             }).then((data) => {
                 resolve(data);
             }).catch((err: any) => {
-                console.error(err);
                 reject(err);
             });
 
@@ -122,7 +120,6 @@ function evaluates(key: string, query: {[s: string]: any}|any, datatable: Datata
                     return indices;
                 }, baseIndices));
             }).catch((err: any) => {
-                console.error(err);
                 reject(err);
             });
 
@@ -137,7 +134,6 @@ function evaluates(key: string, query: {[s: string]: any}|any, datatable: Datata
                 Log.trace('QueryController::evaluates( ' + key + ': ' + JSON.stringify(query) + ' ) ===> ' + counter);
                 return resolve(indices);
             }).catch((err: any) => {
-                console.error(err);
                 reject(err);
             });
 

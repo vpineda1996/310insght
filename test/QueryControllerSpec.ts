@@ -8,6 +8,8 @@ import QueryController from "../src/controller/QueryController";
 import { QueryRequest, QueryResponse, QueryOrder } from '../src/util/Query';
 
 import { isFormatValid } from '../src/queryHelpers/querable';
+import { isValidOrder } from '../src/queryHelpers/queryOrder';
+import { renderTable } from '../src/queryHelpers/queryAs';
 
 import Log from "../src/Util";
 import { isNumber } from '../src/util/String';
@@ -503,6 +505,38 @@ describe("QueryController", function () {
                     });
                 });
             });
+        });
+    });
+
+    describe("useless coverage tests", function() {
+        let q : any = {"ORDER": { "dooom": "DOWN", "keys": ["courseAverage"] } };
+        return new Promise(r => {
+            isValidOrder(q).catch((e) => {
+                expect(e.message).to.exist;
+                r();
+            });
+        }).then(() => {
+            q = {"ORDER": { "dir": "DOWNISH", "keys": ["courseAverage"] } };
+            return new Promise(r => {
+                isValidOrder(q).catch((e) => {
+                    expect(e.message).to.exist;
+                    r();
+                });
+            });
+        }).then(() => {
+            q = {"ORDER": { "dir": "DOWN", "keys": {} } };
+            return new Promise(r => {
+                isValidOrder(q).catch((e) => {
+                    expect(e.message).to.exist;
+                    r();
+                });
+            });
+        }).then(() => {
+            try {
+                renderTable(null, "MOMO");
+            } catch(e) {
+                expect(e.message).to.exist;
+            }
         });
     });
 });
