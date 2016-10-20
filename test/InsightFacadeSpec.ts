@@ -85,6 +85,29 @@ describe("InsightFacade spec", function() {
             });
         });
 
+        it("returns 424 if col at where is not present", () => {
+            let query: any = {
+                "GET": ["courses_dept", "courseAverage", "courseMax"],
+                "WHERE": {"AND": [
+                    {"LT" : {"courses_ids" : 499}},
+                    {"GT" : {"courses_id" : 200}},
+                    {"OR" : [
+                        {"IS" : {"courses_dept" : "math"}},
+                        {"IS" : {"courses_depts" : "cpsc"}}
+                    ]}
+                ]},
+                "GROUP": ["courses_dept"],
+                "APPLY": [{ "courseAverage": { "AVG": "courses_avg" } }, { "courseMax": { "MAX": "courses_avg" } }],
+                "ORDER": { "dir": "DOWN", "keys": ["courseAverage"] },
+                "AS": "TABLE"
+            }
+
+            return IF.performQuery(query).catch((res) => {
+                expect(res.error.missing).to.be.deep.equal(['courses_ids','courses_depts']);
+                expect(res.code).to.be.equal(424);
+            });
+        });
+
         it("supports fancy conditions 1", function() {
             let query: any = {
                 "GET": ["courses_fail", "numSections", "average"],
@@ -123,6 +146,27 @@ describe("InsightFacade spec", function() {
             "ORDER":{ "dir":"UP",
                 "keys":[ "courses_id" ]
             },
+            "AS":"TABLE"
+            }
+
+            return IF.performQuery(query).then((res) => {
+                expect(res.code).to.be.equal(200);
+            });
+        });
+
+        it("supports fancy conditions old sort method", function() {
+            let query: any = {  
+            "GET":[ "courses_id","coursesAvg"],
+            "WHERE":{"AND":[  
+                        {"IS":{  "courses_dept":"cpsc"}},
+                        {"GT":{"courses_avg":80}}
+                    ]
+            },
+            "GROUP":[ "courses_id" ],
+            "APPLY":[ 
+                { "coursesAvg":{ "AVG":"courses_id" }}
+            ],
+            "ORDER": "courses_id",
             "AS":"TABLE"
             }
 

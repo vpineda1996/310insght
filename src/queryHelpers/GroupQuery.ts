@@ -96,15 +96,11 @@ export function isValidGroupQuery(q: QueryRequest): Promise<boolean> {
         let targs = getApplyNames(q);
         Array.prototype.push.apply(targs, q.GROUP);
 
-        Log.trace("GroupQuery::validateAllElemInGetInGroupOrApply == " + JSON.stringify(get) + " " + JSON.stringify(targs))
-
         if (get.length !== targs.length) {
-            Log.trace("Throwing missmatch");
             throw new Error("Mismatch in get and target columns");
         }
         get.forEach(getString => {
             if (!targs.includes(getString)) {
-                Log.trace("Throwing get");
                 throw new Error(getString + " column is not in either group or apply");
             }
         })
@@ -255,10 +251,4 @@ function getGroupCols(groupCols: string[], queryData: QueryData[]): Columns {
         oAcum.col[colName] = colData;
         return oAcum;
     }, oRet);
-}
-
-function getColNamesFromQueryData(queryData: QueryData[]): string[] {
-    return queryData.map((oQDataObj) => {
-        return getFirstKey(oQDataObj);
-    });
 }
