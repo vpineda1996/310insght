@@ -40,21 +40,25 @@ describe('Querable', function () {
     }]
 
     function query(): QueryRequest {
-        return {
+        let query: QueryRequest = {
             GET: GET,
             WHERE: WHERE,
-            APPLY: APPLY,
-            GROUP: GROUP,
             AS: AS
         }
+        if (APPLY)
+          query.APPLY = APPLY;
+        if (GROUP)
+          query.GROUP = GROUP;
+
+      return query;
     }
 
     beforeEach(function() {
         GET = [''];
         WHERE = {};
         AS = 'TABLE';
-        APPLY = [];
-        GROUP = [];
+        APPLY = undefined;
+        GROUP = undefined;
     });
 
     describe('::areValidIds', function () {
@@ -78,7 +82,7 @@ describe('Querable', function () {
             perform().then(done);
         });
 
-        describe('need data', function () {
+        describe('with data', function () {
 
             function prepopulate() : Promise<boolean> {
                 let zip = new JSZip();
@@ -111,6 +115,7 @@ describe('Querable', function () {
             });
             it('returns true with known id and id in APPLY', function (done) {
                 queryIds = ['other_title', 'maxAvg'];
+                GROUP = ['other_title'];
                 APPLY = [ {'maxAvg': {'MAX': 'other_avg'} } ]
                 perform().then(done);
             });
