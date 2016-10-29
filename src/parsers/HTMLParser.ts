@@ -149,7 +149,7 @@ export default class HTMLParser {
         return {
             'number': getRoomNumber(nodes[0]),
             'href': getRoomLink(nodes[0]),
-            'seats': getRoomSeats(nodes[1]).trim(),
+            'seats': parseInt(getRoomSeats(nodes[1]).trim()),
             'furniture': getRoomFurniture(nodes[2]).trim(),
             'type': getRoomType(nodes[3]).trim()
         }
