@@ -33,7 +33,9 @@ export default class JSONParser {
 
     public static parse(zipFiles: { [id: string]: JSZipObject }, datatable: Datatable): Promise<Datatable> {
         Log.trace('JSONParser::parse( ... )');
-        return this.createColumns(datatable).then(() => {
+        return datatable.createColumns(COLUMNS).then((col) => {
+            return datatable.loadColumns(COLUMNS.map(col => datatable.id + '_' + col));
+        }).then(() => {
             let aPromiseArray: Promise<any>[] = [];
             for (var i in zipFiles) {
                 if (zipFiles[i] && !zipFiles[i].dir) {
@@ -41,30 +43,14 @@ export default class JSONParser {
                     aPromiseArray.push(oPromise);
                 }
             }
-            return Promise.all(aPromiseArray).then(() => {
-                return datatable;
-            }).catch((e) => {
-                Log.trace('JSONParser::parse( error pushing data to columns ) ' + e);
-                return e;
-            });
+            return Promise.all(aPromiseArray);
+        }).then(() => {
+            return datatable;
+        }).catch((e) => {
+            Log.trace('JSONParser::parse( error pushing data to columns ) ' + e);
+            return e;
         });
     }
-
-    private static createColumns(datatable: Datatable) {
-        Log.trace('JSONParser::createColumns( ... )');
-        let aPromises: Promise<Column>[] = [];
-        COLUMNS.forEach((colName) => {
-            aPromises.push(datatable.createColumn(datatable.id + "_" + colName));
-        });
-        return Promise.all(aPromises).then((col) => {
-            // Need to load the column data to make it fast
-            let aPromiseArray: Promise<Array<string | number>>[] = [];
-            COLUMNS.forEach((colName, idx) => {
-                aPromiseArray.push(datatable.getColumn(idx).getData());
-            });
-            return Promise.all(aPromiseArray);
-        });
-    };
 
     public static parseCourse(courseZip: JSZipObject, coursePath: string, datatable: Datatable): Promise<number> {
         return new Promise((resolve, reject) => {

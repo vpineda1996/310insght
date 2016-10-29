@@ -10,6 +10,7 @@ import {Datasets} from "../common/Common";
 import {Datatable} from "../common/Common";
 import {Column} from "../common/Common";
 import JSONParser from "../parsers/JSONParser";
+import HTMLParser from "../parsers/HTMLParser";
 
 import Constants = require('../common/Constants');
 const PARENT_DIR = Constants.PARENT_DIR;
@@ -77,7 +78,12 @@ export default class DatasetController {
             }).then((oDataTable: Datatable) => {
                 return myZip.loadAsync(data, { base64: true }).then((zip: JSZip) => {
                     Log.trace('DatasetController::process(..) - unzipped');
-                    return JSONParser.parse(zip.files, oDataTable)
+                    // hardcoding this lol
+                    if (id === 'rooms') {
+                        return HTMLParser.parse(zip.files, oDataTable);
+                    } else {
+                        return JSONParser.parse(zip.files, oDataTable);
+                    }
                 }).then((processedMetadata: Datatable) => {
                     return this.save(id, processedMetadata);
                 }).then(() => {
