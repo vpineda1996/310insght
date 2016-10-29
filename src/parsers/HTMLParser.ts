@@ -94,7 +94,7 @@ export default class HTMLParser {
                         building['fullname'],
                         shortname,
                         room['number'],
-                        room['name'],
+                        shortname + '_' + room['number'],
                         building['address'],
                         0,
                         0,
