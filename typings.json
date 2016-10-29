@@ -6,6 +6,7 @@
     "jszip": "registry:dt/jszip#0.0.0+20160709055933",
     "mocha": "registry:dt/mocha#2.2.5+20160619032855",
     "node": "registry:dt/node#6.0.0+20160621231320",
+    "parse5": "registry:dt/parse5#2.2.0+20161003124339",
     "restify": "registry:dt/restify#2.0.0+20160602145247"
   }
 }
