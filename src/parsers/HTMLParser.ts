@@ -1,6 +1,9 @@
+var http = require('http');
 var parse5 = require('parse5');
 
 import { Datatable, Column, Row } from '../common/Common';
+
+import { GEO_ENDPOINT } from '../common/Constants';
 
 import Log from '../Util';
 
@@ -43,81 +46,87 @@ export default class HTMLParser {
 
     public static parseRoom(zip: JSZipObject, filePath: string, datatable: Datatable): Promise<number> {
         return new Promise((resolve, reject) => {
+            let rooms: any[];
+
             zip.async('string').then((res) => {
                 let document = parse5.parse(res);
                 let html = document.childNodes.find((node: any) => node.nodeName === 'html');
                 let body = html.childNodes.find((node: any) => node.nodeName === 'body');
                 let dtable = body.childNodes[31];
 
-                if (!dtable) return resolve();
+                if (!dtable) throw new Error('missing bunch of stuff on page');
 
-                try {
-                    let placeholder = dtable.
-                        childNodes[10].
-                        childNodes[1].
-                        childNodes[3].
-                        childNodes[1];
+                let placeholder = dtable.
+                    childNodes[10].
+                    childNodes[1].
+                    childNodes[3].
+                    childNodes[1];
 
-                    let title = placeholder.
-                        childNodes[3].
-                        childNodes[1].
-                        childNodes[1].
-                        childNodes.
-                        filter((node: any) => node.attrs).
-                        find((node: any) =>
-                             node.attrs.some((attr: any) =>
-                                             attr.name ==='id' && attr.value === 'building-info'));
+                let title = placeholder.
+                    childNodes[3].
+                    childNodes[1].
+                    childNodes[1].
+                    childNodes.
+                    filter((node: any) => node.attrs).
+                    find((node: any) =>
+                         node.attrs.some((attr: any) =>
+                                         attr.name ==='id' && attr.value === 'building-info'));
 
-                    let data = placeholder.
-                        childNodes[5].
-                        childNodes[1].
-                        childNodes[3];
+                                         let data = placeholder.
+                                             childNodes[5].
+                                             childNodes[1].
+                                             childNodes[3];
 
-                    if (!(title && data)) return resolve();
+                                         if (!(title && data)) throw new Error('missing building or room on page');
 
-                    let table = data.childNodes.find((node: any) => node.nodeName === 'table');
+                                         let table = data.childNodes.find((node: any) => node.nodeName === 'table');
 
-                    if (!table) return resolve();
+                                         if (!table) throw new Error('missing room on page');
 
-                    let building = this.getBuildingInfo(title);
+                                         let building = this.getBuildingInfo(title);
 
-                    let thead = table.childNodes.find((node: any) => node.nodeName === 'thead');
-                    let tbody = table.childNodes.find((node: any) => node.nodeName === 'tbody');
+                                         let thead = table.childNodes.find((node: any) => node.nodeName === 'thead');
+                                         let tbody = table.childNodes.find((node: any) => node.nodeName === 'tbody');
 
-                    let headers = this.getHeaders(thead);
-                    let values = this.getTableValues(tbody, headers);
+                                         let headers = this.getHeaders(thead);
+                                         let values = this.getTableValues(tbody, headers);
 
-                    let names = filePath.split('/');
-                    let shortname = names[names.length - 1];
+                                         let names = filePath.split('/');
+                                         let shortname = names[names.length - 1];
 
-                    let rows = values.map((room: any) => [
-                        building['fullname'],
-                        shortname,
-                        room['number'],
-                        shortname + '_' + room['number'],
-                        building['address'],
-                        0,
-                        0,
-                        room['seats'],
-                        room['type'],
-                        room['furniture'],
-                        room['href']
-                    ]);
+                                         rooms = values.map((room: any) => [
+                                             building['fullname'],
+                                             shortname,
+                                             room['number'],
+                                             shortname + '_' + room['number'],
+                                             building['address'],
+                                             0,
+                                             0,
+                                             room['seats'],
+                                             room['type'],
+                                             room['furniture'],
+                                             room['href']
+                                         ]);
 
-                    return geocodeAddress(rows);
-                } catch (e) {
-                    // idk what to do here
-                    // should we still persist _partial_ data into db?
-                    return resolve();
+                                         return getLatLon(building['address']);
+            }).then((latlon: number[]) => {
+                if (latlon && latlon.length !== 0) {
+                    rooms.forEach((row: any[]) => {
+                        row[5] = latlon[0];
+                        row[6] = latlon[1];
+                    });
                 }
-            }).then((data: any[]) => {
-                data.forEach((row: any[]) => {
-                    row.forEach((val: any, index: number) => datatable.columns[index].insertCellFast(val));
+                return rooms;
+            }).then((rooms: any[]) => {
+                rooms.forEach((room: any[]) => {
+                    room.forEach((val: any, index: number) => datatable.columns[index].insertCellFast(val));
                 });
 
                 return resolve(true);
             }).catch(e => {
-                reject(e);
+                // TODO idk what to do here
+                // should we store partial data too?
+                resolve();
             });
         });
     }
@@ -208,9 +217,26 @@ function getBuildingAddress(divnode: any): string {
     return divnode.childNodes[0].childNodes[0].value || "";
 }
 
-// TODO move to src/common/Geocode.ts or whatever
-function geocodeAddress(data: any[][]): Promise<any> {
-    return new Promise((resolve, reject) => {
-        return resolve(data);
+function getLatLon(address: any): Promise<any> {
+    return new Promise<number[]>((resolve, reject) => {
+        http.get(GEO_ENDPOINT + address, (res: any) => {
+
+            if (res.statusCode !== 200) {
+                return resolve([]);
+            }
+
+            res.setEncoding('utf8');
+            let rawData = '';
+            res.on('data', (chunk: any) => rawData += chunk);
+
+            res.on('end', () => {
+                let latlon: any = JSON.parse(rawData);
+                console.info(latlon);
+                resolve([latlon.lat, latlon.lon]);
+            });
+        }).on('error', (e: Error) => {
+            console.log(`Got error: ${e.message}`);
+            resolve([]);
+        });
     });
 }
