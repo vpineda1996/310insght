@@ -90,26 +90,32 @@ export default class HTMLParser {
                     let names = filePath.split('/');
                     let shortname = names[names.length - 1];
 
-                    values.forEach((room: any) => {
-                        datatable.columns[0].insertCellFast(building['fullname']);
-                        datatable.columns[1].insertCellFast(shortname);
-                        datatable.columns[2].insertCellFast(room['number']);
-                        datatable.columns[3].insertCellFast(room['name']);
-                        datatable.columns[4].insertCellFast(building['address']);
-                        datatable.columns[5].insertCellFast(0);
-                        datatable.columns[6].insertCellFast(0);
-                        datatable.columns[7].insertCellFast(room['seats']);
-                        datatable.columns[8].insertCellFast(room['type']);
-                        datatable.columns[9].insertCellFast(room['furniture']);
-                        datatable.columns[10].insertCellFast(room['href']);
-                    });
+                    let rows = values.map((room: any) => [
+                        building['fullname'],
+                        shortname,
+                        room['number'],
+                        room['name'],
+                        building['address'],
+                        0,
+                        0,
+                        room['seats'],
+                        room['type'],
+                        room['furniture'],
+                        room['href']
+                    ]);
 
-                    return resolve(true);
+                    return geocodeAddress(rows);
                 } catch (e) {
                     // idk what to do here
                     // should we still persist _partial_ data into db?
                     return resolve();
                 }
+            }).then((data: any[]) => {
+                data.forEach((row: any[]) => {
+                    row.forEach((val: any, index: number) => datatable.columns[index].insertCellFast(val));
+                });
+
+                return resolve(true);
             }).catch(e => {
                 reject(e);
             });
@@ -200,4 +206,11 @@ function getBuildingFullName(h2node: any): string {
 
 function getBuildingAddress(divnode: any): string {
     return divnode.childNodes[0].childNodes[0].value || "";
+}
+
+// TODO move to src/common/Geocode.ts or whatever
+function geocodeAddress(data: any[][]): Promise<any> {
+    return new Promise((resolve, reject) => {
+        return resolve(data);
+    });
 }

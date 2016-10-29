@@ -12,3 +12,6 @@ export enum APPLYTOKENS {
     AVG,
     COUNT
 }
+
+export const TEAM_NUMBER = 69;
+export const GEO_ENDPOINT = "http://skaha.cs.ubc.ca:8022/api/v1/team" + TEAM_NUMBER + "/";
