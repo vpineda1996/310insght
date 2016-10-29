@@ -14,7 +14,8 @@ const COLUMNS: string[] = [
     'pass',
     'fail',
     'audit',
-    'uuid'
+    'uuid',
+    'year'
 ];
 const COURSE_KEY_LEN = 4;
 
@@ -82,6 +83,7 @@ export default class JSONParser {
                                 datatable.columns[6].insertCellFast(this.getCourseFail(courseOffering));
                                 datatable.columns[7].insertCellFast(this.getCourseAudit(courseOffering));
                                 datatable.columns[8].insertCellFast(this.getCourseUUID(courseOffering));
+                                datatable.columns[9].insertCellFast(this.getCourseYear(courseOffering));
                             }
                         });
                     } else if (!listOfCourseYears.courses && !listOfCourseYears.result && listOfCourseYears.rank === undefined) {
@@ -91,7 +93,7 @@ export default class JSONParser {
                 } catch(e){
                     reject(e);
                     throw e;
-                }    
+                }
         }).catch((err) => {
                 Log.trace(err);
                 return err;
@@ -140,8 +142,10 @@ export default class JSONParser {
     private static getCourseAudit(courseOffering: any) {
         return courseOffering.Audit || 0;
     }
-
     private static getCourseUUID(courseOffering: any) {
         return courseOffering.id || Math.floor(Math.random() * 100000000);
+    }
+    private static getCourseYear(courseOffering: any) {
+        return courseOffering.Section === 'overall' ? 1900 : parseInt(courseOffering.Year) || 1900;
     }
 };
