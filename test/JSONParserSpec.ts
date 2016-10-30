@@ -14,7 +14,7 @@ import fs = require('fs');
 
 describe("JSON Parser", function() {
     let DS = DatasetController.getInstance();
-    
+
     before(function(){
         try{
             fs.unlinkSync('./data/myData/myData_dept.json');
@@ -68,7 +68,8 @@ describe("JSON Parser", function() {
                 Fail: 2,
                 Audit: 1,
                 Course: '310',
-                Subject: 'cpsc'
+                Subject: 'cpsc',
+                Year: 2056
             },{ }]
         };
         let zip = new JSZip();
@@ -90,7 +91,7 @@ describe("JSON Parser", function() {
 
     it("saved the dataset", function() {
         return DS.getDataset('myData').then((datatable) => {
-            expect(datatable.columns.length).to.equal(9);
+            expect(datatable.columns.length).to.equal(10);
             return datatable.columns[0].getData();
         }).then((col0data) => {
             expect(col0data[0]).to.be.equal('cpsc');

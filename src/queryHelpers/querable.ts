@@ -1,7 +1,7 @@
 import DatasetController from '../controller/DatasetController'
 import { getApplyNames } from '../queryHelpers/queryApply'
 
-import { areFilters, isAsTable, QueryRequest } from '../util/Query'
+import { areFilters, isAsTable, QueryRequest, getUniqueDatasetIds } from '../util/Query'
 import { isStringOrStringArray } from '../util/String'
 import { MissingDatasets } from '../util/Errors'
 
@@ -22,7 +22,8 @@ export function isFormatValid(query: QueryRequest): boolean {
     }
     return false;
 }
-// check ids against datasets & query.APPLY
+
+// check ids against datasets & (query.GROUP + query.APPLY)
 export function areValidIds(query: QueryRequest, queryIds: string[]): Promise<boolean> {
     let applyNamesInApply = getApplyNames(query);
     let applyNamesInGet = queryIds.filter(id => id.split('_').length !== 2);
@@ -34,6 +35,10 @@ export function areValidIds(query: QueryRequest, queryIds: string[]): Promise<bo
     let datasetNamesInGroup = query.GROUP;
     if (!!datasetNamesInGroup && !datasetNamesInGet.every(id => datasetNamesInGroup.includes(id))) {
         throw new Error('GET ids with underscore must appear in GROUP');
+    }
+
+    if (getUniqueDatasetIds(datasetNamesInGet).length > 1) {
+        throw new Error('We are dumb. We cannot process multiple datasets at once');
     }
 
     return areValidDatasetIds(datasetNamesInGet);
@@ -60,6 +65,7 @@ export function areValidDatasetIds(queryIds: string[]) : Promise<boolean> {
 export function hasIdInApply(query: QueryRequest, id: string) : boolean {
     return getApplyNames(query).includes(id);
 }
+
 export function isValidDatasetId(queryId: string): Promise<boolean> {
     return new Promise<boolean>((resolve, reject) => {
         DatasetController.getInstance().getDataset(queryId.split('_')[0]).then(datatable => {

@@ -27,7 +27,7 @@ export class Datatable {
         this.columns = columns;
     }
 
-    /** 
+    /**
      * Returns a promise that will be called whenever the row is inserted
      */
     public insertRow(row: Row): Promise<any[]> {
@@ -39,7 +39,7 @@ export class Datatable {
         return Promise.all(aPromises);
     }
 
-    /** 
+    /**
      * Returns a promise that will be called whenever the row is edited
      */
     public editRow(idx: number, row: Row): Promise<any[]> {
@@ -92,6 +92,24 @@ export class Datatable {
         });
     }
 
+    public loadColumns(columns: string[]) {
+        let promises: Promise<Array<string | number>>[] = columns.map((colName) => {
+            return this.getColumn(colName).getData();
+        });
+
+        return Promise.all(promises);
+    }
+
+    public createColumns(columns: string[]) {
+        Log.trace('Datatable::createColumns( ... )');
+
+        let promises: Promise<Column>[] = columns.map((colName) => {
+            return this.createColumn(this.id + "_" + colName);
+        });
+
+        return Promise.all(promises);
+    };
+
     public createColumn(name: string, src?: string, datatype?: Datatype): Promise<Column> {
         // If a column with the same name already exists, then dont bother creating a new one;
         if (this.getColumn(name)) {
@@ -101,7 +119,7 @@ export class Datatable {
         }
 
         Log.trace('Datatable::createColumn(..) - creating files for ' + name + ' in ' + src);
-        
+
         // Push new cols to array
         return new Promise(resolve => {
             let newCol = new Column(name, src, datatype);
@@ -142,7 +160,7 @@ export interface Row {
 }
 
 /**
- * Column defn where the index of the data 
+ * Column defn where the index of the data
  * array corresponds to row index in the table
  */
 export class Column {
@@ -159,7 +177,7 @@ export class Column {
         Log.trace("Data length : "   + (data && data.length));
         this.data = data || [];
     }
-    
+
 
     public getData(): Promise<Array<string | number>> {
         return new Promise<Array<string | number>>((resolve, reject) => {

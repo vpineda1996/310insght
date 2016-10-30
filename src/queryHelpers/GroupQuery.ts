@@ -186,7 +186,7 @@ export function groupBy(query: QueryRequest, queryData: QueryData[]): Promise<Qu
         });
     }
 
-    // ie map wil contain "superName" -> "courses_id" and "superName2" -> "courses_id" 
+    // ie map wil contain "superName" -> "courses_id" and "superName2" -> "courses_id"
     // then we will accesss courses_id twice to create two aggregated cols
     function getAggKeys(aggCols: Columns, i: number): Array<string | number> {
         return Object.keys(aggCols.mapFromAggNameToColName).map((key) => {
