@@ -3,7 +3,7 @@ import { MCOMPARATORS, SCOMPARATORS, LOGICCOMPARATORS, NEGATORS } from '../commo
 import DatasetController from "../controller/DatasetController";
 import { Datatable } from "../common/Common";
 
-import { QueryRequest } from '../util/Query'
+import { QueryRequest, getUniqueDatasetIds } from '../util/Query'
 import { getFirstKey, getFirst } from '../util/Object'
 import { getAllColumnTargetIds } from './queryApply'
 import Log from '../Util'
@@ -142,27 +142,6 @@ function evaluates(key: string, query: {[s: string]: any}|any, datatable: Datata
         } else {
             reject('wtf?');
         }
-    });
-}
-
-// Extracts unique ids from strins in form of ${id}_${column}
-// ids = ['courses_ids', 'courses_title', 'others_id']
-// ==> uniqueIds = ['courses', 'others']
-function getUniqueDatasetIds(ids : string[]) : string[] {
-    let uniqueIds : string[] = [];
-
-    ids.forEach((val) => {
-        let id_column = val.split('_');
-        uniqueIds.push(id_column[0]);
-    });
-
-    let counter : {[s: string]: any} = {};
-
-    return uniqueIds.filter((id) => {
-        if (counter[id] === true)
-            return false;
-        counter[id] = true;
-        return true;
     });
 }
 
