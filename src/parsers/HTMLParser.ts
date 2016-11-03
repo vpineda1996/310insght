@@ -41,7 +41,7 @@ export default class HTMLParser {
             return datatable;
         }).catch((e) => {
             Log.trace('HTMLParser::parse( error pushing data to columns ) ' + e);
-            return e;
+            throw e;
         });
     }
 
