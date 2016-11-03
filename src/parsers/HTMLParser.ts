@@ -72,43 +72,43 @@ export default class HTMLParser {
                          node.attrs.some((attr: any) =>
                                          attr.name ==='id' && attr.value === 'building-info'));
 
-                                         let data = placeholder.
-                                             childNodes[5].
-                                             childNodes[1].
-                                             childNodes[3];
+                    let data = placeholder.
+                        childNodes[5].
+                        childNodes[1].
+                        childNodes[3];
 
-                                         if (!(title && data)) throw new Error('missing building or room on page');
+                    if (!(title && data)) throw new Error('missing building or room on page');
 
-                                         let table = data.childNodes.find((node: any) => node.nodeName === 'table');
+                    let table = data.childNodes.find((node: any) => node.nodeName === 'table');
 
-                                         if (!table) throw new Error('missing room on page');
+                    if (!table) throw new Error('missing room on page');
 
-                                         let building = this.getBuildingInfo(title);
+                    let building = this.getBuildingInfo(title);
 
-                                         let thead = table.childNodes.find((node: any) => node.nodeName === 'thead');
-                                         let tbody = table.childNodes.find((node: any) => node.nodeName === 'tbody');
+                    let thead = table.childNodes.find((node: any) => node.nodeName === 'thead');
+                    let tbody = table.childNodes.find((node: any) => node.nodeName === 'tbody');
 
-                                         let headers = this.getHeaders(thead);
-                                         let values = this.getTableValues(tbody, headers);
+                    let headers = this.getHeaders(thead);
+                    let values = this.getTableValues(tbody, headers);
 
-                                         let names = filePath.split('/');
-                                         let shortname = names[names.length - 1];
+                    let names = filePath.split('/');
+                    let shortname = names[names.length - 1];
 
-                                         rooms = values.map((room: any) => [
-                                             building['fullname'],
-                                             shortname,
-                                             room['number'],
-                                             shortname + '_' + room['number'],
-                                             building['address'],
-                                             0,
-                                             0,
-                                             room['seats'],
-                                             room['type'],
-                                             room['furniture'],
-                                             room['href']
-                                         ]);
+                    rooms = values.map((room: any) => [
+                        building['fullname'],
+                        shortname,
+                        room['number'],
+                        shortname + '_' + room['number'],
+                        building['address'],
+                        0,
+                        0,
+                        room['seats'],
+                        room['type'],
+                        room['furniture'],
+                        room['href']
+                    ]);
 
-                                         return getLatLon(building['address']);
+                    return getLatLon(building['address']);
             }).then((latlon: number[]) => {
                 if (latlon && latlon.length !== 0) {
                     rooms.forEach((row: any[]) => {
