@@ -220,7 +220,7 @@ function getBuildingAddress(divnode: any): string {
 
 function getLatLon(address: any): Promise<any> {
     return new Promise<number[]>((resolve, reject) => {
-        http.get(GEO_ENDPOINT + address, (res: any) => {
+        http.get(GEO_ENDPOINT + encodeURIComponent(address), (res: any) => {
 
             if (res.statusCode !== 200) {
                 return resolve([]);
