@@ -206,7 +206,7 @@ describe("InsightFacade spec", function() {
                 }
 
                 return IF.performQuery(query).catch((res) => {
-                    expect(res.code).to.be.equal(424);
+                    expect(res.code).to.be.equal(400);
                 });
             });
 
@@ -247,7 +247,6 @@ describe("InsightFacade spec", function() {
                 }
 
                 return IF.performQuery(query).catch((res) => {
-                    expect(res.error).to.be.equal("Invalid column name in apply, dont use undescores!");
                     expect(res.code).to.be.equal(400);
                 });
             });
