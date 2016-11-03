@@ -193,6 +193,17 @@ export class Column {
         });
     }
 
+    // ONLY TO BE USED BY THE PARSER!!!
+    public getCurrentDataLength(){
+        return this.data.length;
+    }
+
+    // ONLY TO BE USED BY THE PARSER!!!
+    public updateCellFast(idx: number, value: string | number) {
+        this.data[idx] = value;;
+    }
+
+    // ONLY TO BE USED BY THE PARSER!!!
     public insertCellFast(value: string | number) {
         this.data.push(value);
     }

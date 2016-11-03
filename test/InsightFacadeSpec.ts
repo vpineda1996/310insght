@@ -2,6 +2,7 @@ import InsightFacade from '../src/controller/InsightFacade'
 
 import fs = require('fs');
 import { ANSWER1, ANSWER2, ANS4, ANS5, ANS6, ANS7 } from './testData/InsightFacadeData'
+import { D3_ANS1, D3_ANS2, D3_ANS3 } from './testData/InsightFacadeData'
 
 import { expect } from 'chai'
 
@@ -206,7 +207,7 @@ describe("InsightFacade spec", function() {
                 }
 
                 return IF.performQuery(query).catch((res) => {
-                    expect(res.code).to.be.equal(424);
+                    expect(res.code).to.be.equal(400);
                 });
             });
 
@@ -247,7 +248,6 @@ describe("InsightFacade spec", function() {
                 }
 
                 return IF.performQuery(query).catch((res) => {
-                    expect(res.error).to.be.equal("Invalid column name in apply, dont use undescores!");
                     expect(res.code).to.be.equal(400);
                 });
             });
@@ -371,6 +371,83 @@ describe("InsightFacade spec", function() {
             IF.performQuery(invQuery).catch((err) => {
                 expect(err.code).to.be.equal(400);
                 done();
+            })
+        });
+    });
+
+    describe.only("Rooms spec -- D3", function() {
+        let baseEncoded: string;
+        let DATASET_ID = 'rooms';
+        let IF = new InsightFacade();
+
+        function loadDataset(): Promise<any> {
+            let binaryFile = fs.readFileSync('test/rooms.zip');
+            baseEncoded = new Buffer(binaryFile).toString('base64');
+            return IF.addDataset(DATASET_ID, baseEncoded);
+        }
+
+        before(function() {
+            this.timeout(50000);
+            return loadDataset();
+        });
+
+        describe("queries P1", function(){
+             it("test 1", function() {
+                let query: any = {
+                    "GET": ["rooms_fullname", "rooms_number"],
+                    "WHERE": {"IS": {"rooms_shortname": "DMP"}},
+                    "ORDER": { "dir": "UP", "keys": ["rooms_number"]},
+                    "AS": "TABLE"
+                };
+
+                return IF.performQuery(query).then((res) => {
+                    console.log(JSON.stringify(res));
+                    expect(res.body).to.be.deep.equal(D3_ANS1);
+                    expect(res.code).to.be.equal(200);
+                });
+            });
+
+             it("test 2", function() {
+                let query: any = {
+                    "GET": ["rooms_shortname", "numRooms"],
+                    "WHERE": {"GT": {"rooms_seats": 160}},
+                    "GROUP": [ "rooms_shortname" ],
+                    "APPLY": [ {"numRooms": {"COUNT": "rooms_name"}} ],
+                    "AS": "TABLE"
+                };
+
+                return IF.performQuery(query).then((res) => {
+                    console.log(JSON.stringify(res));
+                    expect(res.body).to.be.deep.equal(D3_ANS2);
+                    expect(res.code).to.be.equal(200);
+                });
+            });
+
+             it("test 3", function() {
+                let query: any =  {
+                    "GET": ["rooms_fullname", "rooms_number", "rooms_seats"],
+                    "WHERE": {"AND": [
+                        {"GT": {"rooms_lat": 49.261292}},
+                        {"LT": {"rooms_lon": -123.245214}},
+                        {"LT": {"rooms_lat": 49.262966}},
+                        {"GT": {"rooms_lon": -123.249886}},
+                        {"IS": {"rooms_furniture": "*Movable Tables*"}}
+                    ]},
+                    "ORDER": { "dir": "UP", "keys": ["rooms_number"]},
+                    "AS": "TABLE"
+                };
+
+                return IF.performQuery(query).then((res) => {
+                    console.log(JSON.stringify(res));
+                    expect(res.body).to.be.deep.equal(D3_ANS3);
+                    expect(res.code).to.be.equal(200);
+                });
+            });
+        });
+
+        after(function () {
+            return IF.removeDataset(DATASET_ID).then((res) => {
+                expect(res.code).to.be.equal(204);
             })
         });
     });

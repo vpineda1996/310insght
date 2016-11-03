@@ -23,8 +23,9 @@ const COLUMNS = [
 
 export default class HTMLParser {
 
-    public static parse(zipFiles: {[id: string]: JSZipObject }, datatable: Datatable): Promise<Datatable> {
+    public static parse(zipFiles: { [id: string]: JSZipObject }, datatable: Datatable): Promise<Datatable> {
         Log.trace('HTMLParser::parse( ... )');
+        if(!Object.keys(zipFiles).length) throw new Error("invalid dataset!")
 
         return datatable.createColumns(COLUMNS).then((col) => {
             return datatable.loadColumns(COLUMNS.map(col => datatable.id + '_' + col));
@@ -47,6 +48,7 @@ export default class HTMLParser {
     public static parseRoom(zip: JSZipObject, filePath: string, datatable: Datatable): Promise<number> {
         return new Promise((resolve, reject) => {
             let rooms: any[];
+            let idxColStart = Infinity;
 
             zip.async('string').then((res) => {
                 let document = parse5.parse(res);
@@ -69,59 +71,59 @@ export default class HTMLParser {
                     childNodes.
                     filter((node: any) => node.attrs).
                     find((node: any) =>
-                         node.attrs.some((attr: any) =>
-                                         attr.name ==='id' && attr.value === 'building-info'));
+                        node.attrs.some((attr: any) =>
+                            attr.name === 'id' && attr.value === 'building-info'));
 
-                    let data = placeholder.
-                        childNodes[5].
-                        childNodes[1].
-                        childNodes[3];
+                let data = placeholder.
+                    childNodes[5].
+                    childNodes[1].
+                    childNodes[3];
 
-                    if (!(title && data)) throw new Error('missing building or room on page');
+                if (!(title && data)) throw new Error('missing building or room on page');
 
-                    let table = data.childNodes.find((node: any) => node.nodeName === 'table');
+                let table = data.childNodes.find((node: any) => node.nodeName === 'table');
 
-                    if (!table) throw new Error('missing room on page');
+                if (!table) throw new Error('missing room on page');
 
-                    let building = this.getBuildingInfo(title);
+                let building = this.getBuildingInfo(title);
 
-                    let thead = table.childNodes.find((node: any) => node.nodeName === 'thead');
-                    let tbody = table.childNodes.find((node: any) => node.nodeName === 'tbody');
+                let thead = table.childNodes.find((node: any) => node.nodeName === 'thead');
+                let tbody = table.childNodes.find((node: any) => node.nodeName === 'tbody');
 
-                    let headers = this.getHeaders(thead);
-                    let values = this.getTableValues(tbody, headers);
+                let headers = this.getHeaders(thead);
+                let values = this.getTableValues(tbody, headers);
 
-                    let names = filePath.split('/');
-                    let shortname = names[names.length - 1];
+                let names = filePath.split('/');
+                let shortname = names[names.length - 1];
 
-                    rooms = values.map((room: any) => [
-                        building['fullname'],
-                        shortname,
-                        room['number'],
-                        shortname + '_' + room['number'],
-                        building['address'],
-                        0,
-                        0,
-                        room['seats'],
-                        room['type'],
-                        room['furniture'],
-                        room['href']
-                    ]);
+                rooms = values.map((room: any) => [
+                    building['fullname'],
+                    shortname,
+                    room['number'],
+                    shortname + '_' + room['number'],
+                    building['address'],
+                    0,
+                    0,
+                    room['seats'],
+                    room['type'],
+                    room['furniture'],
+                    room['href']
+                ]);
 
-                    return getLatLon(building['address']);
-            }).then((latlon: number[]) => {
-                if (latlon && latlon.length !== 0) {
-                    rooms.forEach((row: any[]) => {
-                        row[5] = latlon[0];
-                        row[6] = latlon[1];
-                    });
-                }
-                return rooms;
-            }).then((rooms: any[]) => {
+                idxColStart = datatable.columns[0].getCurrentDataLength();
+
                 rooms.forEach((room: any[]) => {
                     room.forEach((val: any, index: number) => datatable.columns[index].insertCellFast(val));
                 });
 
+                return getLatLon(building['address']);
+            }).then((latlon: number[]) => {
+                if (latlon && latlon.length !== 0) {
+                    rooms.forEach((row: any[]) => {
+                        datatable.columns[5].updateCellFast(idxColStart, latlon[0]);
+                        datatable.columns[6].updateCellFast(idxColStart++, latlon[1]);
+                    });
+                }
                 return resolve(true);
             }).catch(e => {
                 // TODO idk what to do here
@@ -149,7 +151,7 @@ export default class HTMLParser {
             map((node: any) => this.getRowValues(node, headers));
     }
 
-    private static getRowValues(tr: any, headers: string[]): {[col:string]: string|number} {
+    private static getRowValues(tr: any, headers: string[]): { [col: string]: string | number } {
         if (!tr || tr.nodeName !== 'tr') return {};
 
         let nodes: any = tr.childNodes.
@@ -178,11 +180,11 @@ export default class HTMLParser {
         return children.length === 1 ? children[0] : null;
     }
 
-    private static getBuildingInfo(node: any): {[col:string]:string|number} {
-       return {
-           'fullname': getBuildingFullName(node.childNodes[1]),
-           'address': getBuildingAddress(node.childNodes[3])
-       };
+    private static getBuildingInfo(node: any): { [col: string]: string | number } {
+        return {
+            'fullname': getBuildingFullName(node.childNodes[1]),
+            'address': getBuildingAddress(node.childNodes[3])
+        };
     }
 }
 
@@ -219,7 +221,7 @@ function getBuildingAddress(divnode: any): string {
 
 function getLatLon(address: any): Promise<any> {
     return new Promise<number[]>((resolve, reject) => {
-        http.get(GEO_ENDPOINT + address, (res: any) => {
+        http.get(GEO_ENDPOINT + encodeURIComponent(address), (res: any) => {
 
             if (res.statusCode !== 200) {
                 return resolve([]);
