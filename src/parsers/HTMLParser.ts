@@ -25,6 +25,7 @@ export default class HTMLParser {
 
     public static parse(zipFiles: { [id: string]: JSZipObject }, datatable: Datatable): Promise<Datatable> {
         Log.trace('HTMLParser::parse( ... )');
+        if(!Object.keys(zipFiles).length) throw new Error("invalid dataset!")
 
         return datatable.createColumns(COLUMNS).then((col) => {
             return datatable.loadColumns(COLUMNS.map(col => datatable.id + '_' + col));
