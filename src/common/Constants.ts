@@ -15,3 +15,6 @@ export enum APPLYTOKENS {
 
 export const TEAM_NUMBER = 69;
 export const GEO_ENDPOINT = "http://skaha.cs.ubc.ca:8022/api/v1/team" + TEAM_NUMBER + "/";
+
+export const MAX_GEO_TRIES = 3;
+export const GEO_REQ_TIMEOUT = 700; //ms

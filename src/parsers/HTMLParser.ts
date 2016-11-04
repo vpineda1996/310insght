@@ -3,7 +3,7 @@ var parse5 = require('parse5');
 
 import { Datatable, Column, Row } from '../common/Common';
 
-import { GEO_ENDPOINT } from '../common/Constants';
+import { GEO_ENDPOINT, MAX_GEO_TRIES, GEO_REQ_TIMEOUT } from '../common/Constants';
 
 import Log from '../Util';
 
@@ -259,9 +259,15 @@ function getBuildingAddress(divnode: any): string {
 
 function getLatLon(address: any): Promise<any> {
     return new Promise<number[]>((resolve, reject) => {
-        http.get(GEO_ENDPOINT + encodeURIComponent(address), (res: any) => {
+        
+        let tryCount = 0;
+        let reqHttp : Function;
 
+        let fnHandler = (res: any) => {
             if (res.statusCode !== 200) {
+                if(tryCount ++ < MAX_GEO_TRIES){
+                    return reqHttp();
+                }
                 return resolve([]);
             }
 
@@ -274,8 +280,29 @@ function getLatLon(address: any): Promise<any> {
                 console.info(latlon);
                 resolve([latlon.lat, latlon.lon]);
             });
-        }).on('error', (e: Error) => {
-            resolve([]);
-        });
+        };
+
+        let fnTimeoutHandler = () => {
+            Log.info("Timeout for: " + address);
+            if(tryCount ++ < MAX_GEO_TRIES){
+                reqHttp();
+            } else {
+                resolve([]);
+            }
+        }
+
+        reqHttp = () => {
+            Log.info("Starting req for: " + address);
+            let request = http.get(GEO_ENDPOINT + encodeURIComponent(address), fnHandler ).on('error', (e: Error) => {
+                if(tryCount ++ < MAX_GEO_TRIES){
+                    reqHttp();
+                } else {
+                    resolve([]);
+                }
+            });
+            request.setTimeout(GEO_REQ_TIMEOUT, fnTimeoutHandler);
+        }
+
+        reqHttp();
     });
 }

@@ -118,7 +118,7 @@ export class Datatable {
             });
         }
 
-        Log.trace('Datatable::createColumn(..) - creating files for ' + name + ' in ' + src);
+        Log.trace('Datatable::createColumn(..) - creating files for ' + name);
 
         // Push new cols to array
         return new Promise(resolve => {
@@ -174,7 +174,6 @@ export class Column {
         this.name = name;
         this.src = src;
         this.datatype = datatype || Datatype.STRING;
-        Log.trace("Data length : "   + (data && data.length));
         this.data = data || [];
     }
 
