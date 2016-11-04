@@ -31,7 +31,7 @@ describe("InsightFacade spec", function() {
                 "GROUP": ["courses_dept"],
                 "APPLY": [
                     { "courseAverage": { "AVG": "courses_avg" } },
-                    { "courseMax": { "MAX": "courses_avg" } }, 
+                    { "courseMax": { "MAX": "courses_avg" } },
                     { "courseCount": { "COUNT": "courses_id" } }
                 ],
                 "ORDER": { "dir": "DOWN", "keys": ["courseAverage"] },
@@ -133,15 +133,15 @@ describe("InsightFacade spec", function() {
         });
 
         it("supports fancy conditions 2", function() {
-            let query: any = {  
+            let query: any = {
             "GET":[ "courses_id","coursesAvg"],
-            "WHERE":{"AND":[  
+            "WHERE":{"AND":[
                         {"IS":{  "courses_dept":"cpsc"}},
                         {"GT":{"courses_avg":80}}
                     ]
             },
             "GROUP":[ "courses_id" ],
-            "APPLY":[ 
+            "APPLY":[
                 { "coursesAvg":{ "AVG":"courses_id" }}
             ],
             "ORDER":{ "dir":"UP",
@@ -156,15 +156,15 @@ describe("InsightFacade spec", function() {
         });
 
         it("supports fancy conditions old sort method", function() {
-            let query: any = {  
+            let query: any = {
             "GET":[ "courses_id","coursesAvg"],
-            "WHERE":{"AND":[  
+            "WHERE":{"AND":[
                         {"IS":{  "courses_dept":"cpsc"}},
                         {"GT":{"courses_avg":80}}
                     ]
             },
             "GROUP":[ "courses_id" ],
-            "APPLY":[ 
+            "APPLY":[
                 { "coursesAvg":{ "AVG":"courses_id" }}
             ],
             "ORDER": "courses_id",
@@ -184,7 +184,7 @@ describe("InsightFacade spec", function() {
                     "GROUP": [],
                     "APPLY": [
                         { "courseAverage": { "AVG": "courses_avg" } },
-                        { "courseMax": { "MAX": "courses_avg" } }, 
+                        { "courseMax": { "MAX": "courses_avg" } },
                         { "courseCount": { "COUNT": "courses_id" } }
                     ],
                     "ORDER": { "dir": "DOWN", "keys": ["courseAverage"] },
@@ -219,7 +219,7 @@ describe("InsightFacade spec", function() {
                     "APPLY": [
                         { "courseAverage": { "AVG": "courses_avg" } },
                         { "coursesDept": { "AVG": "courses_avg" } },
-                        { "courseMax": { "MAX": "courses_avg" } }, 
+                        { "courseMax": { "MAX": "courses_avg" } },
                         { "courseCount": { "COUNT": "courses_id" } }
                     ],
                     "ORDER": { "dir": "DOWN", "keys": ["courseAverage"] },
@@ -240,7 +240,7 @@ describe("InsightFacade spec", function() {
                     "APPLY": [
                         { "courseAverage": { "AVG": "courses_avg" } },
                         { "coursesDept": { "AVG": "courses_avg" } },
-                        { "course_Max": { "MAX": "courses_avg" } }, 
+                        { "course_Max": { "MAX": "courses_avg" } },
                         { "courseCount": { "COUNT": "courses_id" } }
                     ],
                     "ORDER": { "dir": "DOWN", "keys": ["courseAverage"] },
@@ -260,7 +260,7 @@ describe("InsightFacade spec", function() {
                     "APPLY": [
                         { "courseAverage": { "AVG": "courses_avg" } },
                         { "coursesDept": { "AVG": "courses_avg" } },
-                        { "__Max": { "MAX": "courses_avg" } }, 
+                        { "__Max": { "MAX": "courses_avg" } },
                         { "courseCount": { "COUNT": "courses_id" } }
                     ],
                     "ORDER": { "dir": "DOWN", "keys": ["courseAverage"] },
@@ -323,7 +323,7 @@ describe("InsightFacade spec", function() {
             });
 
         });
-        
+
         after(function () {
             return IF.removeDataset(DATASET_ID).then((res) => {
                 expect(res.code).to.be.equal(204);
@@ -416,9 +416,9 @@ describe("InsightFacade spec", function() {
                     "AS": "TABLE"
                 };
 
-                return IF.performQuery(query).then((res) => {
+                return IF.performQuery(query).then((res : any) => {
                     console.log(JSON.stringify(res));
-                    expect(res.body).to.be.deep.equal(D3_ANS2);
+                    expect(res.body.result.length).to.be.deep.equal(D3_ANS2.result.length);
                     expect(res.code).to.be.equal(200);
                 });
             });
