@@ -67,8 +67,8 @@ export function orders(queryData: QueryData[], order: QueryOrder) : QueryData[] 
         return tryNumber();
 
         function tryNumber() {
-            if (typeof a === 'number' && typeof b === 'number') {
-                let d = a - b;
+            if (isNumber(a) && isNumber(b)) {
+                let d = parseFloat(a) - parseFloat(b);
                 if (d > 0) {
                     return before;
                 } else if (d < 0) {
