@@ -30,10 +30,16 @@ export default class HTMLParser {
         return datatable.createColumns(COLUMNS).then((col) => {
             return datatable.loadColumns(COLUMNS.map(col => datatable.id + '_' + col));
         }).then(() => {
+            if (!zipFiles['index.htm']) {
+                throw new Error('you better send index file');
+            }
+            return this.parseAvailableBuildingNames(zipFiles['index.htm']);
+        }).then((buildingNames: string[]) => {
             let promises: Promise<any>[] = [];
-            for (var i in zipFiles) {
-                if (zipFiles[i] && !zipFiles[i].dir) {
-                    promises.push(this.parseRoom(zipFiles[i], i, datatable));
+            for (let i in zipFiles) {
+                let filePath = zipFiles[i]['name'].split('/');
+                if (zipFiles[i] && !zipFiles[i].dir && buildingNames.includes(filePath[filePath.length-1])) {
+                    promises.push(this.parseBuilding(zipFiles[i], i, datatable));
                 }
             }
             return Promise.all(promises);
@@ -45,7 +51,39 @@ export default class HTMLParser {
         });
     }
 
-    public static parseRoom(zip: JSZipObject, filePath: string, datatable: Datatable): Promise<number> {
+    public static parseAvailableBuildingNames(zip: JSZipObject): Promise<string[]> {
+        return new Promise<string[]>((resolve, reject) => {
+            zip.async('string').then((res) => {
+                try {
+                    let document = parse5.parse(res);
+                    let html = document.childNodes.find((node: any) => node.nodeName === 'html');
+                    let body = html.childNodes.find((node: any) => node.nodeName === 'body');
+                    let section = body.
+                        childNodes[31].
+                        childNodes[10].
+                        childNodes[1].
+                        childNodes[3];
+                    let tbody = section.
+                        childNodes[1].
+                        childNodes[5].
+                        childNodes[1].
+                        childNodes[3];
+
+                    let buildingNames = tbody.childNodes.filter((node: any) => node.nodeName === 'tr').
+                        map((node: any) => node.childNodes[3].childNodes[0].value.trim());
+
+                    resolve(buildingNames);
+
+                } catch (e) {
+                    reject();
+                };
+                reject();
+            }).catch(reject);
+
+        });
+    }
+
+    public static parseBuilding(zip: JSZipObject, filePath: string, datatable: Datatable): Promise<number> {
         return new Promise((resolve, reject) => {
             let rooms: any[];
             let idxColStart = Infinity;
@@ -237,7 +275,6 @@ function getLatLon(address: any): Promise<any> {
                 resolve([latlon.lat, latlon.lon]);
             });
         }).on('error', (e: Error) => {
-            console.log(`Got error: ${e.message}`);
             resolve([]);
         });
     });
