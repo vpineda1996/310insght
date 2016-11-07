@@ -1,25 +1,46 @@
 var http = require('http');
 var parse5 = require('parse5');
 
-import { Datatable, Column, Row } from '../common/Common';
+import { Datatable, Datatype, ColumnType, Column, Row } from '../common/Common';
 
 import { GEO_ENDPOINT, MAX_GEO_TRIES, GEO_REQ_TIMEOUT } from '../common/Constants';
 
 import Log from '../Util';
 
-const COLUMNS = [
-    'fullname',
-    'shortname',
-    'number',
-    'name',
-    'address',
-    'lat',
-    'lon',
-    'seats',
-    'type',
-    'furniture',
-    'href'
-];
+const COLUMNS: ColumnType[] = [{
+    name: 'fullname',
+    type: Datatype.STRING
+}, {
+    name: 'shortname',
+    type: Datatype.STRING
+}, {
+    name: 'number',
+    type: Datatype.STRING
+}, {
+    name: 'name',
+    type: Datatype.STRING
+}, {
+    name: 'address',
+    type: Datatype.STRING
+}, {
+    name: 'lat',
+    type: Datatype.NUMBER
+}, {
+    name: 'lon',
+    type: Datatype.NUMBER
+}, {
+    name: 'seats',
+    type: Datatype.STRING
+}, {
+    name: 'type',
+    type: Datatype.STRING
+}, {
+    name: 'furniture',
+    type: Datatype.STRING
+}, {
+    name: 'href',
+    type: Datatype.STRING
+}];
 
 export default class HTMLParser {
 
@@ -28,7 +49,7 @@ export default class HTMLParser {
         if(!Object.keys(zipFiles).length) throw new Error("invalid dataset!")
 
         return datatable.createColumns(COLUMNS).then((col) => {
-            return datatable.loadColumns(COLUMNS.map(col => datatable.id + '_' + col));
+            return datatable.loadColumns(COLUMNS.map(col => datatable.id + '_' + col.name));
         }).then(() => {
             if (!zipFiles['index.htm']) {
                 throw new Error('you better send index file');
@@ -259,7 +280,7 @@ function getBuildingAddress(divnode: any): string {
 
 function getLatLon(address: any): Promise<any> {
     return new Promise<number[]>((resolve, reject) => {
-        
+
         let tryCount = 0;
         let reqHttp : Function;
 

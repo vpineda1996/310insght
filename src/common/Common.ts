@@ -12,6 +12,11 @@ export interface Datasets {
     [id: string]: Datatable;
 }
 
+export interface ColumnType {
+    name: string;
+    type: Datatype;
+}
+
 /**
  * The key is the name of the column and the value
  * is a column
@@ -100,11 +105,11 @@ export class Datatable {
         return Promise.all(promises);
     }
 
-    public createColumns(columns: string[]) {
+    public createColumns(columns: ColumnType[]) {
         Log.trace('Datatable::createColumns( ... )');
 
-        let promises: Promise<Column>[] = columns.map((colName) => {
-            return this.createColumn(this.id + "_" + colName);
+        let promises: Promise<Column>[] = columns.map((colType) => {
+            return this.createColumn(this.id + "_" + colType.name, undefined, colType.type);
         });
 
         return Promise.all(promises);

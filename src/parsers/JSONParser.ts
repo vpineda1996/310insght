@@ -1,22 +1,40 @@
 
-import {Datatable} from "../common/Common";
-import {Column} from "../common/Common";
-import {Row} from "../common/Common";
+import { Datatable, Datatype, ColumnType, Column, Row } from "../common/Common";
 
 import Log from '../Util';
 
-const COLUMNS: string[] = [
-    'dept',
-    'id',
-    'avg',
-    'instructor',
-    'title',
-    'pass',
-    'fail',
-    'audit',
-    'uuid',
-    'year'
-];
+const COLUMNS: ColumnType[] = [{
+    name: 'dept',
+    type: Datatype.STRING
+}, {
+    name: 'id',
+    type: Datatype.STRING
+}, {
+    name: 'avg',
+    type: Datatype.NUMBER
+}, {
+    name: 'instructor',
+    type: Datatype.STRING
+}, {
+    name: 'title',
+    type: Datatype.STRING
+}, {
+    name: 'pass',
+    type: Datatype.NUMBER
+}, {
+    name: 'fail',
+    type: Datatype.NUMBER
+}, {
+    name: 'audit',
+    type: Datatype.NUMBER
+}, {
+    name: 'uuid',
+    type: Datatype.NUMBER
+}, {
+    name: 'year',
+    type: Datatype.NUMBER
+}];
+
 const COURSE_KEY_LEN = 4;
 
 // courses_dept: string; The department that offered the course.
@@ -34,7 +52,7 @@ export default class JSONParser {
     public static parse(zipFiles: { [id: string]: JSZipObject }, datatable: Datatable): Promise<Datatable> {
         Log.trace('JSONParser::parse( ... )');
         return datatable.createColumns(COLUMNS).then((col) => {
-            return datatable.loadColumns(COLUMNS.map(col => datatable.id + '_' + col));
+            return datatable.loadColumns(COLUMNS.map(col => datatable.id + '_' + col.name));
         }).then(() => {
             let aPromiseArray: Promise<any>[] = [];
             for (var i in zipFiles) {
