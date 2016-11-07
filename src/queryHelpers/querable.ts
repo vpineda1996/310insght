@@ -1,6 +1,8 @@
 import DatasetController from '../controller/DatasetController'
 import { getApplyNames } from '../queryHelpers/queryApply'
 
+import { Datatype, Column } from '../common/Common';
+
 import { areFilters, isAsTable, QueryRequest, getUniqueDatasetIds } from '../util/Query'
 import { isStringOrStringArray } from '../util/String'
 import { MissingDatasets } from '../util/Errors'
@@ -66,15 +68,20 @@ export function hasIdInApply(query: QueryRequest, id: string) : boolean {
     return getApplyNames(query).includes(id);
 }
 
-export function isValidDatasetId(queryId: string): Promise<boolean> {
+export function isValidDatasetId(queryId: string, valueType?: string): Promise<boolean> {
     return new Promise<boolean>((resolve, reject) => {
         DatasetController.getInstance().getDataset(queryId.split('_')[0]).then(datatable => {
             if (!datatable) {
                 return resolve(false);
             }
             return datatable.getColumn(queryId);
-        }).then((col) => {
+        }).then((col: Column) => {
             if (col) {
+                if (!!valueType) {
+                  if (valueType === 'string') resolve(col.datatype === Datatype.STRING);
+                  else if (valueType === 'number') resolve(col.datatype === Datatype.NUMBER);
+                  else resolve(false);
+                }
                 return resolve(true);
             } else {
                 return resolve(false);

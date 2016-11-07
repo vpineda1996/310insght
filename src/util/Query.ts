@@ -141,7 +141,7 @@ function areIdsValid(query: {[s:string]:any}): Promise<any[]> {
                 promises.push(areIdsValid(query[key]));
             } else {
                 if (!isWhereOperator(key)) {
-                    promises.push(isValidId(key));
+                    promises.push(isValidIdAndType(key, query[key]));
                 } else {
                     promises.push(new Promise<any[]>((resolve, reject) => resolve([false, query[key]])));
                 }
@@ -151,9 +151,9 @@ function areIdsValid(query: {[s:string]:any}): Promise<any[]> {
     });
 }
 
-function isValidId(id: string): Promise<any[]> {
+function isValidIdAndType(id: string, value: string|number): Promise<any[]> {
     return new Promise<any[]>((resolve, reject) => {
-        isValidDatasetId(id).then((isValid) => {
+        isValidDatasetId(id, typeof value).then((isValid) => {
             if (isValid) {
                 resolve([true, []]);
             } else {

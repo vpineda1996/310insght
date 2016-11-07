@@ -30,7 +30,7 @@ const COLUMNS: ColumnType[] = [{
     type: Datatype.NUMBER
 }, {
     name: 'seats',
-    type: Datatype.STRING
+    type: Datatype.NUMBER
 }, {
     name: 'type',
     type: Datatype.STRING

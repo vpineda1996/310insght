@@ -8,7 +8,7 @@ const COLUMNS: ColumnType[] = [{
     type: Datatype.STRING
 }, {
     name: 'id',
-    type: Datatype.STRING
+    type: Datatype.NUMBER
 }, {
     name: 'avg',
     type: Datatype.NUMBER
