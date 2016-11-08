@@ -13,7 +13,7 @@ export enum APPLYTOKENS {
     COUNT
 }
 
-export const TEAM_NUMBER = 69;
+export const TEAM_NUMBER = 29;
 export const GEO_ENDPOINT = "http://skaha.cs.ubc.ca:8022/api/v1/team" + TEAM_NUMBER + "/";
 
 export const MAX_GEO_TRIES = 3;
