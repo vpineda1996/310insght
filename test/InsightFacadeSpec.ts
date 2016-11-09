@@ -407,18 +407,16 @@ describe("InsightFacade spec", function() {
                 });
             });
 
-             it("test 2", function() {
+             it.only("test 2", function() {
                 let query: any = {
-                    "GET": ["rooms_shortname", "numRooms"],
-                    "WHERE": {"GT": {"rooms_seats": 160}},
-                    "GROUP": [ "rooms_shortname" ],
-                    "APPLY": [ {"numRooms": {"COUNT": "rooms_name"}} ],
+                    "GET": ["rooms_shortname"],
+                    "WHERE": {},
                     "AS": "TABLE"
                 };
 
                 return IF.performQuery(query).then((res : any) => {
-                    console.log(JSON.stringify(res));
-                    expect(res.body.result.length).to.be.deep.equal(D3_ANS2.result.length);
+                    console.log(res.body.result.length);
+                    expect(res.body.result).to.be.deep.equal(D3_ANS2.result);
                     expect(res.code).to.be.equal(200);
                 });
             });
