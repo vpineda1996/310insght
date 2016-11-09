@@ -375,7 +375,7 @@ describe("InsightFacade spec", function() {
         });
     });
 
-    describe.only("Rooms spec -- D3", function() {
+    describe("Rooms spec -- D3", function() {
         let baseEncoded: string;
         let DATASET_ID = 'rooms';
         let IF = new InsightFacade();
