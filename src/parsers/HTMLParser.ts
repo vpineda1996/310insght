@@ -117,8 +117,16 @@ export default class HTMLParser {
 
                 if (!dtable) throw new Error('missing bunch of stuff on page');
 
-                let placeholder = dtable.
+                let placeholder =
+                    !filePath.includes('UCLL') ?
+                    dtable.
                     childNodes[10].
+                    childNodes[1].
+                    childNodes[3].
+                    childNodes[1] :
+
+                    dtable.
+                    childNodes[12].
                     childNodes[1].
                     childNodes[3].
                     childNodes[1];

@@ -1,5 +1,5 @@
 import { areValidIds, isFormatValid } from '../queryHelpers/querable'
-import { isValidOrder, orders, standardizeOrder } from '../queryHelpers/queryOrder'
+import { isValidOrder, orders } from '../queryHelpers/queryOrder'
 import { getQueryData } from '../queryHelpers/queryWhere'
 import { renderTable } from '../queryHelpers/queryAs'
 
@@ -29,7 +29,7 @@ export default class QueryController {
             }).then((queryData : QueryData[]) => {
                 return groupBy(query, queryData);
             }).then((queryData : QueryData[]) => {
-                return orders(queryData, standardizeOrder(query.ORDER));
+                return orders(queryData, query);
             }).then((queryData : QueryData[]) => {
                 return renderTable(queryData, query.AS);
             }).then((queryData : any[]) => {
