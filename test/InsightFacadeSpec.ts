@@ -6,7 +6,7 @@ import { D3_ANS1, D3_ANS2, D3_ANS3 } from './testData/InsightFacadeData'
 
 import { expect } from 'chai'
 
-describe("InsightFacade spec", function() {
+describe("InsightFacade spec", function () {
     let baseEncoded: string;
     let DATASET_ID = 'courses';
     let IF = new InsightFacade();
@@ -24,7 +24,7 @@ describe("InsightFacade spec", function() {
             return loadDataset();
         });
 
-        it("query with group by and non empty where", function(){
+        it("query with group by and non empty where", function () {
             let query: any = {
                 "GET": ["courses_dept", "courseAverage", "courseMax", "courseCount"],
                 "WHERE": { "IS": { "courses_dept": "cpsc" } },
@@ -43,10 +43,10 @@ describe("InsightFacade spec", function() {
                     "render": "TABLE",
                     "result": [
                         {
-                        "courses_dept": "cpsc",
-                        "courseAverage": 77.6,
-                        "courseMax": 95,
-                        "courseCount": 53
+                            "courses_dept": "cpsc",
+                            "courseAverage": 77.6,
+                            "courseMax": 95,
+                            "courseCount": 53
                         }
                     ]
                 });
@@ -54,7 +54,7 @@ describe("InsightFacade spec", function() {
             });
         });
 
-        it("query with group by, example query", function() {
+        it("query with group by, example query", function () {
             let query: any = {
                 "GET": ["courses_id", "courseAverage"],
                 "WHERE": { "IS": { "courses_dept": "cpsc" } },
@@ -70,11 +70,11 @@ describe("InsightFacade spec", function() {
             });
         });
 
-        it("supports empty where", function() {
+        it("supports empty where", function () {
             let query: any = {
-                "GET": [ "courses_dept", "courseAverage"],
-                "WHERE": { },
-                "GROUP": [ "courses_dept" ],
+                "GET": ["courses_dept", "courseAverage"],
+                "WHERE": {},
+                "GROUP": ["courses_dept"],
                 "APPLY": [{ "courseAverage": { "AVG": "courses_avg" } }],
                 "ORDER": { "dir": "DOWN", "keys": ["courseAverage", "courses_dept"] },
                 "AS": "TABLE"
@@ -89,14 +89,18 @@ describe("InsightFacade spec", function() {
         it("returns 424 if col at where is not present", () => {
             let query: any = {
                 "GET": ["courses_dept", "courseAverage", "courseMax"],
-                "WHERE": {"AND": [
-                    {"LT" : {"courses_ids" : 499}},
-                    {"GT" : {"courses_id" : 200}},
-                    {"OR" : [
-                        {"IS" : {"courses_dept" : "math"}},
-                        {"IS" : {"courses_depts" : "cpsc"}}
-                    ]}
-                ]},
+                "WHERE": {
+                    "AND": [
+                        { "LT": { "courses_ids": 499 } },
+                        { "GT": { "courses_id": 200 } },
+                        {
+                            "OR": [
+                                { "IS": { "courses_dept": "math" } },
+                                { "IS": { "courses_depts": "cpsc" } }
+                            ]
+                        }
+                    ]
+                },
                 "GROUP": ["courses_dept"],
                 "APPLY": [{ "courseAverage": { "AVG": "courses_avg" } }, { "courseMax": { "MAX": "courses_avg" } }],
                 "ORDER": { "dir": "DOWN", "keys": ["courseAverage"] },
@@ -104,26 +108,30 @@ describe("InsightFacade spec", function() {
             }
 
             return IF.performQuery(query).catch((res) => {
-                expect(res.error.missing).to.be.deep.equal(['courses_ids','courses_depts']);
+                expect(res.error.missing).to.be.deep.equal(['courses_ids', 'courses_depts']);
                 expect(res.code).to.be.equal(424);
             });
         });
 
-        it("supports fancy conditions 1", function() {
+        it("supports fancy conditions 1", function () {
             let query: any = {
                 "GET": ["courses_fail", "numSections", "average"],
-                "WHERE": {"AND": [
-                        {"LT" : {"courses_id" : 499}},
-                        {"GT" : {"courses_id" : 200}},
-                        {"OR" : [
-                            {"IS" : {"courses_dept" : "math"}},
-                            {"IS" : {"courses_dept" : "cpsc"}}
-                        ]}
-                    ]},
-                "GROUP": [ "courses_fail" ],
-                "APPLY": [ {"numSections": {"COUNT": "courses_uuid"}}, {"average": {"AVG": "courses_avg"}} ],
-                "ORDER": { "dir": "DOWN", "keys": [ "numSections" ,"average"]},
-                "AS":"TABLE"
+                "WHERE": {
+                    "AND": [
+                        { "LT": { "courses_id": 499 } },
+                        { "GT": { "courses_id": 200 } },
+                        {
+                            "OR": [
+                                { "IS": { "courses_dept": "math" } },
+                                { "IS": { "courses_dept": "cpsc" } }
+                            ]
+                        }
+                    ]
+                },
+                "GROUP": ["courses_fail"],
+                "APPLY": [{ "numSections": { "COUNT": "courses_uuid" } }, { "average": { "AVG": "courses_avg" } }],
+                "ORDER": { "dir": "DOWN", "keys": ["numSections", "average"] },
+                "AS": "TABLE"
             }
 
             return IF.performQuery(query).then((res) => {
@@ -132,22 +140,24 @@ describe("InsightFacade spec", function() {
             });
         });
 
-        it("supports fancy conditions 2", function() {
+        it("supports fancy conditions 2", function () {
             let query: any = {
-            "GET":[ "courses_id","coursesAvg"],
-            "WHERE":{"AND":[
-                        {"IS":{  "courses_dept":"cpsc"}},
-                        {"GT":{"courses_avg":80}}
+                "GET": ["courses_id", "coursesAvg"],
+                "WHERE": {
+                    "AND": [
+                        { "IS": { "courses_dept": "cpsc" } },
+                        { "GT": { "courses_avg": 80 } }
                     ]
-            },
-            "GROUP":[ "courses_id" ],
-            "APPLY":[
-                { "coursesAvg":{ "AVG":"courses_id" }}
-            ],
-            "ORDER":{ "dir":"UP",
-                "keys":[ "courses_id" ]
-            },
-            "AS":"TABLE"
+                },
+                "GROUP": ["courses_id"],
+                "APPLY": [
+                    { "coursesAvg": { "AVG": "courses_id" } }
+                ],
+                "ORDER": {
+                    "dir": "UP",
+                    "keys": ["courses_id"]
+                },
+                "AS": "TABLE"
             }
 
             return IF.performQuery(query).then((res) => {
@@ -155,20 +165,21 @@ describe("InsightFacade spec", function() {
             });
         });
 
-        it("supports fancy conditions old sort method", function() {
+        it("supports fancy conditions old sort method", function () {
             let query: any = {
-            "GET":[ "courses_id","coursesAvg"],
-            "WHERE":{"AND":[
-                        {"IS":{  "courses_dept":"cpsc"}},
-                        {"GT":{"courses_avg":80}}
+                "GET": ["courses_id", "coursesAvg"],
+                "WHERE": {
+                    "AND": [
+                        { "IS": { "courses_dept": "cpsc" } },
+                        { "GT": { "courses_avg": 80 } }
                     ]
-            },
-            "GROUP":[ "courses_id" ],
-            "APPLY":[
-                { "coursesAvg":{ "AVG":"courses_id" }}
-            ],
-            "ORDER": "courses_id",
-            "AS":"TABLE"
+                },
+                "GROUP": ["courses_id"],
+                "APPLY": [
+                    { "coursesAvg": { "AVG": "courses_id" } }
+                ],
+                "ORDER": "courses_id",
+                "AS": "TABLE"
             }
 
             return IF.performQuery(query).then((res) => {
@@ -177,7 +188,7 @@ describe("InsightFacade spec", function() {
         });
 
         describe("group by failures", () => {
-            it("fails if empty group", function(){
+            it("fails if empty group", function () {
                 let query: any = {
                     "GET": ["courses_dept", "courseAverage", "courseMax", "courseCount"],
                     "WHERE": { "IS": { "courses_dept": "cpsc" } },
@@ -196,7 +207,7 @@ describe("InsightFacade spec", function() {
                 });
             });
 
-            it("fails if elements in get not specified", function(){
+            it("fails if elements in get not specified", function () {
                 let query: any = {
                     "GET": ["courses_dept", "courseAverage", "courseMax", "courseCount"],
                     "WHERE": { "IS": { "courses_dept": "cpsc" } },
@@ -211,7 +222,7 @@ describe("InsightFacade spec", function() {
                 });
             });
 
-            it("fails if elements in get not specified", function(){
+            it("fails if elements in get not specified", function () {
                 let query: any = {
                     "GET": ["coursesDept", "courseAverage", "courseMax", "courseCount"],
                     "WHERE": { "IS": { "courses_dept": "cpsc" } },
@@ -232,7 +243,7 @@ describe("InsightFacade spec", function() {
                 });
             });
 
-            it("fails if column nmae fore apply is invalid", function(){
+            it("fails if column nmae fore apply is invalid", function () {
                 let query: any = {
                     "GET": ["courses_dept", "courseAverage", "course_Max", "courseCount"],
                     "WHERE": { "IS": { "courses_dept": "cpsc" } },
@@ -252,7 +263,7 @@ describe("InsightFacade spec", function() {
                 });
             });
 
-            it("fails if column nmae fore apply is invalid with double underscore", function(){
+            it("fails if column nmae fore apply is invalid with double underscore", function () {
                 let query: any = {
                     "GET": ["courses_dept", "courseAverage", "__Max", "courseCount"],
                     "WHERE": { "IS": { "courses_dept": "cpsc" } },
@@ -275,16 +286,16 @@ describe("InsightFacade spec", function() {
 
         });
 
-        describe("tests that were given to us", function() {
+        describe("tests that were given to us", function () {
 
-            it("test 1", function() {
+            it("test 1", function () {
                 let query: any = {
                     "GET": ["courses_id", "courseAverage"],
-                    "WHERE": {"IS": {"courses_dept": "cpsc"}} ,
-                    "GROUP": [ "courses_id" ],
-                    "APPLY": [ {"courseAverage": {"AVG": "courses_avg"}} ],
-                    "ORDER": { "dir": "UP", "keys": ["courseAverage", "courses_id"]},
-                    "AS":"TABLE"
+                    "WHERE": { "IS": { "courses_dept": "cpsc" } },
+                    "GROUP": ["courses_id"],
+                    "APPLY": [{ "courseAverage": { "AVG": "courses_avg" } }],
+                    "ORDER": { "dir": "UP", "keys": ["courseAverage", "courses_id"] },
+                    "AS": "TABLE"
                 };
                 return IF.performQuery(query).then((res) => {
                     expect(res.body).to.be.deep.equal(ANS5);
@@ -292,14 +303,14 @@ describe("InsightFacade spec", function() {
                 });
             });
 
-            it("test 2", function() {
+            it("test 2", function () {
                 let query: any = {
                     "GET": ["courses_dept", "courses_id", "courseAverage", "maxFail"],
                     "WHERE": {},
-                    "GROUP": [ "courses_dept", "courses_id" ],
-                    "APPLY": [ {"courseAverage": {"AVG": "courses_avg"}}, {"maxFail": {"MAX": "courses_fail"}} ],
-                    "ORDER": { "dir": "UP", "keys": ["courseAverage", "maxFail", "courses_dept", "courses_id"]},
-                    "AS":"TABLE"
+                    "GROUP": ["courses_dept", "courses_id"],
+                    "APPLY": [{ "courseAverage": { "AVG": "courses_avg" } }, { "maxFail": { "MAX": "courses_fail" } }],
+                    "ORDER": { "dir": "UP", "keys": ["courseAverage", "maxFail", "courses_dept", "courses_id"] },
+                    "AS": "TABLE"
                 };
                 return IF.performQuery(query).then((res) => {
                     expect(res.body).to.be.deep.equal(ANS6);
@@ -307,14 +318,14 @@ describe("InsightFacade spec", function() {
                 });
             });
 
-            it("test 3", function() {
+            it("test 3", function () {
                 let query: any = {
                     "GET": ["courses_dept", "courses_id", "numSections"],
                     "WHERE": {},
-                    "GROUP": [ "courses_dept", "courses_id" ],
-                    "APPLY": [ {"numSections": {"COUNT": "courses_uuid"}} ],
-                    "ORDER": { "dir": "UP", "keys": ["numSections", "courses_dept", "courses_id"]},
-                    "AS":"TABLE"
+                    "GROUP": ["courses_dept", "courses_id"],
+                    "APPLY": [{ "numSections": { "COUNT": "courses_uuid" } }],
+                    "ORDER": { "dir": "UP", "keys": ["numSections", "courses_dept", "courses_id"] },
+                    "AS": "TABLE"
                 };
                 return IF.performQuery(query).then((res) => {
                     expect(res.body).to.be.deep.equal(ANS7);
@@ -345,7 +356,7 @@ describe("InsightFacade spec", function() {
         it("returns 424 if the dataset is not present", () => {
             let query: any = {
                 "GET": ["courses_dept", "courseAverage", "courseMax"],
-                "WHERE": { },
+                "WHERE": {},
                 "GROUP": ["courses_dept"],
                 "APPLY": [{ "courseAverage": { "AVG": "courses_avg" } }, { "courseMax": { "MAX": "courses_avg" } }],
                 "ORDER": { "dir": "DOWN", "keys": ["courseAverage"] },
@@ -386,17 +397,17 @@ describe("InsightFacade spec", function() {
             return IF.addDataset(DATASET_ID, baseEncoded);
         }
 
-        before(function() {
+        before(function () {
             this.timeout(50000);
             return loadDataset();
         });
 
-        describe("queries P1", function(){
-             it("test 1", function() {
+        describe("queries P1", function () {
+            it("test 1", function () {
                 let query: any = {
                     "GET": ["rooms_fullname", "rooms_number"],
-                    "WHERE": {"IS": {"rooms_shortname": "DMP"}},
-                    "ORDER": { "dir": "UP", "keys": ["rooms_number"]},
+                    "WHERE": { "IS": { "rooms_shortname": "DMP" } },
+                    "ORDER": { "dir": "UP", "keys": ["rooms_number"] },
                     "AS": "TABLE"
                 };
 
@@ -407,7 +418,8 @@ describe("InsightFacade spec", function() {
                 });
             });
 
-             it.only("test 2", function() {
+
+             it("test 2", function() {
                 let query: any = {
                     "GET": ["rooms_shortname"],
                     "WHERE": {},
@@ -421,23 +433,53 @@ describe("InsightFacade spec", function() {
                 });
             });
 
-             it("test 3", function() {
-                let query: any =  {
+            it("test 3", function () {
+                let query: any = {
                     "GET": ["rooms_fullname", "rooms_number", "rooms_seats"],
-                    "WHERE": {"AND": [
-                        {"GT": {"rooms_lat": 49.261292}},
-                        {"LT": {"rooms_lon": -123.245214}},
-                        {"LT": {"rooms_lat": 49.262966}},
-                        {"GT": {"rooms_lon": -123.249886}},
-                        {"IS": {"rooms_furniture": "*Movable Tables*"}}
-                    ]},
-                    "ORDER": { "dir": "UP", "keys": ["rooms_number"]},
+                    "WHERE": {
+                        "AND": [
+                            { "GT": { "rooms_lat": 49.261292 } },
+                            { "LT": { "rooms_lon": -123.245214 } },
+                            { "LT": { "rooms_lat": 49.262966 } },
+                            { "GT": { "rooms_lon": -123.249886 } },
+                            { "IS": { "rooms_furniture": "*Movable Tables*" } }
+                        ]
+                    },
+                    "ORDER": { "dir": "UP", "keys": ["rooms_number"] },
                     "AS": "TABLE"
                 };
 
                 return IF.performQuery(query).then((res) => {
                     console.log(JSON.stringify(res));
                     expect(res.body).to.be.deep.equal(D3_ANS3);
+                    expect(res.code).to.be.equal(200);
+                });
+            });
+
+            it("test 4", function () {
+                let query: any =  {
+                    "GET": ["rooms_shortname", "numRooms"],
+                    "WHERE": { },
+                    "GROUP": [ "rooms_shortname" ],
+                    "APPLY": [ {"numRooms": {"COUNT": "rooms_name"}} ],
+                    "AS": "TABLE"
+                };
+
+                return IF.performQuery(query).then((res: any) => {
+                    expect(res.code).to.be.equal(200);
+                });
+            });
+
+
+            it("test 5", function () {
+                let query: any =  {
+                    "GET": ["rooms_lat"],
+                    "WHERE": { },
+                    "AS": "TABLE"
+                };
+
+                return IF.performQuery(query).then((res: any) => {
+                    expect(res.body.result.length).to.be.equal(364);
                     expect(res.code).to.be.equal(200);
                 });
             });
