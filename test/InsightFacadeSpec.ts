@@ -386,11 +386,7 @@ describe("InsightFacade spec", function () {
         });
     });
 
-<<<<<<< HEAD
-    describe.only("Rooms spec -- D3", function () {
-=======
     describe("Rooms spec -- D3", function() {
->>>>>>> origin
         let baseEncoded: string;
         let DATASET_ID = 'rooms';
         let IF = new InsightFacade();
