@@ -420,9 +420,11 @@ describe("InsightFacade spec", function () {
 
 
              it("test 2", function() {
-                let query: any = {
-                    "GET": ["rooms_shortname"],
-                    "WHERE": {},
+                let query: any =  {
+                    "GET": ["rooms_shortname", "numRooms"],
+                    "WHERE": {"GT": {"rooms_seats": 160}},
+                    "GROUP": [ "rooms_shortname" ],
+                    "APPLY": [ {"numRooms": {"COUNT": "rooms_name"}} ],
                     "AS": "TABLE"
                 };
 
