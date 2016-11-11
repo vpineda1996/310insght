@@ -233,20 +233,6 @@ export default class HTMLParser {
         }
     }
 
-    private static findById(root: any, id: string): any {
-        if (!root) return null;
-
-        if (root.attrs.some((attr: any) => attr.name === 'id' && attr.value === id)) {
-            return root;
-        }
-
-        let children = root.childNodes.
-            map((node: any) => this.findById(node, id)).
-            filter((node: any) => !node);
-
-        return children.length === 1 ? children[0] : null;
-    }
-
     private static getBuildingInfo(node: any): { [col: string]: string | number } {
         return {
             'fullname': getBuildingFullName(node.childNodes[1]),
@@ -313,21 +299,13 @@ function getLatLon(address: any): Promise<any> {
 
         let fnTimeoutHandler = () => {
             Log.info("Timeout for: " + address);
-            if(tryCount ++ < MAX_GEO_TRIES){
-                reqHttp();
-            } else {
-                resolve([]);
-            }
+             (tryCount ++ < MAX_GEO_TRIES) ? reqHttp() : resolve([]);
         }
 
         reqHttp = () => {
             Log.info("Starting req for: " + address);
             let request = http.get(GEO_ENDPOINT + encodeURIComponent(address), fnHandler ).on('error', (e: Error) => {
-                if(tryCount ++ < MAX_GEO_TRIES){
-                    reqHttp();
-                } else {
-                    resolve([]);
-                }
+                (tryCount ++ < MAX_GEO_TRIES) ? reqHttp() : resolve([]);
             });
             request.setTimeout(GEO_REQ_TIMEOUT, fnTimeoutHandler);
         }

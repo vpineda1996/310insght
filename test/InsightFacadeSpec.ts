@@ -419,7 +419,7 @@ describe("InsightFacade spec", function () {
             });
 
 
-             it("test 2", function() {
+             xit("test 2", function() {
                 let query: any =  {
                     "GET": ["rooms_shortname", "numRooms"],
                     "WHERE": {"GT": {"rooms_seats": 160}},
