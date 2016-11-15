@@ -25,8 +25,8 @@
     "configurewin": "npm install & typings install --global",
     "build": "tsc",
     "test": "mocha -c -R mochawesome public/test",
-    "cover": "istanbul cover _mocha",
-    "coverwin": "istanbul cover node_modules/mocha/bin/_mocha",
+    "cover": "istanbul cover _mocha public/test",
+    "coverwin": "istanbul cover node_modules/mocha/bin/_mocha public/test",
     "start": "node public/src/App.js"
   },
   "dependencies": {
