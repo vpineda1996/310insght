@@ -1,15 +1,17 @@
 {
   "compilerOptions": {
+    "outDir": "./public/",
     "module": "commonjs",
     "target": "ES5",
     "noImplicitAny": true,
     "removeComments": true,
     "preserveConstEnums": true,
-    "sourceMap": true
+    "sourceMap": true,
+    "jsx": "react"
   },
   "filesGlob": [
     "/typings/index.d.ts",
-    "/src/**/*.ts",
+    "/src/**/*.tsx?",
     "/test/**/*.ts"
   ],
   "exclude": [
