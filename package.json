@@ -29,17 +29,20 @@
     "test": "mocha -c -R mochawesome public/test",
     "cover": "istanbul cover _mocha public/test",
     "coverwin": "istanbul cover node_modules/mocha/bin/_mocha public/test",
-    "start": "node public/src/App.js"
+    "start": "node public/src/App.js",
+    "devserver": "webpack-dev-server --hot --inline --module-bind \"css=style!css\" --content-base public/src/static"
   },
   "dependencies": {
     "@types/react": "^0.14.48",
     "@types/react-dom": "^0.14.18",
+    "css-loader": "^0.25.0",
     "jszip": "^3.1.2",
     "mochawesome": "^1.5.2",
     "parse5": "^2.2.3",
     "react": "^15.3.2",
     "react-dom": "^15.3.2",
     "restify": "^4.0.3",
+    "style-loader": "^0.13.1",
     "tslint": "^3.15.1",
     "typescript": "^1.8.10",
     "webpack": "^1.13.3",
