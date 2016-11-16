@@ -1,0 +1,2 @@
+- Query the server for lat long and force the sync events to always save entries in the correct order
+- Tests!
