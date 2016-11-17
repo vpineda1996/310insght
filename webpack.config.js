@@ -4,7 +4,8 @@ module.exports = {
     entry: "./src/ui/index.tsx",
     output: {
         filename: "bundle.js",
-        path: path.join(__dirname,"public","src","static","js")
+        path: path.join(__dirname,"public","src","static","js"),
+        publicPath: "/js"
     },
 
     // Enable sourcemaps for debugging webpack's output.
@@ -18,7 +19,11 @@ module.exports = {
     module: {
         loaders: [
             // All files with a '.ts' or '.tsx' extension will be handled by 'ts-loader'.
-            { test: /\.tsx?$/, loader: "ts-loader" }
+            { 
+                test: /\.tsx?$/, 
+                loader: "react-hot-loader/webpack!ts-loader",
+                include: [ path.join(__dirname,"src","ui") ]
+            }
         ],
 
         preLoaders: [
@@ -28,6 +33,7 @@ module.exports = {
     },
 
     plugins: [
+        new webpack.HotModuleReplacementPlugin(),
         new webpack.DefinePlugin({
                 'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV)
             }),
