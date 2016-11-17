@@ -11,7 +11,7 @@
   },
   "filesGlob": [
     "/typings/index.d.ts",
-    "/src/**/*.tsx?",
+    "/src/**/*.ts",
     "/test/**/*.ts"
   ],
   "exclude": [
