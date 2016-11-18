@@ -1,5 +1,6 @@
 import * as React from "react";
 import { MainNavBar, NavBarStates } from "../components/MainNavBar"
+import { RoomExplorer } from '../components/RoomExplorer'
 
 export interface MainLayoutProps {}
 export interface MainLayoutState {
@@ -8,7 +9,7 @@ export interface MainLayoutState {
 
 export class MainLayout extends React.Component<MainLayoutProps, MainLayoutState> {
     constructor(props: any){
-        super(props);  
+        super(props);
         this.state = {
             currentTab: NavBarStates.COURSES
         };
@@ -19,10 +20,12 @@ export class MainLayout extends React.Component<MainLayoutProps, MainLayoutState
             prev.currentTab = newState;
             return prev;
         });
-        console.log(this.state)
     }
 
     render() {
-        return <MainNavBar navState={this.state.currentTab} onChangeState={this.onChangeTab.bind(this)}/>;
+        return <div>
+            <MainNavBar navState={this.state.currentTab} onChangeState={this.onChangeTab.bind(this)}/>
+            <RoomExplorer />
+        </div>
     }
 }

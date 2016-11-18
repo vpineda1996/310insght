@@ -64,8 +64,8 @@ export class RoomExplorer extends React.Component<MapProps, {}> {
     render () {
         return (
             <Map
-                containerElement={<div className='map-container' />}
-                mapElement={<div className='map-container' />}
+                containerElement={<div className='map' />}
+                mapElement={<div className='map' />}
                 markers = {this.marker}
                 {...this.props}
             />

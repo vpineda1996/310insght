@@ -1,3 +1,4 @@
+/// <reference path="../custom.d.ts" />
 /// <reference path="globals/bunyan/index.d.ts" />
 /// <reference path="globals/chai/index.d.ts" />
 /// <reference path="globals/core-js/index.d.ts" />

@@ -36,7 +36,6 @@ export namespace NavBarStates {
 
 export class MainNavBar extends React.Component<MainNavBarPros, {}> {
     private onSelectState(navState: NavBarStates) {
-        console.info(navState);
         this.props.onChangeState(navState);
     };
     render() {
@@ -46,7 +45,7 @@ export class MainNavBar extends React.Component<MainNavBarPros, {}> {
                 <Button text={NavBarStates[state]} onClick={this.onSelectState.bind(this, state)} cssClass={"button"}/>
             </li>;
         });
-        return <nav className="navbar navbar-default mainNavBar">
+        return <nav className="navbar navbar-default main-nav-bar">
             <div className="container-fluid">
                 <div className="navbar-header">
                     <button type="button" className="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1" aria-expanded="false">
