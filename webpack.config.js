@@ -49,7 +49,8 @@ module.exports = {
                 sourcemap: false,
                 beautify: false,
                 dead_code: true
-        })
+            }),
+            new WebpackNotifierPlugin()
     ],
     sassLoader: {
         includePaths: [path.resolve(__dirname, "./src/ui/styles")]

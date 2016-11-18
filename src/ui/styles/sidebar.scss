@@ -1,0 +1,14 @@
+.sidebar-layout {
+  width: 20%;
+  height: 90vh;
+  float: left;
+  border: 2px groove red;
+  border-radius: 25px;
+  padding: 20px; 
+  z-index: 1;
+}
+
+.sidebar {
+  width: auto;
+  height: 100%;
+}
