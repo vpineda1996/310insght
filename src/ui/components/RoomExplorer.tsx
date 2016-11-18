@@ -6,8 +6,7 @@ import {
     Marker
 } from 'react-google-maps';
 
-// Load CSS
-require("../styles/roomview.scss");
+require('../styles/roomview.scss');
 
 interface Geo {
     lat: number;
