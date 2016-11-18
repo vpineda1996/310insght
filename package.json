@@ -35,7 +35,7 @@
     "cover": "istanbul cover _mocha public/test",
     "coverwin": "istanbul cover node_modules/mocha/bin/_mocha public/test",
     "start": "node public/src/App.js",
-    "devserver": "webpack-dev-server --content-base public/src/static"
+    "devserver": "webpack-dev-server"
   },
   "dependencies": {
     "@types/react": "^0.14.48",

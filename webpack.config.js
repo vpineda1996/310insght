@@ -1,5 +1,7 @@
 const path = require("path");
 const webpack = require('webpack');
+const WebpackNotifierPlugin = require('webpack-notifier');
+
 module.exports = {
     entry: "./src/ui/index.tsx",
     output: {
@@ -53,7 +55,19 @@ module.exports = {
             new WebpackNotifierPlugin()
     ],
     sassLoader: {
-        includePaths: [path.resolve(__dirname, "./src/ui/styles")]
+        includePaths: [path.resolve(__dirname, 'src', 'ui', 'styles')]
+    },
+
+    devServer: {
+        contentBase: path.resolve(__dirname, 'public', 'src', 'static'),
+        host: '0.0.0.0',
+        port: 8080,
+        proxy: {
+            '/dataset/*': {
+                target: 'http://localhost:4321',
+                secure: false
+            }
+        }
     },
 
     // When importing a module whose path matches one of the following, just
