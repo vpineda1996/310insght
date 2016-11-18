@@ -1,6 +1,9 @@
 import * as React from "react";
 import { Button } from './Button'
 
+// Styesheet
+require("../styles/navbar.scss");
+
 export interface MainNavBarPros { navState: NavBarStates; onChangeState: Function; }
 
 export enum NavBarStates {
@@ -40,10 +43,10 @@ export class MainNavBar extends React.Component<MainNavBarPros, {}> {
         let navBarButtons = NavBarStates.indices().map((state: any) => {
             let active = state === this.props.navState ? "active" : "";
             return <li key={state} className={active}>
-                <Button text={NavBarStates[state]} onClick={this.onSelectState.bind(this, state)} />
+                <Button text={NavBarStates[state]} onClick={this.onSelectState.bind(this, state)} cssClass={"button"}/>
             </li>;
         });
-        return <nav className="navbar navbar-default">
+        return <nav className="navbar navbar-default mainNavBar">
             <div className="container-fluid">
                 <div className="navbar-header">
                     <button type="button" className="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1" aria-expanded="false">

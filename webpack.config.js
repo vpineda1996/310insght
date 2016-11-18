@@ -23,6 +23,10 @@ module.exports = {
                 test: /\.tsx?$/, 
                 loader: "react-hot-loader/webpack!ts-loader",
                 include: [ path.join(__dirname,"src","ui") ]
+            },
+            {
+                test: /\.scss$/,
+                loaders: ["style", "css", "sass"]
             }
         ],
 
@@ -47,6 +51,9 @@ module.exports = {
                 dead_code: true
         })
     ],
+    sassLoader: {
+        includePaths: [path.resolve(__dirname, "./src/ui/styles")]
+    },
 
     // When importing a module whose path matches one of the following, just
     // assume a corresponding global variable exists and use that instead.
