@@ -1,73 +1,49 @@
-import * as React from "react";
+import * as React from 'react'
+import { Map, MarkerProps } from './Map'
+import { Store } from '../store/store'
 
-import {
-    withGoogleMap,
-    GoogleMap,
-    Marker
-} from 'react-google-maps';
+interface RoomExplorerProps {
 
-require('../styles/roomview.scss');
-
-interface Geo {
-    lat: number;
-    lng: number;
+}
+interface RoomExplorerState {
+    markers?: MarkerProps[]
 }
 
-interface MapProps {
-    defaultZoom?: number
-    zoomLevel?: number
-    defaultCenter?: Geo
-    center?: Geo,
+const defaultProps = {
+
 }
 
-const defaultProps: MapProps = {
-    defaultCenter: {
-        lat: 49.264086,
-        lng: -123.249864
-    },
-    defaultZoom: 16
+const defaultQueryParams = {
+    'id': 'rooms'
 }
 
-const Map = withGoogleMap((props: any) => (
-    <GoogleMap
-        defaultZoom={props.defaultZoom}
-        defaultCenter={props.defaultCenter}>
-        {props.markers}
-    </GoogleMap>
-));
+export class RoomExplorer extends React.Component<RoomExplorerProps, RoomExplorerState> {
+    static defaultProps: RoomExplorerProps = defaultProps;
 
-
-export class RoomExplorer extends React.Component<MapProps, {}> {
-    static defaultProps: MapProps = defaultProps;
-
-    onClick() {
-        console.info('onClick');
+    constructor (props: any) {
+        super(props);
+        this.state = {
+        };
     }
 
-    onRightClick () {
-        console.info('onRightClick')
-    }
+    fetchData = () => {
+        console.info('fetching data');
+        const query = {
+            "id": "rooms",
+            "GET": ["rooms_shortname"],
+            "WHERE": {
+                "GT": { "rooms_seat": 0 }
+            },
+            "AS": "TABLE"
+        }
+        Store.fetch('rooms_map', query);
 
-    onDrug () {
-        console.info('onDrug')
     }
-
-    private marker = (
-        <Marker
-            onClick={this.onClick}
-            onRightClick={this.onRightClick}
-            onDragStart={this.onDrug}
-        />
-    );
 
     render () {
-        return (
-            <Map
-                containerElement={<div className='map' />}
-                mapElement={<div className='map' />}
-                markers = {this.marker}
-                {...this.props}
-            />
-        )
+        return <div className='room-explorer'>
+            <Map />
+            <button className='uppercase' onClick={this.fetchData}> Load Data </button>
+        </div>
     }
 }
