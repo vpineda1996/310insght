@@ -16,13 +16,15 @@ export interface Geo {
 }
 
 export interface MarkerProps {
+    name: string
     position: Geo
     showInfo: boolean
-    infoContent: any
+    infoContent: any[]
 }
 
 interface MapProps {
     markers?: MarkerProps[]
+    handleClick?: Function
     defaultZoom?: number
     zoomLevel?: number
     defaultCenter?: Geo
@@ -30,14 +32,7 @@ interface MapProps {
 }
 
 const defaultProps: MapProps = {
-    markers: [{
-        position: {
-            lat: 49.264086,
-            lng: -123.249864
-        },
-        showInfo: false,
-        infoContent: <div className='rainbow'/>
-    }],
+    markers: [],
     defaultCenter: {
         lat: 49.264086,
         lng: -123.249864
@@ -81,25 +76,41 @@ export class Map extends React.Component<MapProps, {}> {
         console.info('info z index changed');
     }
 
-    private renderMarker = (marker: MarkerProps) => <Marker
-        onClick={this.onClick}
-        onRightClick={this.onRightClick}
-        onDragStart={this.onDrug}
-        position={marker.position}
-        key={'marker-' + JSON.stringify(marker.position)}>
-        {marker.showInfo && this.infoWindow(marker)}
-    </Marker>
+    private renderMarker = (marker: MarkerProps, handleClick: Function) => (
+        <Marker
+            onClick={() => handleClick(marker.name)}
+            onRightClick={this.onRightClick}
+            onDragStart={this.onDrug}
+            position={marker.position}
+            key={'marker-' + marker.name + '-' + marker.showInfo}>
+            {marker.showInfo && this.infoWindow(marker.name, marker.infoContent, () => handleClick(marker))}
+        </Marker>
+    )
 
-    private infoWindow = (marker: MarkerProps) => <InfoWindow
-        onCloseClick={this.onInfoClose}
-        onDomReady={this.onInfoReady}
-        onZIndexChanged={this.onInfoZChanged}
-    />
+    private infoWindow = (buildingName: string, content: any[], handleClick: Function) => (
+        <InfoWindow
+            onCloseClick={handleClick}
+            onDomReady={this.onInfoReady}
+            onZIndexChanged={this.onInfoZChanged}>
+            <div className='map-info-content'>
+                <label>{buildingName}</label>
+                <ul className='map-info-table'>
+                    {content.map((c: any) => (
+                        <li><a target='_blank'
+                              href={c.rooms_href}
+                              key={'marker-info-' + buildingName + c.rooms_number}>
+                            {c.rooms_number}
+                        </a></li>)
+                    )}
+                </ul>
+            </div>
+        </InfoWindow>
+    )
 
     render () {
         // this.props is read-only object
         let props: any = $.extend({}, this.props);
-        props.markers = this.props.markers.map(this.renderMarker);
+        props.markers = this.props.markers.map((marker) => this.renderMarker(marker, this.props.handleClick));
 
         return <div className='room-explorer'>
             <UBCMap

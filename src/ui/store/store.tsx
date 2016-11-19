@@ -1,6 +1,6 @@
 import { fetch } from './dispatcher'
 
-interface Data {
+export interface Data {
     id: string;
     query_key: string;
     value: any[];
@@ -28,23 +28,23 @@ export class Store {
         return this._instance;
     }
 
-    public static fetch(id: string, query: {}): Data|Promise<Data> {
+    public static fetch(id: string, query: {}): Promise<any[]> {
         return this.getInstance().fetch(id, query);
     }
 
-    private fetch(id: string, query: {}): Data|Promise<Data> {
+    private fetch(id: string, query: {}): Promise<any[]> {
         let dataContainer = this._data[id];
         if (!dataContainer) return this.load(id, query);
 
         let key = JSON.stringify(query);
         let data: Data = dataContainer[key];
 
-        if (!data || data.expires_at > new Date().getTime()) return this.load(id, query);
+        if (!data || data.value === [] || data.expires_at > new Date().getTime()) return this.load(id, query);
 
-        return data
+        return new Promise<any[]>((resolve, reject) => resolve(data.value));
     }
 
-    private load(id: string, query: {}): Data|Promise<Data> {
+    private load(id: string, query: {}): Promise<any[]> {
         let key = JSON.stringify(query);
         let dataContainer = this._data[id];
         if (!dataContainer) dataContainer = {};
@@ -57,13 +57,13 @@ export class Store {
           expires_at: new Date().getTime() + 5 * 60000 // 5 mins
         };
 
-        return new Promise<Data>((resolve, reject) => {
+        return new Promise<any[]>((resolve, reject) => {
             return fetch(id, query).then(res => {
                 console.info(res.result);
-                return null;
+                return resolve(res.result);
             }).fail((xhr, status, error) => {
                 console.error(error);
-                return null;
+                return reject(error);
             });
         });
     }
