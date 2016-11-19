@@ -2,11 +2,13 @@ import * as React from 'react';
 import * as $ from 'jquery'
 
 import {
-    withGoogleMap,
     GoogleMap,
+    InfoWindow,
     Marker,
-    InfoWindow
+    withGoogleMap
 } from 'react-google-maps';
+
+import DrawingManager from 'react-google-maps/lib/drawing/DrawingManager'
 
 require('../styles/roomview.scss');
 
@@ -25,6 +27,7 @@ export interface MarkerProps {
 interface MapProps {
     markers?: MarkerProps[]
     handleClick?: Function
+    handleDrawOverlay?: Function
     defaultZoom?: number
     zoomLevel?: number
     defaultCenter?: Geo
@@ -44,43 +47,39 @@ const UBCMap = withGoogleMap((props: any) => (
     <GoogleMap
         defaultZoom={props.defaultZoom}
         defaultCenter={props.defaultCenter}>
-        {props.markers}
+        <div>
+            {props.children}
+            {props.markers}
+        </div>
     </GoogleMap>
 ));
 
+const DRAWING_OPTIONS = {
+    drawingControl: true,
+    drawingControlOptions: {
+        position: google.maps.ControlPosition.TOP_CENTER,
+        drawingModes: [
+            google.maps.drawing.OverlayType.CIRCLE,
+            google.maps.drawing.OverlayType.POLYGON,
+            google.maps.drawing.OverlayType.RECTANGLE,
+        ],
+    },
+    circleOptions: {
+        fillColor: `#ffff00`,
+        fillOpacity: 0.25,
+        strokeWeight: 5,
+        clickable: false,
+        editable: true,
+        zIndex: 1,
+    },
+};
 
 export class Map extends React.Component<MapProps, {}> {
     static defaultProps: MapProps = defaultProps;
 
-    onClick() {
-        console.info('onClick');
-    }
-
-    onRightClick () {
-        console.info('onRightClick')
-    }
-
-    onDrug () {
-        console.info('onDrug')
-    }
-
-    onInfoClose () {
-        console.info('info closed');
-    }
-
-    onInfoReady () {
-        console.info('info ready');
-    }
-
-    onInfoZChanged () {
-        console.info('info z index changed');
-    }
-
     private renderMarker = (marker: MarkerProps, handleClick: Function) => (
         <Marker
             onClick={() => handleClick(marker.name)}
-            onRightClick={this.onRightClick}
-            onDragStart={this.onDrug}
             position={marker.position}
             key={'marker-' + marker.name + '-' + marker.showInfo}>
             {marker.showInfo && this.infoWindow(marker.name, marker.infoContent, () => handleClick(marker))}
@@ -88,10 +87,7 @@ export class Map extends React.Component<MapProps, {}> {
     )
 
     private infoWindow = (buildingName: string, content: any[], handleClick: Function) => (
-        <InfoWindow
-            onCloseClick={handleClick}
-            onDomReady={this.onInfoReady}
-            onZIndexChanged={this.onInfoZChanged}>
+        <InfoWindow onCloseClick={handleClick}>
             <div className='map-info-content'>
                 <label>{buildingName}</label>
                 <ul className='map-info-table'>
@@ -117,6 +113,10 @@ export class Map extends React.Component<MapProps, {}> {
                 containerElement={<div className='map' />}
                 mapElement={<div className='map' />}
                 {...props}>
+                <DrawingManager id='hahahah'
+                    defaultDrawingMode={google.maps.drawing.OverlayType.CIRCLE}
+                    defaultOptions={DRAWING_OPTIONS}
+                    onOverlayComplete={this.props.handleDrawOverlay} />
             </UBCMap>
         </div>
     }

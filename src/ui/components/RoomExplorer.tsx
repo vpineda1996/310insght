@@ -3,18 +3,71 @@ import { Map, MarkerProps } from './Map'
 import { Store, Data } from '../store/store'
 
 interface RoomExplorerProps {
-
 }
+
 interface RoomExplorerState {
-    markers?: MarkerProps[]
+    markers: MarkerProps[]
+    regions: any[]
 }
 
-const defaultProps = {
+const defaultProps = {}
 
+const ALL_ROOM_QUERY = {
+    "GET": ["rooms_shortname", "rooms_lat", "rooms_lon", "rooms_number", "rooms_href"],
+    "WHERE": {},
+    "AS": "TABLE"
 }
 
-const defaultQueryParams = {
-    'id': 'rooms'
+const boundQuery = (overlay: any) => {
+    let bounds: any = overlay.overlay.bounds;
+
+    switch (overlay.type) {
+        case google.maps.drawing.OverlayType.RECTANGLE:
+            return RECTANGULAR_QUERY(bounds);
+        case google.maps.drawing.OverlayType.CIRCLE:
+            return CIRCULAR_QUERY(bounds);
+        case google.maps.drawing.OverlayType.POLYGON:
+            return POLYGON_QUERY(bounds);
+        default:
+            return {};
+    }
+}
+
+const RECTANGULAR_QUERY = (bounds: any) => {
+    return {
+        "WHERE": {
+            "AND": [
+                { "GT": { "rooms_lat": bounds.f.f } },
+                { "LT": { "rooms_lat": bounds.f.b } },
+                { "LT": { "rooms_lon": bounds.b.f } },
+                { "GT": { "rooms_lon": bounds.b.b } }
+            ]
+        }
+    };
+}
+
+const CIRCULAR_QUERY = (bounds: any) => {
+    return {
+        "WHERE": {}
+    };
+}
+
+const POLYGON_QUERY = (bounds: any) => {
+    return {
+        "WHERE": {}
+    };
+}
+
+const createMarker = (room: any) => {
+    return {
+        name: room.rooms_shortname,
+        position: {
+            lat: room.rooms_lat,
+            lng: room.rooms_lon
+        },
+        showInfo: false,
+        infoContent: [room]
+    }
 }
 
 export class RoomExplorer extends React.Component<RoomExplorerProps, RoomExplorerState> {
@@ -23,41 +76,26 @@ export class RoomExplorer extends React.Component<RoomExplorerProps, RoomExplore
     constructor (props: any) {
         super(props);
         this.state = {
+            markers: [],
+            regions: []
         };
-    }
-
-    createMarker(room: any): MarkerProps {
-        return {
-            name: room.rooms_shortname,
-            position: {
-                lat: room.rooms_lat,
-                lng: room.rooms_lon
-            },
-            showInfo: false,
-            infoContent: [room]
-        }
     }
 
     handleMarkerClick = (name: string) => {
         let markerIndex = this.state.markers.findIndex(marker => marker.name === name);
-        let marker = this.state.markers[markerIndex];
+        let state = this.state;
+        let marker = state.markers[markerIndex];
 
         marker.showInfo = !marker.showInfo;
-        this.setState({ markers: this.state.markers });
+        this.setState(state);
     }
 
-    fetchData = () => {
-        const query = {
-            "GET": ["rooms_shortname", "rooms_lat", "rooms_lon", "rooms_number", "rooms_href"],
-            "WHERE": {},
-            "AS": "TABLE"
-        }
-
-        Store.fetch('rooms_map', query).then((data) => {
+    fetchMarkerData = () => {
+        Store.fetch('rooms_map', ALL_ROOM_QUERY).then((data) => {
             let buildingMarkers = data.reduce((markers: {[id:string]: MarkerProps}, room: any) => {
                 let marker = markers[room.rooms_shortname];
                 if (!marker) {
-                    marker = this.createMarker(room);
+                    marker = createMarker(room);
                 } else {
                     marker.infoContent.push(room);
                 }
@@ -69,15 +107,32 @@ export class RoomExplorer extends React.Component<RoomExplorerProps, RoomExplore
             for (let markerId in buildingMarkers) {
                 markers.push(buildingMarkers[markerId]);
             }
-            this.setState({ markers: markers});
-        });
 
+            let state = this.state;
+            state.markers = markers;
+            this.setState(state);
+        });
+    }
+
+    handleDrawOverlay = (overlay: any) => {
+        let query: any = boundQuery(overlay);
+        query.GET = ["rooms_shortname", "rooms_number"];
+        query.AS = "TABLE";
+        this.fetchRegionData(query)
+    }
+
+    fetchRegionData = (query: any) => {
+        Store.fetch('room_bounds', query).then(data => {
+            console.info('room_bounds', data);
+        }).catch(error => {
+            console.info('room_bounds error', error);
+        });
     }
 
     render () {
         return <div className='room-explorer'>
-            <Map markers={this.state.markers} handleClick={this.handleMarkerClick} />
-            <button className='uppercase' onClick={this.fetchData}> Load Data </button>
+            <Map markers={this.state.markers} handleClick={this.handleMarkerClick} handleDrawOverlay={this.handleDrawOverlay} />
+            <button className='uppercase' onClick={this.fetchMarkerData}> Load Data </button>
         </div>
     }
 }
