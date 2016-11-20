@@ -1,4 +1,7 @@
 import * as React from 'react'
+
+import { SidebarLayout } from '../layout/SidebarLayout'
+import { RoomExplorerSidebar } from './RoomExplorerSidebar'
 import { Map, MarkerProps } from './Map'
 import { Store, Data } from '../store/store'
 
@@ -136,9 +139,14 @@ export class RoomExplorer extends React.Component<RoomExplorerProps, RoomExplore
     }
 
     render () {
-        return <div className='room-explorer'>
-            <Map markers={this.state.markers} handleClick={this.handleMarkerClick} handleDrawOverlay={this.handleDrawOverlay} />
-            <button className='uppercase' onClick={this.fetchMarkerData}> Load Data </button>
-        </div>
+        return (
+            <div className='room-explorer'>
+                <SidebarLayout>
+                    <RoomExplorerSidebar />
+                </SidebarLayout>
+                <Map markers={this.state.markers} handleClick={this.handleMarkerClick} handleDrawOverlay={this.handleDrawOverlay} />
+                <button className='uppercase' onClick={this.fetchMarkerData}> Load Data </button>
+            </div>
+        );
     }
 }

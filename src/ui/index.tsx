@@ -1,9 +1,9 @@
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 
-import { MainLayout } from "./layout/MainLayout";
+import { App } from './App'
 
 ReactDOM.render(
-    <MainLayout/>,
+    <App />,
     document.getElementById("example")
 );
