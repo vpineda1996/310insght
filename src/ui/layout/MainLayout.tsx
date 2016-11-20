@@ -1,6 +1,8 @@
 import * as React from 'react';
 import { MainNavBar, NavBarStates } from '../components/MainNavBar'
 import { RoomExplorer } from '../components/RoomExplorer'
+import { CoursesExplorerView } from '../components/CoursesExplorerView'
+import { CoursesExplorerNav } from '../components/CoursesExplorerNav'
 import { DataUploader, Uploadable } from '../components/DataUploader'
 import { Sidebar } from '../components/Sidebar'
 import { SidebarLayout } from '../layout/SidebarLayout'
@@ -30,7 +32,10 @@ export class MainLayout extends React.Component<MainLayoutProps, MainLayoutState
             case NavBarStates.ROOMS:
                 return <DataUploader uploadType={Uploadable.ROOMS} />;
             case NavBarStates.COURSES:
-                return <DataUploader uploadType={Uploadable.COURSES} />;
+                return <div> 
+                            <DataUploader uploadType={Uploadable.COURSES} />
+                            <CoursesExplorerNav />
+                       </div>;;
             case NavBarStates.SCHEDULING:
                 return <div />;
             default:
@@ -42,6 +47,8 @@ export class MainLayout extends React.Component<MainLayoutProps, MainLayoutState
         switch (this.state.currentTab) {
             case NavBarStates.ROOMS:
                 return <RoomExplorer />;
+            case NavBarStates.COURSES:
+                return <CoursesExplorerView />
             default:
                 return <div/>
         }

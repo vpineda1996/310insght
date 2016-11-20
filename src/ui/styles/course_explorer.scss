@@ -1,0 +1,26 @@
+.grid-1 {
+    width: 100%;
+}
+
+.columns-height-courses-explorer {
+    height: 300px;
+    padding-left: 0px;
+    padding-right: 0px;
+}
+
+.flex-row {
+    display: flex;
+    flex-direction: row;
+}
+
+.cell-centered {
+    text-align: center;
+}
+
+.course-explorer .ag-bl .ag-body .ag-body-viewport {
+    overflow-x: hidden;
+}
+
+.course-explorer {
+    margin-right: inherit;
+}

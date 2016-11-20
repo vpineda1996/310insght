@@ -15,7 +15,10 @@ module.exports = {
 
     resolve: {
         // Add '.ts' and '.tsx' as resolvable extensions.
-        extensions: ["", ".webpack.js", ".web.js", ".ts", ".tsx", ".js"]
+        extensions: ["", ".webpack.js", ".web.js", ".ts", ".tsx", ".js"],
+        alias: {
+            "ag-grid-root" : __dirname + "/node_modules/ag-grid"
+        }
     },
 
     module: {
@@ -27,7 +30,7 @@ module.exports = {
                 include: [ path.join(__dirname,"src","ui") ]
             },
             {
-                test: /\.scss$/,
+                test: /\.s?css$/,
                 loaders: ["style", "css", "sass"]
             }
         ],
@@ -75,6 +78,9 @@ module.exports = {
     // dependencies, which allows browsers to cache those libraries between builds.
     externals: {
         "react": "React",
-        "react-dom": "ReactDOM"
-    },
+        "react-dom": "ReactDOM",
+        "jquery": "jQuery",
+        "jQuery": "jQuery",
+        "$": "jQuery"
+    }
 };
