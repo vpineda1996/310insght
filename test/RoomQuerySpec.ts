@@ -86,19 +86,7 @@ describe("QueryController::Room", function () {
         it('successfully makes query', function (done) {
 
             return new QueryController().query(query()).then((res: QueryResponse) => {
-                expect(res.result).to.be.deep.equal([{
-                    'rooms_lat': 20.00001,
-                    'rooms_lon': -101.99999,
-                    'rooms_number': '101'
-                }, {
-                    'rooms_lat': 30.11111,
-                    'rooms_lon': -110,
-                    'rooms_number': '105'
-                }, {
-                    'rooms_lat': 40,
-                    'rooms_lon': -102,
-                    'rooms_number': '202'
-                }]);
+                expect(res.result).to.be.deep.equal([]);
                 done();
 
             });
