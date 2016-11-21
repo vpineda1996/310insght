@@ -5,7 +5,6 @@ export interface MainLayoutProps {
     currentTab: NavBarStates,
     handleChangeTab: Function
 }
-
 export class MainLayout extends React.Component<MainLayoutProps, {}> {
     render() {
         return (
