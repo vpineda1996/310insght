@@ -1,4 +1,4 @@
-import { MCOMPARATORS, SCOMPARATORS, LOGICCOMPARATORS, NEGATORS, APPLYTOKENS } from '../common/Constants'
+import { MCOMPARATORS, SCOMPARATORS, LOGICCOMPARATORS, NEGATORS, MULTI_FILTERS } from '../common/Constants'
 import { Datatable } from '../common/Common'
 
 import DatasetController from '../controller/DatasetController'
@@ -79,6 +79,13 @@ export function isNegation(key: string, val: any): boolean {
         areFilters(Object.keys(val)[0], val);
 }
 
+export function isAppliedFilter(key: string, val: any): boolean {
+    return Object.keys(MULTI_FILTERS).indexOf(key) !== -1 &&
+        isHash(val)  &&
+        Object.keys(val).every((k: string) => typeof val[k] === 'number') &&
+        Object.keys(val).some(k => MULTI_FILTERS[key].token === k);
+}
+
 export function isAsTable(key: string, val: any): boolean {
     return key === 'AS' &&
         isString(val) &&
@@ -93,7 +100,8 @@ export function isFilter(key: string, val: any): boolean {
     return isLogicComparison(key, val) ||
         isMComparison(key, val) ||
         isSComparison(key, val) ||
-        isNegation(key, val);
+        isNegation(key, val) ||
+        isAppliedFilter(key, val);
 }
 
 export function areValidWhereIds(query: QueryRequest): Promise<boolean> {
@@ -138,7 +146,11 @@ function areIdsValid(query: {[s:string]:any}): Promise<any[]> {
 
         for (let key in query) {
             if (isHash(query[key])) {
-                promises.push(areIdsValid(query[key]));
+                if (Object.keys(MULTI_FILTERS).includes(key)) {
+                    promises.push(isValidAdvancedFilter(key, query[key]));
+                } else {
+                    promises.push(areIdsValid(query[key]));
+                }
             } else {
                 if (!isWhereOperator(key)) {
                     promises.push(isValidId(key));
@@ -160,6 +172,13 @@ function isValidId(id: string): Promise<any[]> {
                 resolve([false, [id]]);
             }
         });
+    });
+}
+
+function isValidAdvancedFilter(key: string, filter: {[s:string]:any}): Promise<any[]> {
+    return new Promise<any[]>((resolve, reject) => {
+
+        resolve([true, []])
     });
 }
 

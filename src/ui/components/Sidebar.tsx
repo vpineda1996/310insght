@@ -1,20 +1,14 @@
 import * as React from 'react';
 
-interface SidebarProps {
-
-}
-
-const defaultProps = {
-
-}
+interface SidebarProps {}
 
 export class Sidebar extends React.Component<SidebarProps, {}> {
-    static defaultProps: SidebarProps = defaultProps;
+    renderSidebar = () => <div />
 
     render () {
         return (
             <div className='sidebar'>
-                {this.props.children}
+                {this.renderSidebar()}
             </div>
         );
     }

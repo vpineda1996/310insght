@@ -121,7 +121,7 @@ export default class DatasetController {
      * @param id
      * @param processedDataset
      */
-    private save(id: string, processedDataset: Datatable): Promise<any> {
+    public save(id: string, processedDataset: Datatable): Promise<any> {
         // add it to the memory model
         if (typeof processedDataset !== 'object') {
             throw new Error("Processed dataset cannot be saved");
