@@ -56,6 +56,7 @@
     "react": "^15.3.2",
     "react-dom": "^15.3.2",
     "react-google-maps": "^6.0.1",
+    "react-input-range": "^0.9.3",
     "restify": "^4.0.3"
   }
 }
