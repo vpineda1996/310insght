@@ -7,7 +7,7 @@ import "../styles/course_explorer.scss";
 import 'ag-grid-root/dist/styles/ag-grid.css';
 import 'ag-grid-root/dist/styles/theme-fresh.css';
 
-export interface CoursesExplorerViewProps { 
+export interface CoursesExplorerViewProps {
     columns?: ColumnType[]
 }
 
@@ -20,12 +20,12 @@ export class CoursesExplorerView extends React.Component<CoursesExplorerViewProp
     api: any;
     columnApi: any;
 
-    onFilterChange(whereClause : any) {
-        let query = $.extend({}, QUERY, whereClause, {GET: this.props.columns.map(v => 'courses_' + v.name)});
+    onFilterChange(whereClause: any) {
+        let query = $.extend({}, QUERY, whereClause, { GET: this.props.columns.map(v => 'courses_' + v.name) });
         Store.fetch('courses', query).then(result => this.api.setRowData(result));
     }
 
-     onGridReady(params: any) {
+    onGridReady(params: any) {
         this.api = params.api;
         this.columnApi = params.columnApi;
     };
@@ -38,7 +38,7 @@ export class CoursesExplorerView extends React.Component<CoursesExplorerViewProp
 
     render() {
         return <div className="container course-explorer">
-            <CourseSelector onStatusChanged={this.onFilterChange.bind(this)}/>
+            <CourseSelector onStatusChanged={this.onFilterChange.bind(this)} />
             <div className={"columns-height-courses-explorer ag-dark"}><AgGridReact columnDefs={this.getHeaderDefinition()}
                 onGridReady={this.onGridReady.bind(this)}
 
@@ -48,7 +48,7 @@ export class CoursesExplorerView extends React.Component<CoursesExplorerViewProp
                 enableFilter="true"
                 rowHeight="22"
                 rowData={[]}
-            /></div>
+                /></div>
         </div>;
     }
 }
@@ -65,7 +65,7 @@ const QUERY: any = {
     "AS": "TABLE"
 };
 
-const APPLY_EXTENSION : any= {
+const APPLY_EXTENSION: any = {
     "GROUP": [],
     "APPLY": []
 };
@@ -89,9 +89,7 @@ class CourseSelector extends React.Component<CourseSelectorProps, {}> {
             let selectedRows = api.getSelectedRows();
             if (!selectedRows.length) return;
             return selectedRows.map((e: any) => {
-                for (var i in e) {
-                    return e[i];
-                }
+                for (var i in e) return e[i];
             }).map((e: any) => {
                 return { [fnGetColTypeWhereClause(columnId)]: { [getDatasetId(columnId)]: e } };
             });
@@ -100,14 +98,28 @@ class CourseSelector extends React.Component<CourseSelectorProps, {}> {
         let orStatements = possibleAndCols.map((colsToSearch) => {
             return { OR: fnGetOrQuery(colsToSearch) };
         }).filter(val => val.OR);
-        return { WHERE: { "AND": orStatements }};
+        return { WHERE: { "AND": orStatements } };
+    }
+
+    extendWhereToCourse(originalQuery: any) {
+        let ref: any = this.refs[COLUMNS.COURSE]
+        let api: any = ref.api;
+        let selectedRows = api.getSelectedRows();
+        if (!selectedRows.length) return;
+        let newSelection = selectedRows.map((e: any) => {
+            for (var i in e) return e[i];
+        }).map((e: any) => {
+            return { EQ: { [getDatasetId(COLUMNS.COURSE)]: e } };
+        });
+        $.extend(originalQuery.WHERE.AND, [{ OR: newSelection}]);
+        return originalQuery;
     }
 
     queryCourses() {
         this.getData(COLUMNS.COURSE, this.getWhereComponent()).then((datum) => {
             return this.setData(COLUMNS.COURSE, datum);
         }).then(() => {
-            this.props.onStatusChanged(this.getWhereComponent());
+            this.props.onStatusChanged(this.extendWhereToCourse(this.getWhereComponent()));
         });
     }
 
@@ -136,12 +148,11 @@ class CourseSelector extends React.Component<CourseSelectorProps, {}> {
     }
 
     onStatusChanged() {
-        let whereComponent = this.getWhereComponent();
-        this.props.onStatusChanged(whereComponent);
+        this.props.onStatusChanged(this.extendWhereToCourse(this.getWhereComponent()));
     }
 
     render() {
-        return <div className="row flex-row">
+        return <div className="row flex-row hide-overflow">
             <Column className="col-md-3 columns-height-courses-explorer" name="Year"
                 onSelectOption={this.queryCourses.bind(this)} ref={COLUMNS.YEAR.toString()}
                 fieldId={getDatasetId(COLUMNS.YEAR)} />
