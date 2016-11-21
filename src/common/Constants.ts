@@ -5,6 +5,10 @@ export const MCOMPARATORS = ['LT', 'GT', 'EQ'];
 export const SCOMPARATORS = ['IS'];
 export const LOGICCOMPARATORS = ['AND', 'OR'];
 export const NEGATORS = ['NOT'];
+export const MULTI_FILTERS: {[filter:string]:{token: string; count:number}} = {
+    'WITHIN': { token: 'radius', count: 2} // 2 columns is needed to calc radius
+}
+
 export const LOGENABLE = true;
 export enum APPLYTOKENS {
     MAX,

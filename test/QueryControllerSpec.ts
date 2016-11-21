@@ -276,6 +276,16 @@ describe("QueryController", function () {
                 WHERE = VALID_LOGICCOMPARISON;
                 expect(isValid()).to.equal(true);
             });
+            it('succeeds with valid within clause', function () {
+                WHERE = {
+                    WITHIN: {
+                        [ID + '_lat']: 469.123242,
+                        [ID + '_lon']: -123.23563,
+                        radius: 100.01
+                    }
+                }
+                expect(isValid()).to.equal(true);
+            });
         });
 
         describe('NEGATION', function () {

@@ -1,19 +1,10 @@
 import * as React from 'react';
+import { Sidebar } from '../components/Sidebar';
 
 require('../styles/mixins/colour.scss');
 require('../styles/sidebar.scss');
 
-interface SidebarLayoutProps {
-
-}
-
-const defaultProps = {
-
-}
-
-export class SidebarLayout extends React.Component<SidebarLayoutProps, {}> {
-    static defaultProps: SidebarLayoutProps = defaultProps;
-
+export class SidebarLayout extends React.Component<{}, {}> {
     render () {
         return (
             <div className='sidebar-layout rainbow'>

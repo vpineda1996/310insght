@@ -1,4 +1,7 @@
 import * as React from 'react'
+
+import { SidebarLayout } from '../layout/SidebarLayout'
+import { RoomExplorerSidebar } from './RoomExplorerSidebar'
 import { Map, MarkerProps } from './Map'
 import { Store, Data } from '../store/store'
 
@@ -19,15 +22,15 @@ const ALL_ROOM_QUERY = {
 }
 
 const boundQuery = (overlay: any) => {
-    let bounds: any = overlay.overlay.bounds;
-
+    console.info(overlay);
     switch (overlay.type) {
         case google.maps.drawing.OverlayType.RECTANGLE:
-            return RECTANGULAR_QUERY(bounds);
+            return RECTANGULAR_QUERY(overlay.overlay.bounds);
         case google.maps.drawing.OverlayType.CIRCLE:
-            return CIRCULAR_QUERY(bounds);
+            console.info(overlay.overlay.center.lat(), overlay.overlay.center.lng());
+            return CIRCULAR_QUERY(overlay.overlay);
         case google.maps.drawing.OverlayType.POLYGON:
-            return POLYGON_QUERY(bounds);
+            return POLYGON_QUERY(overlay.overlay);
         default:
             return {};
     }
@@ -46,9 +49,15 @@ const RECTANGULAR_QUERY = (bounds: any) => {
     };
 }
 
-const CIRCULAR_QUERY = (bounds: any) => {
+const CIRCULAR_QUERY = (overlay: any) => {
     return {
-        "WHERE": {}
+        "WHERE": {
+            "WITHIN": {
+                "rooms_lat": overlay.center.lat(),
+                "rooms_lon": overlay.center.lng(),
+                "radius": overlay.radius
+            }
+        }
     };
 }
 
@@ -130,9 +139,14 @@ export class RoomExplorer extends React.Component<RoomExplorerProps, RoomExplore
     }
 
     render () {
-        return <div className='room-explorer'>
-            <Map markers={this.state.markers} handleClick={this.handleMarkerClick} handleDrawOverlay={this.handleDrawOverlay} />
-            <button className='uppercase' onClick={this.fetchMarkerData}> Load Data </button>
-        </div>
+        return (
+            <div className='room-explorer'>
+                <SidebarLayout>
+                    <RoomExplorerSidebar />
+                </SidebarLayout>
+                <Map markers={this.state.markers} handleClick={this.handleMarkerClick} handleDrawOverlay={this.handleDrawOverlay} />
+                <button className='uppercase' onClick={this.fetchMarkerData}> Load Data </button>
+            </div>
+        );
     }
 }

@@ -1,4 +1,4 @@
-import { MCOMPARATORS, SCOMPARATORS, LOGICCOMPARATORS, NEGATORS } from '../common/Constants'
+import { MULTI_FILTERS, MCOMPARATORS, SCOMPARATORS, LOGICCOMPARATORS, NEGATORS } from '../common/Constants'
 
 import DatasetController from "../controller/DatasetController";
 import { Datatable } from "../common/Common";
@@ -136,6 +136,54 @@ function evaluates(key: string, query: {[s: string]: any}|any, datatable: Datata
             }).catch((err: any) => {
                 reject(err);
             });
+
+        } else if (Object.keys(MULTI_FILTERS).indexOf(key) !== -1) {
+             let filter = MULTI_FILTERS[key];
+
+             let columnNames: string[] = Object.keys(query);
+             let filterValue = query[filter.count];
+             let filterIndex = columnNames.indexOf(filterValue);
+             columnNames.splice(filterIndex,1);
+
+             let allData = columnNames.filter(c => c !== filter.token).map(columnName => {
+                 return datatable.getColumn(columnName).getData().then(data => {
+                     return { [columnName]: data };
+                 });
+             });
+
+             Promise.all(allData).then((allData: any[]) => {
+                 let data = allData.reduce((out: any, data: any) => {
+                     out[getFirstKey(data)] = getFirst(data);
+                     return out;
+                 }, {});
+
+                 resolve(getFirst(data).map((i: boolean, index: number) => {
+                     // check if-clause for MCOMPARATORS if you want to add more multi-filters
+                     let dx = data[columnNames[0]][index] - query[columnNames[0]];
+                     let dy = data[columnNames[1]][index] - query[columnNames[1]];
+                     let r = query[filter.token];
+                     let latIndex = columnNames.findIndex((cn: string) => cn.includes('lat'));
+                     let lonIndex = columnNames.findIndex((cn: string) => cn.includes('lon'));
+                     let lat1 = data[columnNames[latIndex]][index];
+                     let lon1 = data[columnNames[lonIndex]][index];
+                     let lat2 = query[columnNames[latIndex]];
+                     let lon2 = query[columnNames[lonIndex]];
+
+                     let R = 6371e3; // metres
+                     let latr1 = lat1 * Math.PI / 180;
+                     let latr2 = lat2 * Math.PI / 180;
+                     let dlat = (lat2-lat1) * Math.PI / 180;
+                     let dlon = (lon2-lon1) * Math.PI / 180;
+
+                     let a = Math.sin(dlat/2) * Math.sin(dlat/2) +
+                         Math.cos(latr1) * Math.cos(latr2) *
+                         Math.sin(dlon/2) * Math.sin(dlon/2);
+                     let c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+
+                     let d = R * c;
+                     return d <= r;
+                 }));
+             });
 
         } else if (typeof key === 'undefined' && indices === null) {
             resolve(null);
