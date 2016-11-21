@@ -2,6 +2,7 @@ import * as React from "react";
 import { AgGridReact } from 'ag-grid-react';
 import { Store } from '../store/store'
 import { COURSES_COLUMNS, ColumnType } from '../store/constants'
+import { DataUploader, Uploadable } from './DataUploader';
 
 import "../styles/course_explorer.scss";
 import 'ag-grid-root/dist/styles/ag-grid.css';
@@ -38,6 +39,7 @@ export class CoursesExplorerView extends React.Component<CoursesExplorerViewProp
 
     render() {
         return <div className="container course-explorer">
+            <DataUploader uploadType={Uploadable.COURSES} />
             <CourseSelector onStatusChanged={this.onFilterChange.bind(this)} />
             <div className={"columns-height-courses-explorer ag-dark"}><AgGridReact columnDefs={this.getHeaderDefinition()}
                 onGridReady={this.onGridReady.bind(this)}
@@ -105,13 +107,13 @@ class CourseSelector extends React.Component<CourseSelectorProps, {}> {
         let ref: any = this.refs[COLUMNS.COURSE]
         let api: any = ref.api;
         let selectedRows = api.getSelectedRows();
-        if (!selectedRows.length) return;
+        if (!selectedRows.length) return originalQuery;
         let newSelection = selectedRows.map((e: any) => {
             for (var i in e) return e[i];
         }).map((e: any) => {
             return { EQ: { [getDatasetId(COLUMNS.COURSE)]: e } };
         });
-        $.extend(originalQuery.WHERE.AND, [{ OR: newSelection}]);
+        originalQuery.WHERE.AND.push({ OR: newSelection});
         return originalQuery;
     }
 

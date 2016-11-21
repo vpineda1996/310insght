@@ -17,10 +17,14 @@
     text-align: center;
 }
 
+.course-explorer .hide-overflow .ag-bl {
+    overflow-x: hidden;
+}
+
 .course-explorer .hide-overflow .ag-bl .ag-body .ag-body-viewport {
     overflow-x: hidden;
 }
 
 .course-explorer {
-    margin-right: inherit;
+    /*margin-right: inherit;*/
 }
