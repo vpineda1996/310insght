@@ -1,5 +1,4 @@
 import * as React from 'react'
-import InputRange = require('react-input-range');
 
 import { SidebarLayout } from '../layout/SidebarLayout'
 import { RoomExplorerSidebar } from './RoomExplorerSidebar'
@@ -22,12 +21,10 @@ const ALL_ROOM_QUERY = {
 }
 
 const boundQuery = (overlay: any) => {
-    console.info(overlay);
     switch (overlay.type) {
         case google.maps.drawing.OverlayType.RECTANGLE:
             return RECTANGULAR_QUERY(overlay.overlay.bounds);
         case google.maps.drawing.OverlayType.CIRCLE:
-            console.info(overlay.overlay.center.lat(), overlay.overlay.center.lng());
             return CIRCULAR_QUERY(overlay.overlay);
         case google.maps.drawing.OverlayType.POLYGON:
             return POLYGON_QUERY(overlay.overlay);
@@ -146,16 +143,6 @@ export class RoomExplorer extends React.Component<RoomExplorerProps, RoomExplore
                 </SidebarLayout>
                 <Map markers={this.state.markers} handleClick={this.handleMarkerClick} handleDrawOverlay={this.handleDrawOverlay} />
                 <button className='uppercase' onClick={this.fetchMarkerData}> Load Data </button>
-
-                <div className='range-slider'>
-                    <div className='range-slider-field'>
-                        <InputRange
-                            maxValue={20}
-                            minValue={0}
-                            value={{min:5,max:10}}
-                            onChange={console.info} />
-                    </div>
-                </div>
             </div>
         );
     }

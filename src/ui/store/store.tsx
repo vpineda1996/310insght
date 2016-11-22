@@ -1,5 +1,10 @@
 import { fetch } from './dispatcher'
 
+const BASE_QUERY = {
+    "AS": "TABLE",
+    "WHERE": {}
+}
+
 export interface Data {
     id: string;
     query_key: string;
@@ -29,7 +34,9 @@ export class Store {
     }
 
     public static fetch(id: string, query: {}): Promise<any[]> {
-        return this.getInstance().fetch(id, query);
+        let _query = $.extend({}, BASE_QUERY, query);
+
+        return this.getInstance().fetch(id, _query);
     }
 
     private fetch(id: string, query: {}): Promise<any[]> {

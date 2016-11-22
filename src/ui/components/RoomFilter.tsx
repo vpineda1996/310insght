@@ -9,14 +9,18 @@ export interface FilterProps {
     options: Filters;
     connector: string;
     connectors: string[];
-    operator: string;
+    operator: {[field:string]: string};
     operators: string[];
     field: string
-    values: {
+    textValue: {[field:string]: string};
+    values: {[field:string]:{
+        min: number;
+        max: number;
+    }}
+    range: {
         min: number;
         max: number;
     }
-    textValue: string;
     onRangeChange: any;
     onFieldChange: any;
     onTextValueChange: any;
@@ -35,8 +39,8 @@ export interface Filters {
 }
 
 export class RoomFilter extends React.Component<FilterProps, {}> {
-    renderDropdown = () => {
-        return <select onChange={this.props.onFieldChange}>
+    renderDropdown = () => (
+        <select onChange={this.props.onFieldChange}>
             {Object.keys(this.props.options).map((field: string, index: number) => (
                 <option
                     key={'room-filter-option-'+index}
@@ -45,55 +49,54 @@ export class RoomFilter extends React.Component<FilterProps, {}> {
                 </option>))
             }
         </select>
-    }
-
-    handleDropdownSelect = (e: any) => {
-        this.setState({ value: e.target.value });
-    }
+    );
 
     renderFilterOption = () => {
-        return (
-            <div className='range-slider-field'>
-                <InputRange
-                    maxValue={20}
-                    minValue={0}
-                    value={this.props.values}
-                    onChange={this.props.onRangeChange} />
-            </div>
-        );
+        if (!!this.props.range) {
+            return (
+                <div className='range-slider-field'>
+                    <InputRange
+                        maxValue={this.props.range.max}
+                        minValue={this.props.range.min}
+                        value={this.props.values[this.props.field]}
+                        onChange={this.props.onRangeChange} />
+                </div>
+            );
+        } else {
+            return (
+                <div><h5>no data, sir</h5></div>
+            );
+        }
     }
 
-    renderTextInput = () => {
-        return (
-            <div>
-                <select onChange={this.props.onOperatorChange}>
-                    {this.props.operators.map((operator: string, index: number) => (
-                        <option
-                            key={'filter-operator-'+index}
-                            value={operator}>
-                            {operator}
-                        </option>))}
-                </select>
-                <input type='text' onChange={this.props.onTextValueChange} />
-            </div>
-        );
-    }
+    renderTextInput = () => (
+        <div>
+            <select
+                onChange={this.props.onOperatorChange}
+                value={this.props.operator[this.props.field]}>
+                {this.props.operators.map((operator: string, index: number) => (
+                    <option
+                        key={'filter-operator-'+index}
+                        value={operator}>
+                        {operator}
+                    </option>))}
+            </select>
+            <input type='text' value={this.props.textValue[this.props.field]} onChange={this.props.onTextValueChange} />
+        </div>
+    );
 
-    renderConnector = () => {
-        return (
-            <div>
-                <select onChange={this.props.onConnectorChange}>
-                    {this.props.connectors.map((connector: string, index: number) => (
-                        <option
-                            key={'filter-connector-'+index}
-                            value={connector}>
-                            {connector}
-                        </option>))}
-                </select>
-                <input type='text' onChange={this.props.onTextValueChange} />
-            </div>
-        );
-    }
+    renderConnector = () => (
+        <div>
+            <select onChange={this.props.onConnectorChange}>
+                {this.props.connectors.map((connector: string, index: number) => (
+                    <option
+                        key={'filter-connector-'+index}
+                        value={connector}>
+                        {connector}
+                    </option>))}
+            </select>
+        </div>
+    );
 
     render () {
         let keys = this.props.keyId.split('-');

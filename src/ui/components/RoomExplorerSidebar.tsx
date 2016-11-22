@@ -6,11 +6,11 @@ import { Filters, DataType } from './RoomFilter';
 
 
 const FILTER_OPTIONS: Filters = {
-    'capacity': DataType.NUMBER,
+    'seats': DataType.NUMBER,
     'feature': DataType.STRING,
     'type': DataType.STRING,
-    'latitude': DataType.NUMBER,
-    'longitude': DataType.NUMBER
+    'lat': DataType.NUMBER,
+    'lon': DataType.NUMBER
 };
 export class RoomExplorerSidebar extends Sidebar {
     renderSidebar = () => (
