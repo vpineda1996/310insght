@@ -11,6 +11,7 @@
 .sidebar {
   width: auto;
   height: 100%;
+  overflow: scroll;
 }
 
 .range-slider {
@@ -18,5 +19,34 @@
   &-field {
     margin-top: 10px;
     margin-bottom: 10px;
+  }
+}
+
+.panel {
+  padding: 10px;
+  border: 2px groove blue;
+  background-color: rgba(0,0,0,0);
+
+  .divider {
+    height: 25px;
+  }
+
+  .filter-add-more-rule {
+  }
+
+  &-border {
+    border: 1px solid rgba(0, 0, 0, .2);
+
+  }
+}
+
+.filter {
+  &-connector {
+    padding-top: 0;
+    padding-bottom: 0;
+    margin-top: 5px;
+    margin-bottom: 5px;
+    text-align: center;
+
   }
 }

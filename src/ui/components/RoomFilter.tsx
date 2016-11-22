@@ -27,6 +27,7 @@ export interface FilterProps {
     onOperatorChange: any;
     onConnectorChange: any;
     [anyprops:string]: any;
+    filters?: FilterProps[];
 }
 
 export enum DataType {
@@ -51,6 +52,15 @@ export class RoomFilter extends React.Component<FilterProps, {}> {
         </select>
     );
 
+    calcStepSize(range: { min: number, max: number }): number {
+        let diff = range.max - range.min;
+        if (diff % 1 === 0) {
+            return 1;
+        } else {
+            return diff / 1000;
+        }
+    }
+
     renderFilterOption = () => {
         if (!!this.props.range) {
             return (
@@ -59,12 +69,14 @@ export class RoomFilter extends React.Component<FilterProps, {}> {
                         maxValue={this.props.range.max}
                         minValue={this.props.range.min}
                         value={this.props.values[this.props.field]}
-                        onChange={this.props.onRangeChange} />
+                        onChange={this.props.onRangeChange}
+                        onChangeComplete={this.props.onRangeChange}
+                        step={this.calcStepSize(this.props.range)}/>
                 </div>
             );
         } else {
             return (
-                <div><h5>no data, sir</h5></div>
+                <div><h5>we have no data, sir</h5></div>
             );
         }
     }
@@ -98,14 +110,25 @@ export class RoomFilter extends React.Component<FilterProps, {}> {
         </div>
     );
 
-    render () {
+    render (): any {
         let keys = this.props.keyId.split('-');
         return(
-            <div className='range-slider'>
-                {keys[keys.length-1] !== '0' && this.renderConnector()}
-                {this.renderDropdown()}
-                {this.props.options[this.props.field] === DataType.NUMBER && this.renderFilterOption()}
-                {this.props.options[this.props.field] === DataType.STRING && this.renderTextInput()}
+            <div className=''>
+                <div className='filter-connector'>
+                    {keys[keys.length-1] !== '0' && this.renderConnector()}
+                </div>
+                <div className='range-slider panel panel-border'>
+                    {this.renderDropdown()}
+                    {this.props.options[this.props.field] === DataType.NUMBER && this.renderFilterOption()}
+                    {this.props.options[this.props.field] === DataType.STRING && this.renderTextInput()}
+                    {this.props.filters && this.props.filters.map(filter => (
+                        <RoomFilter
+                            key={'room-filter-'+this.props.keyId+'-'+filter.keyId}
+                            {...this.props}
+                            {...filter} />))}
+                    <div className='divider' />
+                    <button className='initialism filter-more-rule'>add more rule!</button>
+                </div>
             </div>
         );
     }

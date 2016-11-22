@@ -113,7 +113,7 @@ export class Map extends React.Component<MapProps, {}> {
                 containerElement={<div className='map' />}
                 mapElement={<div className='map' />}
                 {...props}>
-                <DrawingManager id='hahahah'
+                <DrawingManager
                     defaultDrawingMode={google.maps.drawing.OverlayType.CIRCLE}
                     defaultOptions={DRAWING_OPTIONS}
                     onOverlayComplete={this.props.handleDrawOverlay} />

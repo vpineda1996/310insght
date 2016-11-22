@@ -16,14 +16,19 @@ interface FilterContainerState {
 }
 
 const OPERATORS = [
-    'eqauls',
+    'equals',
     'contains'
 ]
 
 const CONNECTORS = [
-    'and',
-    'or'
+    'AND',
+    'OR'
 ]
+
+const PRECEDENCE: {[operator:string]: number} = {
+    'AND': 0,
+    'OR': 1
+}
 
 function findMin(data: {[key:string]:number}[], key: string): number {
     return data.reduce((max: number, val: {[k:string]:number}) => Math.min(max, val[key]), Infinity)
@@ -96,21 +101,22 @@ export class FilterContainer extends React.Component<FilterContainerProps, Filte
         });
 
         filters.push({
-            keyId: key,
-            options: this.props.options,
-            operators: OPERATORS,
             connector: CONNECTORS[0],
             connectors: CONNECTORS,
-            operator: operatorValues,
             field: field,
-            range: null,
-            values: rangeValues,
-            textValue: textValues,
-            onRangeChange: this.onRangeChange.bind(null, key),
+            keyId: key,
+            mapoverlay: null,
+            onConnectorChange: this.onConnectorChange.bind(null, key),
             onFieldChange: this.onFieldChange.bind(null, key),
-            onTextValueChange: this.onTextValueChange.bind(null, key),
             onOperatorChange: this.onOperatorChange.bind(null, key),
-            onConnectorChange: this.onConnectorChange.bind(null, key)
+            onRangeChange: this.onRangeChange.bind(null, key),
+            onTextValueChange: this.onTextValueChange.bind(null, key),
+            operator: operatorValues,
+            operators: OPERATORS,
+            options: this.props.options,
+            range: null,
+            textValue: textValues,
+            values: rangeValues
         });
         state.filters = filters;
         this.setState(state);
@@ -153,7 +159,70 @@ export class FilterContainer extends React.Component<FilterContainerProps, Filte
     }
 
     onRangeChange = (key: string, component: any, value: any) => {
+        console.info(key, component, value);
+        if (!value) return;
         this.onOptionStateChange(key, 'values', value);
+    }
+
+    performSearch = (e: any) => {
+        let query = this.state.filters.reduce((query: {[key:string]:any}, filter: FilterProps) => {
+            if (Object.keys(query).length === 0) {
+                return this.buildFilterQuery(filter);
+            }
+            let key = Object.keys(query)[0];
+            console.log(filter.connector, PRECEDENCE[filter.connector])
+            let precedence1 = PRECEDENCE[filter.connector];
+            let precedence2 = PRECEDENCE[key];
+            if (typeof precedence1 === 'undefined') precedence1 = 2;
+            if (typeof precedence2 === 'undefined') precedence2 = 2;
+
+            console.info(key, filter.connector, precedence1, precedence2);
+            if (precedence1 === precedence2) {
+                // append new filter
+                if (!query[key]) query[key] = [];
+                query[key].push(this.buildFilterQuery(filter));
+            } else {
+                query = {
+                    [filter.connector]: [
+                        query,
+                        this.buildFilterQuery(filter)
+                    ]
+                }
+
+            }
+            return query;
+        }, {});
+        console.info(query);
+    }
+
+    buildFilterQuery(filter: FilterProps): {} {
+        let field = filter.field;
+        let column = this.props.dataId + '_' + field;
+
+        switch (this.props.options[field]) {
+            case DataType.STRING:
+                switch (filter.operator[field]) {
+                    case 'contains':
+                        return { 'IS': { [column]: '*' + filter.textValue[field] + '*' } };
+                    case 'equals':
+                        return { 'IS': { [column]: filter.textValue[field] } };
+                }
+            case DataType.NUMBER:
+                return {
+                    'OR': [{
+                        'AND': [
+                            { 'GT': { [column]: filter.values[field].min } },
+                            { 'LT': { [column]: filter.values[field].max } }
+                        ]
+                    }, {
+                        'EQ': { [column]: filter.values[field].min }
+                    }, {
+                        'EQ': { [column]: filter.values[field].max }
+                    }]
+                };
+            default:
+                return null;
+        }
     }
 
     render () {
@@ -161,7 +230,8 @@ export class FilterContainer extends React.Component<FilterContainerProps, Filte
             <label>Customize your search here</label>
                 {this.state.filters.map(this.renderFilter)}
             <button onClick={this.createNewFilter}>Create new filter</button>
-            <button>Filter</button>
+            <div><span /></div>
+            <button onClick={this.performSearch} > Filter </button>
         </div>
     }
 }
