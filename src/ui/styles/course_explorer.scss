@@ -8,6 +8,11 @@
     padding-right: 0px;
 }
 
+.table-courses-explorer {
+    padding-left: 15px;
+    padding-right: 15px;
+}
+
 .flex-row {
     display: flex;
     flex-direction: row;
@@ -17,14 +22,65 @@
     text-align: center;
 }
 
-.course-explorer .hide-overflow .ag-bl {
-    overflow-x: hidden;
-}
-
-.course-explorer .hide-overflow .ag-bl .ag-body .ag-body-viewport {
-    overflow-x: hidden;
-}
-
 .course-explorer {
-    /*margin-right: inherit;*/
+    width: 100%;
+    padding-left: 0px;
+    padding-right: 0px; 
+
+    .hide-overflow .ag-bl {
+        overflow-x: hidden;
+    }
+
+    .hide-overflow .ag-bl .ag-body .ag-body-viewport {
+        overflow-x: hidden;
+    }
+
+    > :nth-child(2n + 1) {
+        background-color:#EEEEEE;
+    }
+
+    .flex-row {
+        padding-left: 30px;
+        padding-right: 30px;
+    }
+
+}
+
+.col-selector {
+    padding-left: 15px;
+    
+    .col-selector-label {
+        margin-top: 10px;
+        width: 12%;
+    }
+
+    button {
+        margin: 2px;
+    }
+}
+
+.group-selector {
+    padding-left: 15px;
+    padding-right: 15px;
+    height: 300px;
+
+    .group-section {
+        height: 50%;
+    }
+
+    .apply-section {
+        height: 50%;
+    }
+
+    .col-defn {
+        div {
+            margin: 5px;
+        }
+    }
+}
+
+.flex-vertical {
+    display: flex;
+    flex-flow: column wrap; 
+    height: 100%;
 }
