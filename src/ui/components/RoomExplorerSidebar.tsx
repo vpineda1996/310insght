@@ -1,22 +1,26 @@
 import * as React from 'react';
-import { Sidebar } from './Sidebar';
 import { DataUploader, Uploadable } from './DataUploader';
 import { FilterContainer } from './FilterContainer';
-import { Filters, DataType } from './RoomFilter';
+import { Filters, FilterOptionProps, Range } from './RoomFilter';
 
+interface RoomExplorerSidebarProps {
+    options: Filters;
+    filters: FilterOptionProps[];
+    minMax: {[field:string]: Range};
+    onNewFilter: Function;
+    onUpdateFilter: Function;
+    onUpdateRange: Function;
+    performSearch: any;
+    [id:string]: any
+}
 
-const FILTER_OPTIONS: Filters = {
-    'seats': DataType.NUMBER,
-    'feature': DataType.STRING,
-    'type': DataType.STRING,
-    'lat': DataType.NUMBER,
-    'lon': DataType.NUMBER
-};
-export class RoomExplorerSidebar extends Sidebar {
-    renderSidebar = () => (
-        <div>
-            <DataUploader uploadType={Uploadable.ROOMS} />
-            <FilterContainer dataId='rooms' options={FILTER_OPTIONS} />
-        </div>
-    );
+export class RoomExplorerSidebar extends React.Component<RoomExplorerSidebarProps, {}> {
+    render () {
+        return (
+            <div className='sidebar'>
+                <DataUploader uploadType={Uploadable.ROOMS} />
+                <FilterContainer {...this.props} />
+            </div>
+        );
+    }
 }

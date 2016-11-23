@@ -4,31 +4,34 @@ import InputRange = require('react-input-range');
 require('../styles/InputRange.scss');
 require('../styles/sidebar.scss');
 
-export interface FilterProps {
-    keyId: string;
-    options: Filters;
-    connector: string;
+export interface FilterDefaultProps {
     connectors: string[];
-    operator: {[field:string]: string};
-    operators: string[];
-    field: string
-    textValue: {[field:string]: string};
-    values: {[field:string]:{
-        min: number;
-        max: number;
-    }}
-    range: {
-        min: number;
-        max: number;
-    }
-    onRangeChange: any;
-    onFieldChange: any;
-    onTextValueChange: any;
-    onOperatorChange: any;
     onConnectorChange: any;
-    [anyprops:string]: any;
-    filters?: FilterProps[];
+    onFieldChange: any;
+    onNewNestedFiter: any;
+    onOperatorChange: any;
+    onRangeChange: any;
+    onTextValueChange: any;
+    operators: string[];
+    options: Filters;
+    range: {[field:string]: Range};
 }
+
+export interface FilterOptionProps {
+    depth: number;
+    keyId: string;
+    [anyprops:string]: any;
+    connector: string;
+    field: string
+    filters: FilterOptionProps[];
+    mapoverlay: any
+    operatorValues: {[field:string]: string};
+    rangeValues: {[field:string]: Range}
+    textValues: {[field:string]: string};
+    filterDefaultProps: Function;
+}
+
+export interface FilterProps extends FilterOptionProps, FilterDefaultProps {}
 
 export enum DataType {
     NUMBER,
@@ -37,6 +40,11 @@ export enum DataType {
 
 export interface Filters {
     [field: string]: DataType;
+}
+
+export interface Range {
+    min: number
+    max: number
 }
 
 export class RoomFilter extends React.Component<FilterProps, {}> {
@@ -52,7 +60,7 @@ export class RoomFilter extends React.Component<FilterProps, {}> {
         </select>
     );
 
-    calcStepSize(range: { min: number, max: number }): number {
+    calcStepSize(range: Range): number {
         let diff = range.max - range.min;
         if (diff % 1 === 0) {
             return 1;
@@ -66,12 +74,12 @@ export class RoomFilter extends React.Component<FilterProps, {}> {
             return (
                 <div className='range-slider-field'>
                     <InputRange
-                        maxValue={this.props.range.max}
-                        minValue={this.props.range.min}
-                        value={this.props.values[this.props.field]}
+                        maxValue={this.props.range[this.props.field].max}
+                        minValue={this.props.range[this.props.field].min}
+                        value={this.props.rangeValues[this.props.field]}
                         onChange={this.props.onRangeChange}
                         onChangeComplete={this.props.onRangeChange}
-                        step={this.calcStepSize(this.props.range)}/>
+                        step={this.calcStepSize(this.props.range[this.props.field])}/>
                 </div>
             );
         } else {
@@ -85,7 +93,7 @@ export class RoomFilter extends React.Component<FilterProps, {}> {
         <div>
             <select
                 onChange={this.props.onOperatorChange}
-                value={this.props.operator[this.props.field]}>
+                value={this.props.operatorValues[this.props.field]}>
                 {this.props.operators.map((operator: string, index: number) => (
                     <option
                         key={'filter-operator-'+index}
@@ -93,7 +101,7 @@ export class RoomFilter extends React.Component<FilterProps, {}> {
                         {operator}
                     </option>))}
             </select>
-            <input type='text' value={this.props.textValue[this.props.field]} onChange={this.props.onTextValueChange} />
+            <input type='text' value={this.props.textValues[this.props.field]} onChange={this.props.onTextValueChange} />
         </div>
     );
 
@@ -110,6 +118,11 @@ export class RoomFilter extends React.Component<FilterProps, {}> {
         </div>
     );
 
+    addNestedRule = (e: any) => {
+        this
+        this.props.onNewNestedFiter(this.props);
+    }
+
     render (): any {
         let keys = this.props.keyId.split('-');
         return(
@@ -118,17 +131,25 @@ export class RoomFilter extends React.Component<FilterProps, {}> {
                     {keys[keys.length-1] !== '0' && this.renderConnector()}
                 </div>
                 <div className='range-slider panel panel-border'>
-                    {this.renderDropdown()}
-                    {this.props.options[this.props.field] === DataType.NUMBER && this.renderFilterOption()}
-                    {this.props.options[this.props.field] === DataType.STRING && this.renderTextInput()}
-                    {this.props.filters && this.props.filters.map(filter => (
-                        <RoomFilter
-                            key={'room-filter-'+this.props.keyId+'-'+filter.keyId}
-                            {...this.props}
-                            {...filter} />))}
-                    <div className='divider' />
-                    <button className='initialism filter-more-rule'>add more rule!</button>
+                    {this.props.filters && this.props.filters.length !== 0 ? (
+                        <div>
+                            {this.props.filters && this.props.filters.map(filter => (
+                                <RoomFilter
+                                    key={'room-filter-'+this.props.keyId+'-'+filter.keyId}
+                                    {...this.props}
+                                    {...this.props.filterDefaultProps(filter.keyId)}
+                                    range={this.props.range}
+                                    {...filter} />))}
+                        </div>) : (
+                        <div>
+                            {this.renderDropdown()}
+                            {this.props.options[this.props.field] === DataType.NUMBER && this.renderFilterOption()}
+                            {this.props.options[this.props.field] === DataType.STRING && this.renderTextInput()}
+                        </div>)
+                    }
+                    {this.props.depth === 0 && <button onClick={this.addNestedRule} className=''>Add more rule!</button>}
                 </div>
+                <div className='divider' />
             </div>
         );
     }

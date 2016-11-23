@@ -1,18 +1,15 @@
 import * as React from 'react';
 import { Store } from '../store/store';
-import { RoomFilter, FilterProps, DataType, Filters } from './RoomFilter';
+import { RoomFilter, FilterProps, FilterDefaultProps, FilterOptionProps, DataType, Filters, Range } from './RoomFilter';
 
 interface FilterContainerProps {
-    dataId: string;
-    options: Filters
-}
-
-interface FilterContainerState {
-    filters: FilterProps[],
-    minMax: {[field:string]: {
-        min: number;
-        max: number;
-    }}
+    options: Filters;
+    filters: FilterOptionProps[];
+    minMax: {[field:string]:Range}
+    onNewFilter: Function;
+    onUpdateFilter: Function;
+    onUpdateRange: Function;
+    performSearch: any;
 }
 
 const OPERATORS = [
@@ -25,11 +22,6 @@ const CONNECTORS = [
     'OR'
 ]
 
-const PRECEDENCE: {[operator:string]: number} = {
-    'AND': 0,
-    'OR': 1
-}
-
 function findMin(data: {[key:string]:number}[], key: string): number {
     return data.reduce((max: number, val: {[k:string]:number}) => Math.min(max, val[key]), Infinity)
 }
@@ -37,109 +29,124 @@ function findMax(data: {[key:string]:number}[], key: string): number {
     return data.reduce((max: number, val: {[k:string]:number}) => Math.max(max, val[key]), -Infinity)
 }
 
-export class FilterContainer extends React.Component<FilterContainerProps, FilterContainerState> {
+export class FilterContainer extends React.Component<FilterContainerProps, {}> {
     constructor (props: any) {
         super(props);
-        this.state = {
-            filters: [],
-            minMax: {}
-        }
+        this.fetchRangeData();
+    }
 
+    key = (parentKey: string, index: number) => (!parentKey ? 'rooom-filter--' : (parentKey + '--')) + index;
+
+    fetchRangeData = () => {
         let query: any = {}
-
         Object.keys(this.props.options).forEach((optionKey: string) => {
-            if (props.options[optionKey] === DataType.NUMBER) {
-                let queryField = props.dataId + '_' + optionKey;
-                let countKey = props.dataId + "Count";
+            if (this.props.options[optionKey] === DataType.NUMBER) {
+                let queryField = 'rooms_' + optionKey;
+                let countKey = 'roomsCount';
                 query = {
                     "GET": [ queryField, countKey ],
                     "GROUP": [ queryField ],
                     "APPLY": [ { [countKey]: { "COUNT": queryField } } ]
                 }
-                Store.fetch(props.dataId + '-filter-range-values', query).then(data => {
-                    let state = this.state;
-                    let filters = state.filters;
+                Store.fetch('rooms-filter-range-values', query).then(data => {
                     let max = findMax(data, queryField);
                     let min = findMin(data, queryField);
 
-                    state.minMax[optionKey] = {
-                        min: min,
-                        max: max
-                    }
-                    state.filters = filters;
-                    this.setState(state);
+                    this.props.onUpdateRange(optionKey, { min:min, max:max });
                 });
             }
         });
     }
 
     renderFilter = (filter: FilterProps, index: number) => {
+        let key = filter.keyId;
         return <RoomFilter
-            key={'room-filter-'+index}
+            key={key}
             options={this.props.options}
             {...filter}
-            range={this.state.minMax[filter.field]}/>
+            {...this.filterDefaultProps(key)}
+            range={this.props.minMax}/>
     }
 
     createNewFilter = () => {
-        let state = this.state;
-        let filters = state.filters;
-        let key = 'filter-' + filters.length;
+        let key = this.key(null, this.props.filters.length);
+        let filter = this.initializeNewFilter(key);
+        this.props.onNewFilter(filter);
+    }
+
+    createNestedFilter = (filter: FilterProps) => {
+        if (!filter.filters || filter.filters.length === 0) {
+            filter.filters = [];
+            filter.filters.push($.extend({}, filter, {depth: filter.depth+1}))
+        }
+        let length = filter.filters && filter.filters.length;
+
+        let key = this.key(filter.keyId, length);
+        let f = this.initializeNewFilter(key, filter.depth);
+
+        filter.filters.push(f);
+        this.props.onUpdateFilter(filter.keyId, 'filters', filter.filters, length, false);
+    }
+
+    filterDefaultProps = (key: string) => {
+        let props: FilterDefaultProps = {
+            operators: OPERATORS,
+            connectors: CONNECTORS,
+            options: this.props.options,
+            range: null,
+            onConnectorChange: this.onConnectorChange.bind(null, key),
+            onFieldChange: this.onFieldChange.bind(null, key),
+            onOperatorChange: this.onOperatorChange.bind(null, key),
+            onRangeChange: this.onRangeChange.bind(null, key),
+            onTextValueChange: this.onTextValueChange.bind(null, key),
+            onNewNestedFiter: this.createNestedFilter,
+        }
+        return props;
+    }
+
+    initializeNewFilter = (key: string, depth?: number) => {
         let field = Object.keys(this.props.options)[0];
 
-        let rangeValues: {[field: string]: {min: number, max: number}} = {};
+        let rangeValues: {[field: string]: Range} = {};
         let textValues: {[field: string]: string} = {};
         let operatorValues: {[field: string]: string} = {};
 
         Object.keys(this.props.options).forEach(opt => {
             if (this.props.options[opt] === DataType.NUMBER) {
-                rangeValues[opt] = state.minMax[opt];
+                rangeValues[opt] = this.props.minMax[opt];
             } else {
                 operatorValues[opt] = OPERATORS[0];
                 textValues[opt] = '';
             }
         });
 
-        filters.push({
+        if (typeof depth === 'undefined') depth = 0;
+        else depth = depth + 1;
+        let filter: FilterOptionProps = {
+            depth: depth,
             connector: CONNECTORS[0],
-            connectors: CONNECTORS,
             field: field,
+            filters: [],
+            filterDefaultProps: this.filterDefaultProps,
             keyId: key,
             mapoverlay: null,
-            onConnectorChange: this.onConnectorChange.bind(null, key),
-            onFieldChange: this.onFieldChange.bind(null, key),
-            onOperatorChange: this.onOperatorChange.bind(null, key),
-            onRangeChange: this.onRangeChange.bind(null, key),
-            onTextValueChange: this.onTextValueChange.bind(null, key),
-            operator: operatorValues,
-            operators: OPERATORS,
-            options: this.props.options,
-            range: null,
-            textValue: textValues,
-            values: rangeValues
-        });
-        state.filters = filters;
-        this.setState(state);
+            operatorValues: operatorValues,
+            rangeValues: rangeValues,
+            textValues: textValues
+        };
+        return filter;
     }
 
     onOptionStateChange = (key: string, field: string, value: any) => {
-        let state = this.state;
-        let filters = state.filters;
+        let filters = this.props.filters;
         let filterIndex = filters.findIndex(filter => filter.keyId === key);
 
-        filters[filterIndex][field][filters[filterIndex].field] = value;
-        state.filters = filters;
-        this.setState(state);
+        this.props.onUpdateFilter(key, field, value, filterIndex, false)
     }
 
     onStateChange = (key: string, field: string, value: any) => {
-        let state = this.state;
-        let filters = state.filters;
-        let filterIndex = filters.findIndex(filter => filter.keyId === key);
-
-        filters[filterIndex][field] = value;
-        state.filters = filters;
-        this.setState(state);
+        let filterIndex = this.props.filters.findIndex(filter => filter.keyId === key);
+        this.props.onUpdateFilter(key, field, value, filterIndex, true)
     }
 
     onConnectorChange = (key: string, event: any) => {
@@ -147,11 +154,11 @@ export class FilterContainer extends React.Component<FilterContainerProps, Filte
     }
 
     onOperatorChange = (key: string, event: any) => {
-        this.onOptionStateChange(key, 'operator', event.target.value);
+        this.onOptionStateChange(key, 'operatorValues', event.target.value);
     }
 
     onTextValueChange = (key: string, event: any) => {
-        this.onOptionStateChange(key, 'textValue', event.target.value);
+        this.onOptionStateChange(key, 'textValues', event.target.value);
     }
 
     onFieldChange = (key: string, event: any) => {
@@ -159,79 +166,17 @@ export class FilterContainer extends React.Component<FilterContainerProps, Filte
     }
 
     onRangeChange = (key: string, component: any, value: any) => {
-        console.info(key, component, value);
-        if (!value) return;
-        this.onOptionStateChange(key, 'values', value);
-    }
-
-    performSearch = (e: any) => {
-        let query = this.state.filters.reduce((query: {[key:string]:any}, filter: FilterProps) => {
-            if (Object.keys(query).length === 0) {
-                return this.buildFilterQuery(filter);
-            }
-            let key = Object.keys(query)[0];
-            console.log(filter.connector, PRECEDENCE[filter.connector])
-            let precedence1 = PRECEDENCE[filter.connector];
-            let precedence2 = PRECEDENCE[key];
-            if (typeof precedence1 === 'undefined') precedence1 = 2;
-            if (typeof precedence2 === 'undefined') precedence2 = 2;
-
-            console.info(key, filter.connector, precedence1, precedence2);
-            if (precedence1 === precedence2) {
-                // append new filter
-                if (!query[key]) query[key] = [];
-                query[key].push(this.buildFilterQuery(filter));
-            } else {
-                query = {
-                    [filter.connector]: [
-                        query,
-                        this.buildFilterQuery(filter)
-                    ]
-                }
-
-            }
-            return query;
-        }, {});
-        console.info(query);
-    }
-
-    buildFilterQuery(filter: FilterProps): {} {
-        let field = filter.field;
-        let column = this.props.dataId + '_' + field;
-
-        switch (this.props.options[field]) {
-            case DataType.STRING:
-                switch (filter.operator[field]) {
-                    case 'contains':
-                        return { 'IS': { [column]: '*' + filter.textValue[field] + '*' } };
-                    case 'equals':
-                        return { 'IS': { [column]: filter.textValue[field] } };
-                }
-            case DataType.NUMBER:
-                return {
-                    'OR': [{
-                        'AND': [
-                            { 'GT': { [column]: filter.values[field].min } },
-                            { 'LT': { [column]: filter.values[field].max } }
-                        ]
-                    }, {
-                        'EQ': { [column]: filter.values[field].min }
-                    }, {
-                        'EQ': { [column]: filter.values[field].max }
-                    }]
-                };
-            default:
-                return null;
-        }
+        if (typeof value === 'undefined' || value === null) return;
+        this.onOptionStateChange(key, 'rangeValues', value);
     }
 
     render () {
         return <div>
             <label>Customize your search here</label>
-                {this.state.filters.map(this.renderFilter)}
+                {this.props.filters.map(this.renderFilter)}
             <button onClick={this.createNewFilter}>Create new filter</button>
             <div><span /></div>
-            <button onClick={this.performSearch} > Filter </button>
+            <button onClick={this.props.performSearch} > Filter </button>
         </div>
     }
 }
