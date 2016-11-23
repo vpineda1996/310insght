@@ -5,6 +5,12 @@ export interface ColumnType {
     dataset?: string;
 }
 
+export interface ApplyColumn {
+    originalCol: ColumnType,
+    newColId: ColumnType,
+    aggregateType: APPLYTOKENS
+}
+
 export enum Datatype {
     STRING,
     NUMBER
@@ -144,4 +150,57 @@ export enum APPLYTOKENS {
     MIN,
     AVG,
     COUNT
+}
+
+export namespace APPLYTOKENS {
+    function isIndex(key: any): boolean {
+        const n = ~~Number(key);
+        return String(n) === key && n >= 0;
+    }
+
+    const _names: string[] = Object
+        .keys(APPLYTOKENS)
+        .filter(key => !isIndex(key));
+
+    const _indices: number[] = Object
+        .keys(APPLYTOKENS)
+        .filter(key => isIndex(key))
+        .map(index => Number(index));
+
+    export function names(): string[] {
+        return _names;
+    }
+
+    export function indices(): number[] {
+        return _indices;
+    }
+}
+
+export enum SORTDIRECTION {
+    UP,
+    DOWN
+}
+
+export namespace SORTDIRECTION {
+    function isIndex(key: any): boolean {
+        const n = ~~Number(key);
+        return String(n) === key && n >= 0;
+    }
+
+    const _names: string[] = Object
+        .keys(SORTDIRECTION)
+        .filter(key => !isIndex(key));
+
+    const _indices: number[] = Object
+        .keys(SORTDIRECTION)
+        .filter(key => isIndex(key))
+        .map(index => Number(index));
+
+    export function names(): string[] {
+        return _names;
+    }
+
+    export function indices(): number[] {
+        return _indices;
+    }
 }
