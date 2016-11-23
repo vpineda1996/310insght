@@ -12,7 +12,8 @@ export interface ApplyModalProps {
 export class ApplyModal extends React.Component<ApplyModalProps, {}> {
 
     static defaultProps = {
-        isOpen: false
+        isOpen: false,
+        orginalColumn: {}
     }
 
     onOk = (ev: React.MouseEvent<HTMLFormElement>) => {
@@ -43,7 +44,7 @@ export class ApplyModal extends React.Component<ApplyModalProps, {}> {
             <form data-toggle="validator" role="form" onSubmit={this.onOk}> 
                 <ModalHeader>
                     <ModalClose onClick={this.props.onCancel} />
-                    <ModalTitle>Create calculated column</ModalTitle>
+                    <ModalTitle>{(this.props.orginalColumn && this.props.orginalColumn.locale) || "Column"}</ModalTitle>
                 </ModalHeader>
                 <ModalBody>
                     <p>Select which type of aggregate you want</p>

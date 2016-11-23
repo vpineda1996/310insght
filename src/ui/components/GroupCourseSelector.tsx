@@ -46,7 +46,6 @@ export class GroupCourseSelector extends React.Component<GroupCourseSelectorProp
         
         this.state.modalActive = oCol;
         this.setState(this.state);
-        this.props.onStatusChanged(this.state);
     }
 
     onSuccessApplyModal = (newCol : ApplyColumn) => {
@@ -148,11 +147,11 @@ export class GroupCourseSelector extends React.Component<GroupCourseSelectorProp
                         </div>
                     </div>
                 </div>
-                <ApplyModal isOpen={!!this.state.modalActive} 
-                            onOk={this.onSuccessApplyModal} 
-                            onCancel={this.onCloseModal}
-                            orginalColumn={this.state.modalActive}/>
             </div>
+            <ApplyModal isOpen={!!this.state.modalActive} 
+                        onOk={this.onSuccessApplyModal} 
+                        onCancel={this.onCloseModal}
+                        orginalColumn={this.state.modalActive}/>
         </div>;
     }
 }

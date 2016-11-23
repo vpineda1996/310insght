@@ -37,10 +37,9 @@ export class CoursesExplorerView extends React.Component<CoursesExplorerViewProp
 
     onFilterChange = (whereClause: any) => {
         this.state.whereClause = whereClause;
-        this.query();
     }
 
-    query(){
+    query = () => {
         let query = $.extend({}, QUERY, this.state.whereClause, { GET: this.state.columns.map(v => v.dataset + v.name) });
         if(this.state.groupCols.length){
             $.extend(query, {
@@ -66,7 +65,6 @@ export class CoursesExplorerView extends React.Component<CoursesExplorerViewProp
         this.state.groupCols = cols.groupCols;
         this.state.applyCols = cols.applyCols;
         this.updateColumnDefinition(newCols);
-        this.query();
     }
 
     onSortChange = (cols : SortCourseSelectorState) => {
@@ -74,7 +72,6 @@ export class CoursesExplorerView extends React.Component<CoursesExplorerViewProp
             "dir": SORTDIRECTION[cols.sortDirection],
              "keys": cols.sortCols.map((oCol) => oCol.dataset + oCol.name)
         }};
-        this.query();
     }
 
     activateTable(rowData : any){
@@ -114,6 +111,10 @@ export class CoursesExplorerView extends React.Component<CoursesExplorerViewProp
 
                 <SortCourseSelector columns={this.state.columns} className="col-md-4" ref="sortSelector"
                                     onStatusChanged={this.onSortChange}/>
+            </div>
+            <div className="flex-row flex-button">
+                    <div type="button" className="col-sm-11 btn btn-primary bottom-button" 
+                         onClick={this.query}>Query!</div>
             </div>
             <TableModal ref="table-modal"/>
         </div>;
