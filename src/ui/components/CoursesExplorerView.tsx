@@ -6,6 +6,7 @@ import { COURSES_COLUMNS, ColumnType, ApplyColumn, QUERY, APPLY_EXTENSION, APPLY
 import { WhereCourseSelector } from './WhereCourseSelector'
 import { GroupCourseSelector, GroupCourseSelectorState } from './GroupCourseSelector'
 import { SortCourseSelector, SortCourseSelectorState } from './SortCourseSelector'
+import { TableModal, TableModalState } from './TableModal'
 
 import "../styles/course_explorer.scss";
 import 'ag-grid-root/dist/styles/ag-grid.css';
@@ -29,9 +30,6 @@ export class CoursesExplorerView extends React.Component<CoursesExplorerViewProp
         columns: $.extend([], COURSES_COLUMNS)
     }
 
-    api: any;
-    columnApi: any;
-
     constructor(props: any) {
         super(props);
         this.state = $.extend({},this.props, {groupCols: [], applyCols: [], whereClause: {}, sortClause: {}} );
@@ -43,7 +41,6 @@ export class CoursesExplorerView extends React.Component<CoursesExplorerViewProp
     }
 
     query(){
-        this.onColumnShowSelection();
         let query = $.extend({}, QUERY, this.state.whereClause, { GET: this.state.columns.map(v => v.dataset + v.name) });
         if(this.state.groupCols.length){
             $.extend(query, {
@@ -58,7 +55,7 @@ export class CoursesExplorerView extends React.Component<CoursesExplorerViewProp
             $.extend(query, this.state.sortClause);
         }
         if(query.WHERE.AND && !query.WHERE.AND.length) delete query.WHERE.AND;
-        Store.fetch('courses', query).then(result => this.api.setRowData(result));
+        Store.fetch('courses', query).then(result => this.activateTable(result));
     }
     
     onGroupChange = (cols : GroupCourseSelectorState) => {
@@ -68,7 +65,7 @@ export class CoursesExplorerView extends React.Component<CoursesExplorerViewProp
         })
         this.state.groupCols = cols.groupCols;
         this.state.applyCols = cols.applyCols;
-        this.state.columns = newCols;
+        this.updateColumnDefinition(newCols);
         this.query();
     }
 
@@ -80,25 +77,37 @@ export class CoursesExplorerView extends React.Component<CoursesExplorerViewProp
         this.query();
     }
 
-    onGridReady = (params: any) => {
-        this.api = params.api;
-        this.columnApi = params.columnApi;
-    };
-
-    onColumnShowSelection = () => {
-        this.api.setColumnDefs(this.getHeaderDefinition());
+    activateTable(rowData : any){
+        let table : any = this.refs["table-modal"];
+        table.setState({
+            isOpen: true,
+            rowData: rowData,
+            columns: this.state.columns
+        });
     }
 
-    getHeaderDefinition = () => {
+    updateColumnDefinition = (cols: ColumnType[]) => {
+        this.state.columns = cols;
         if(!this.state.columns.length) this.state.columns = COURSES_COLUMNS;
-        return this.state.columns.map(colDefn => {
-            return { headerName: colDefn.locale, field: colDefn.dataset + colDefn.name }
+
+        let sortDiv :any = this.refs["sortSelector"];
+        sortDiv.setState({
+            sortCols: [],
+            sortDirection: SORTDIRECTION.UP,
+            nonSortCols: this.state.columns 
         });
     }
 
     render() {
         return <div className="container course-explorer">
-            <WhereCourseSelector onStatusChanged={this.onFilterChange} />
+            <div className="flex-row where-panel-row">
+                <div className={"panel panel-primary col-sm-12 where-panel"}>
+                    <div className="panel-heading">Where Selector</div>
+                    <div className="panel-body">
+                        <WhereCourseSelector onStatusChanged={this.onFilterChange} />  
+                    </div>
+                </div>
+            </div>
             <div className="advanced-controls">
                 <GroupCourseSelector columns={COURSES_COLUMNS} className="col-md-7"
                                     onStatusChanged={this.onGroupChange}/>
@@ -106,19 +115,7 @@ export class CoursesExplorerView extends React.Component<CoursesExplorerViewProp
                 <SortCourseSelector columns={this.state.columns} className="col-md-4" ref="sortSelector"
                                     onStatusChanged={this.onSortChange}/>
             </div>
-            <div className={"col-md-12 columns-height-courses-explorer table-courses-explorer ag-fresh"}>
-                <AgGridReact
-                    columnDefs={this.getHeaderDefinition()}
-                    onGridReady={this.onGridReady}
-
-                    // or provide props the old way with no binding
-                    rowSelection="multiple"
-                    enableSorting="true"
-                    enableFilter="true"
-                    rowHeight="22"
-                    rowData={[]}
-                    />
-            </div>
+            <TableModal ref="table-modal"/>
         </div>;
     }
 }

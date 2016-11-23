@@ -9,14 +9,16 @@ export interface SortCourseSelectorProps {
 
 export interface SortCourseSelectorState {
     sortCols: ColumnType[];
+    nonSortCols: ColumnType[];
     sortDirection: SORTDIRECTION;
 }
 
 export class SortCourseSelector extends React.Component<SortCourseSelectorProps, SortCourseSelectorState> {
 
-    constructor(args: any) {
+    constructor(args: SortCourseSelectorProps) {
         super(args);
         this.state = {
+            nonSortCols: args.columns,
             sortCols: [],
             sortDirection: SORTDIRECTION.UP
         }
@@ -57,7 +59,7 @@ export class SortCourseSelector extends React.Component<SortCourseSelectorProps,
     }
 
     renderButtonDefn = () => {
-        return this.props.columns.filter((oCol) => {
+        return this.state.nonSortCols.filter((oCol) => {
             return !this.state.sortCols.find((groupCol) => {
                 return groupCol.name === oCol.name;
             });

@@ -9,6 +9,7 @@
 }
 
 .table-courses-explorer {
+    height: 600px;
     padding-left: 15px;
     padding-right: 15px;
 }
@@ -39,14 +40,25 @@
         background-color:#EEEEEE;
     }
 
-    .flex-row {
-        padding-left: 30px;
-        padding-right: 30px;
-    }
-
     .advanced-controls {
         display: flex;
         justify-content: center;
+        margin-top: 15px;
+    }
+
+    .where-panel-row {
+        padding-left: 30px;
+        padding-right: 30px;
+        
+    }
+
+    .where-panel{
+        padding-left: 0px;
+        padding-right: 0px;
+    }
+
+    .modal-dialog {
+        width: 800px;
     }
 
 }
