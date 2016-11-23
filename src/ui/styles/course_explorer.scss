@@ -10,8 +10,10 @@
 
 .table-courses-explorer {
     height: 600px;
-    padding-left: 15px;
-    padding-right: 15px;
+
+    #borderLayout_eRootPanel {
+        overflow-x: hidden;
+    }
 }
 
 .flex-row {
@@ -36,14 +38,9 @@
         overflow-x: hidden;
     }
 
-    > :nth-child(2n + 1) {
-        background-color:#EEEEEE;
-    }
-
     .advanced-controls {
         display: flex;
         justify-content: center;
-        margin-top: 15px;
     }
 
     .where-panel-row {
@@ -59,6 +56,18 @@
 
     .modal-dialog {
         width: 800px;
+    }
+
+    .flex-button {
+        display: flex;
+        justify-content: center;
+        margin-top: 15px;
+    }
+
+    .bottom-button {
+        padding-left: -40px;
+        padding-right: -40px;
+        margin-bottom: 20px;
     }
 
 }

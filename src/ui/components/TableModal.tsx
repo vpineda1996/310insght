@@ -52,18 +52,20 @@ export class TableModal extends React.Component<TableModalProps, TableModalState
                     <ModalTitle>Table view</ModalTitle>
                 </ModalHeader>
                 <ModalBody>
-                    <div className="col-md-12 columns-height-courses-explorer table-courses-explorer ag-fresh">
-                        <AgGridReact
-                            columnDefs={this.getHeaderDefinition()}
-                            onGridReady={this.onGridReady}
+                    <div className="row">
+                        <div className="col-md-12 columns-height-courses-explorer table-courses-explorer ag-fresh">
+                            <AgGridReact
+                                columnDefs={this.getHeaderDefinition()}
+                                onGridReady={this.onGridReady}
 
-                            // or provide props the old way with no binding
-                            rowSelection="multiple"
-                            enableSorting="true"
-                            enableFilter="true"
-                            rowHeight="22"
-                            rowData={this.state.rowData}
-                        />
+                                // or provide props the old way with no binding
+                                rowSelection="multiple"
+                                enableSorting="true"
+                                enableFilter="true"
+                                rowHeight="22"
+                                rowData={this.state.rowData}
+                            />
+                        </div>
                     </div>
                 </ModalBody>
                 <ModalFooter>
