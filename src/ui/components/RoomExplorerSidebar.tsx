@@ -1,7 +1,26 @@
 import * as React from 'react';
-import { Sidebar } from './Sidebar';
 import { DataUploader, Uploadable } from './DataUploader';
+import { FilterContainer } from './FilterContainer';
+import { Filters, FilterOptionProps, Range } from './RoomFilter';
 
-export class RoomExplorerSidebar extends Sidebar {
-    renderSidebar = () => <DataUploader uploadType={Uploadable.ROOMS} />
+interface RoomExplorerSidebarProps {
+    options: Filters;
+    filters: FilterOptionProps[];
+    minMax: {[field:string]: Range};
+    onNewFilter: Function;
+    onUpdateFilter: Function;
+    onUpdateRange: Function;
+    performSearch: any;
+    [id:string]: any
+}
+
+export class RoomExplorerSidebar extends React.Component<RoomExplorerSidebarProps, {}> {
+    render () {
+        return (
+            <div className='sidebar'>
+                <DataUploader uploadType={Uploadable.ROOMS} />
+                <FilterContainer {...this.props} />
+            </div>
+        );
+    }
 }

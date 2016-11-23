@@ -64,7 +64,7 @@ module.exports = {
     devServer: {
         contentBase: path.resolve(__dirname, 'public', 'src', 'static'),
         host: '0.0.0.0',
-        port: 8080,
+        port: 8000,
         proxy: [{
             context: ['/query*', '/dataset/*'],
             target: 'http://localhost:4321',
