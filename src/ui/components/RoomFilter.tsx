@@ -119,7 +119,12 @@ export class RoomFilter extends React.Component<FilterProps, {}> {
     );
 
     addNestedRule = (e: any) => {
+        let or = this, that = this, should = this, fail = this
         this
+        or
+        that
+        should
+        fail
         this.props.onNewNestedFiter(this.props);
     }
 

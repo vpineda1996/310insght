@@ -6,7 +6,10 @@ import { RoomFilter, FilterProps, FilterOptionProps, DataType, Filters, Range } 
 import { Map, MarkerProps } from './Map'
 import { Store, Data } from '../store/store'
 
-interface RoomExplorerProps {}
+interface RoomExplorerProps {
+    dataId: string;
+    onNewQuery: (who: string, query: {}) => void;
+}
 
 interface RoomExplorerState {
     filters: FilterOptionProps[],
@@ -127,6 +130,7 @@ export class RoomExplorer extends React.Component<RoomExplorerProps, RoomExplore
             let state = this.state;
             state.markers = markers;
             this.setState(state);
+            this.props.onNewQuery(this.props.dataId, query);
         });
     }
 

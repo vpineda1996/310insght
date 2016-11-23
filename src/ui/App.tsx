@@ -4,8 +4,9 @@ import { MainLayout } from './layout/MainLayout'
 import { NavBarStates } from './components/MainNavBar'
 import { RoomExplorer } from './components/RoomExplorer'
 import { CoursesExplorerView } from './components/CoursesExplorerView'
+import { Scheduler, SchedulerProps } from './components/Scheduler'
 
-interface AppState {
+interface AppState extends SchedulerProps {
     currentTab: NavBarStates
 }
 
@@ -14,22 +15,34 @@ export class App extends React.Component<{}, AppState> {
     constructor (props: any) {
         super(props);
         this.state = {
-            currentTab: NavBarStates.COURSES
+            currentTab: NavBarStates.COURSES,
+            queries: {
+                rooms: {},
+                courses: {}
+            }
         }
     }
 
     handleChangeTab = (newState: NavBarStates) => {
-        this.setState({ currentTab: newState });
+        let state = this.state;
+        state.currentTab = newState;
+        this.setState(state);
+    }
+
+    onNewQuery = (who: string, query: {}) => {
+        let state = this.state;
+        state.queries[who] = query;
+        this.setState(state);
     }
 
     renderTabContent = () => {
         switch (this.state.currentTab) {
             case NavBarStates.ROOMS:
-                return <RoomExplorer />;
+                return <RoomExplorer dataId='rooms' onNewQuery={this.onNewQuery} />;
             case NavBarStates.COURSES:
-                return <CoursesExplorerView />;
+                return <CoursesExplorerView dataId='courses' onNewQuery={this.onNewQuery}/>;
             default:
-                return <div/>
+                return <Scheduler {...this.state} />;
         }
     }
 
