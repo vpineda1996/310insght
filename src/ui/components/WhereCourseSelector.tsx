@@ -85,7 +85,7 @@ export class WhereCourseSelector extends React.Component<CourseSelectorProps, {}
     }
 
     render() {
-        return <div className="row flex-row hide-overflow">
+        return <div className="flex-row hide-overflow">
             <Column className="col-md-3 columns-height-courses-explorer" name="Year"
                 onSelectOption={this.queryCourses.bind(this)} ref={COLUMNS.YEAR.toString()}
                 fieldId={getDatasetId(COLUMNS.YEAR)} />

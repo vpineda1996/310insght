@@ -1,9 +1,12 @@
 import * as React from "react";
 import { AgGridReact } from 'ag-grid-react';
 import { Store } from '../store/store'
-import { COURSES_COLUMNS, ColumnType, QUERY, APPLY_EXTENSION, APPLYTOKENS } from '../store/constants'
-import { DataUploader, Uploadable } from './DataUploader';
+import { COURSES_COLUMNS, ColumnType, ApplyColumn, QUERY, APPLY_EXTENSION, APPLYTOKENS, SORTDIRECTION } from '../store/constants'
+
 import { WhereCourseSelector } from './WhereCourseSelector'
+import { GroupCourseSelector, GroupCourseSelectorState } from './GroupCourseSelector'
+import { SortCourseSelector, SortCourseSelectorState } from './SortCourseSelector'
+import { TableModal, TableModalState } from './TableModal'
 
 import "../styles/course_explorer.scss";
 import 'ag-grid-root/dist/styles/ag-grid.css';
@@ -14,7 +17,11 @@ export interface CoursesExplorerViewProps {
 }
 
 export interface CoursesExplorerViewState {
-    columns?: ColumnType[]
+    columns?: ColumnType[],
+    groupCols?: ColumnType[],
+    applyCols?: ApplyColumn[],
+    whereClause? : any,
+    sortClause? : any
 }
 
 export class CoursesExplorerView extends React.Component<CoursesExplorerViewProps, CoursesExplorerViewState> {
@@ -23,236 +30,92 @@ export class CoursesExplorerView extends React.Component<CoursesExplorerViewProp
         columns: $.extend([], COURSES_COLUMNS)
     }
 
-    api: any;
-    columnApi: any;
-
-    constructor(props: any){
+    constructor(props: any) {
         super(props);
-        this.state = this.props;
+        this.state = $.extend({},this.props, {groupCols: [], applyCols: [], whereClause: {}, sortClause: {}} );
     }
 
-    onFilterChange(whereClause: any) {
-        let query = $.extend({}, QUERY, whereClause, { GET: this.state.columns.map(v => v.dataset + v.name) });
-        Store.fetch('courses', query).then(result => this.api.setRowData(result));
+    onFilterChange = (whereClause: any) => {
+        this.state.whereClause = whereClause;
+        this.query();
     }
 
-    onGridReady(params: any) {
-        this.api = params.api;
-        this.columnApi = params.columnApi;
-    };
-
-    onColumnShowSelection(selectedCols : ColumnType[]) {
-        this.api.setColumnDefs(this.getHeaderDefinition())
+    query(){
+        let query = $.extend({}, QUERY, this.state.whereClause, { GET: this.state.columns.map(v => v.dataset + v.name) });
+        if(this.state.groupCols.length){
+            $.extend(query, {
+                GROUP: this.state.groupCols.map(v => v.dataset + v.name),
+                APPLY: this.state.applyCols.map(v => {
+                    let aggOp = APPLYTOKENS[v.aggregateType];
+                    return {[v.newColId.name] : {[ aggOp ]: v.originalCol.dataset + v.originalCol.name}};
+                })
+            })
+        }
+        if(this.state.sortClause.ORDER && this.state.sortClause.ORDER.keys.length){
+            $.extend(query, this.state.sortClause);
+        }
+        if(query.WHERE.AND && !query.WHERE.AND.length) delete query.WHERE.AND;
+        Store.fetch('courses', query).then(result => this.activateTable(result));
+    }
+    
+    onGroupChange = (cols : GroupCourseSelectorState) => {
+        let newCols : ColumnType[] = $.extend([], cols.groupCols);
+        cols.applyCols.forEach((aCol) => {
+            newCols.push(aCol.newColId);
+        })
+        this.state.groupCols = cols.groupCols;
+        this.state.applyCols = cols.applyCols;
+        this.updateColumnDefinition(newCols);
+        this.query();
     }
 
-    getHeaderDefinition() {
-        return this.state.columns.map(colDefn => {
-            return { headerName: colDefn.locale, field: colDefn.dataset + colDefn.name }
+    onSortChange = (cols : SortCourseSelectorState) => {
+        this.state.sortClause = {"ORDER": { 
+            "dir": SORTDIRECTION[cols.sortDirection],
+             "keys": cols.sortCols.map((oCol) => oCol.dataset + oCol.name)
+        }};
+        this.query();
+    }
+
+    activateTable(rowData : any){
+        let table : any = this.refs["table-modal"];
+        table.setState({
+            isOpen: true,
+            rowData: rowData,
+            columns: this.state.columns
+        });
+    }
+
+    updateColumnDefinition = (cols: ColumnType[]) => {
+        this.state.columns = cols;
+        if(!this.state.columns.length) this.state.columns = COURSES_COLUMNS;
+
+        let sortDiv :any = this.refs["sortSelector"];
+        sortDiv.setState({
+            sortCols: [],
+            sortDirection: SORTDIRECTION.UP,
+            nonSortCols: this.state.columns 
         });
     }
 
     render() {
         return <div className="container course-explorer">
-            <WhereCourseSelector onStatusChanged={this.onFilterChange.bind(this)} />
-            <GroupCourseSelector columns={this.state.columns}/>
-            <div className={"columns-height-courses-explorer table-courses-explorer ag-fresh"}>
-                <AgGridReact 
-                    columnDefs={this.getHeaderDefinition()}
-                    onGridReady={this.onGridReady.bind(this)}
-
-                    // or provide props the old way with no binding
-                    rowSelection="multiple"
-                    enableSorting="true"
-                    enableFilter="true"
-                    rowHeight="22"
-                    rowData={[]}
-                />
+            <div className="flex-row where-panel-row">
+                <div className={"panel panel-primary col-sm-12 where-panel"}>
+                    <div className="panel-heading">Where Selector</div>
+                    <div className="panel-body">
+                        <WhereCourseSelector onStatusChanged={this.onFilterChange} />  
+                    </div>
+                </div>
             </div>
-        </div>;
-    }
-}
+            <div className="advanced-controls">
+                <GroupCourseSelector columns={COURSES_COLUMNS} className="col-md-7"
+                                    onStatusChanged={this.onGroupChange}/>
 
-interface GroupCourseSelectorProps {
-    columns: ColumnType[]
-}
-
-interface ApplyColumns {
-    originalCol: ColumnType,
-    newColId: ColumnType,
-    aggregateType: APPLYTOKENS
-}
-
-interface GroupCourseSelectorState { 
-    groupCols: ColumnType[];
-    applyCols: ApplyColumns[]
-}
-
-class GroupCourseSelector extends React.Component<GroupCourseSelectorProps, GroupCourseSelectorState> {
-    
-    constructor(args: any) {
-        super(args);
-        this.state = {
-            groupCols: [],
-            applyCols: []
-        }
-    }
-
-    allowDrop(ev: React.DragEvent<HTMLDivElement>){
-        ev.preventDefault();       
-    }
-
-    drag(ev : React.DragEvent<HTMLDivElement>, oCol: ColumnType){
-        ev.dataTransfer.setData("text/plain", JSON.stringify(oCol));
-    }
-
-    dropOnGroup(ev: any){
-        ev.preventDefault(); 
-        var oCol = JSON.parse(ev.dataTransfer.getData("text/plain"));
-        this.setState((prev) => {
-            prev.groupCols.push(oCol);
-            return prev;
-        });
-    }
-
-    dropOnApply(ev: any){
-        ev.preventDefault(); 
-        var oCol : ColumnType = JSON.parse(ev.dataTransfer.getData("text/plain"));
-        this.setState((prev) => {
-            prev.applyCols.push({
-                originalCol: oCol,
-                newColId: oCol,
-                aggregateType: APPLYTOKENS.AVG
-            });
-            return prev;
-        });
-    }
-
-    onGroupButtonClick(oButtonCol: ColumnType){
-        let idx = -1;
-        this.state.groupCols.some((oCol, i) => {
-            if (oCol.name === oButtonCol.name){
-                idx = i;
-                return true;
-            }
-        });
-        this.setState((prev) => {
-            prev.groupCols.splice(idx, 1);
-            return prev;
-        })
-    }
-
-    onApplyButtonClick(oButtonCol: ApplyColumns){
-        let idx = -1;
-        this.state.applyCols.some((oCol, i) => {
-            if (oCol.newColId.name === oButtonCol.newColId.name){
-                idx = i;
-                return true;
-            }
-        });
-        this.setState((prev) => {
-            prev.applyCols.splice(idx, 1);
-            return prev;
-        })
-    }
-
-    renderButtonDefn() {
-        return this.props.columns.filter((oCol) => {
-            return !this.state.groupCols.find((groupCol) => {
-                return groupCol.name === oCol.name;
-            });
-        }).map((oCol, idx) =>{
-            return <div draggable={true} type="button" className="col-sm-6 btn btn-default" 
-                        onDragStart={(ev) => { this.drag(ev, oCol)}} 
-                        ref={oCol.name} key={idx}>{oCol.locale}
-                   </div>
-        });
-    }
-
-    renderGroupButtons(){
-        return this.state.groupCols.map((oCol, idx) => {
-            return <div type="button" className="col-sm-6 btn btn-default" 
-                        onClick={this.onGroupButtonClick.bind(this, oCol)}
-                        ref={oCol.name} key={idx}>{oCol.locale}
-                   </div>
-        });
-    }
-
-    renderApplyButtons(){
-        return this.state.applyCols.map((oCol, idx) => {
-            return <div type="button" className="col-sm-6 btn btn-default" 
-                        onClick={this.onApplyButtonClick.bind(this, oCol)}
-                        ref={oCol.newColId.name} key={idx}>{oCol.newColId.locale}
-                   </div>
-        });
-    }
-
-    render() {
-        return <div className="row group-selector">
-            <div className="col-md-3 flex-vertical col-defn">{this.renderButtonDefn()}</div>
-            <div className="col-md-9 flex-vertical">
-                <div className="group-section" onDrop={this.dropOnGroup.bind(this)} 
-                     onDragOver={this.allowDrop.bind(this)}>{this.renderGroupButtons()}</div>
-                <div className="apply-section" onDrop={this.dropOnApply.bind(this)} 
-                     onDragOver={this.allowDrop.bind(this)}>{this.renderApplyButtons()}</div>
+                <SortCourseSelector columns={this.state.columns} className="col-md-4" ref="sortSelector"
+                                    onStatusChanged={this.onSortChange}/>
             </div>
+            <TableModal ref="table-modal"/>
         </div>;
-    }
-}
-
-interface ColumnsSelectorProps {
-    cols: ColumnType[],
-    onSelectColumn: Function,
-    name: string
-}
-
-interface ColumnsSelectorState {
-    cols: ColumnType[]
-}
-
-class ColumnsSelector extends React.Component<ColumnsSelectorProps, ColumnsSelectorState> {
-
-    constructor(props : ColumnsSelectorProps) {
-        super(props);
-        this.state = {
-            cols: []
-        };
-    }
-
-    onSelectColumn(oCol: ColumnType){
-        let oButton : any = this.refs[oCol.name];
-        let $button = $(oButton);
-        $button.hasClass("active") ? $button.removeClass("active") : $button.addClass("active");
-        this.props.onSelectColumn(this.updateState());
-    }
-
-    updateState(){
-        let aCols = this.props.cols.filter((oCol) => {
-            let oButton = this.refs[oCol.name];
-            let $button = $(oButton);
-            return $button.hasClass("active");
-        });
-
-        this.setState((p) => {
-            p.cols = aCols;
-            return p;
-        });
-
-        return aCols;
-    }
-    
-    renderButtons(){
-        return this.props.cols.map((oCol, idx) => {
-            return <button type="button" className="col-sm-1 btn btn-default" 
-                           ref={oCol.name} key={idx} onClick={() => this.onSelectColumn(oCol)}>
-                                {oCol.locale}
-                   </button>
-        });
-    }
-
-    render() {
-        return <div className="row col-selector">
-                    <div className="col-md-1 col-selector-label">{this.props.name}</div>
-                    {this.renderButtons()}
-               </div>;
     }
 }
