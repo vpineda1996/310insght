@@ -14,6 +14,8 @@ import 'ag-grid-root/dist/styles/theme-fresh.css';
 
 export interface CoursesExplorerViewProps {
     columns?: ColumnType[]
+    dataId: string;
+    onNewQuery: (who: string, query: {}) => void;
 }
 
 export interface CoursesExplorerViewState {
@@ -27,7 +29,9 @@ export interface CoursesExplorerViewState {
 export class CoursesExplorerView extends React.Component<CoursesExplorerViewProps, CoursesExplorerViewState> {
 
     static defaultProps: CoursesExplorerViewProps = {
-        columns: $.extend([], COURSES_COLUMNS)
+        columns: $.extend([], COURSES_COLUMNS),
+        dataId: 'courses',
+        onNewQuery: null
     }
 
     constructor(props: any) {
@@ -56,7 +60,7 @@ export class CoursesExplorerView extends React.Component<CoursesExplorerViewProp
         if(query.WHERE.AND && !query.WHERE.AND.length) delete query.WHERE.AND;
         Store.fetch('courses', query).then(result => this.activateTable(result));
     }
-    
+
     onGroupChange = (cols : GroupCourseSelectorState) => {
         let newCols : ColumnType[] = $.extend([], cols.groupCols);
         cols.applyCols.forEach((aCol) => {
@@ -68,7 +72,7 @@ export class CoursesExplorerView extends React.Component<CoursesExplorerViewProp
     }
 
     onSortChange = (cols : SortCourseSelectorState) => {
-        this.state.sortClause = {"ORDER": { 
+        this.state.sortClause = {"ORDER": {
             "dir": SORTDIRECTION[cols.sortDirection],
              "keys": cols.sortCols.map((oCol) => oCol.dataset + oCol.name)
         }};
@@ -91,7 +95,7 @@ export class CoursesExplorerView extends React.Component<CoursesExplorerViewProp
         sortDiv.setState({
             sortCols: [],
             sortDirection: SORTDIRECTION.UP,
-            nonSortCols: this.state.columns 
+            nonSortCols: this.state.columns
         });
     }
 
@@ -101,7 +105,7 @@ export class CoursesExplorerView extends React.Component<CoursesExplorerViewProp
                 <div className={"panel panel-primary col-sm-12 where-panel"}>
                     <div className="panel-heading">Where Selector</div>
                     <div className="panel-body">
-                        <WhereCourseSelector onStatusChanged={this.onFilterChange} />  
+                        <WhereCourseSelector onStatusChanged={this.onFilterChange} />
                     </div>
                 </div>
             </div>
