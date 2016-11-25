@@ -9,7 +9,7 @@ export interface ColumnProps {
     className?: string
 }
 
-export class Column extends React.Component<ColumnProps, {}> {
+export class Column extends React.PureComponent<ColumnProps, {}> {
     static defaultProps: ColumnProps = {
         className: "",
         data: [],
@@ -27,6 +27,10 @@ export class Column extends React.Component<ColumnProps, {}> {
         this.columnApi = params.columnApi;
         this.api.sizeColumnsToFit()
     };
+
+    shouldComponentUpdate() {
+        return false;
+    }
 
     render() {
         return <div className={"ag-fresh " + this.props.className}>

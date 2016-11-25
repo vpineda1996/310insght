@@ -128,8 +128,8 @@ export class GroupCourseSelector extends React.Component<GroupCourseSelectorProp
         return <div className={"panel panel-primary group-selector " + this.props.className}>
             <div className="panel-heading">Group Selector</div>
             <div className="panel-body group-selector-body">
-                <div className="col-md-5 flex-vertical col-defn">{this.renderButtonDefn()}</div>
-                <div className="col-md-7 flex-vertical">
+                <div className="col-md-5 flex-vertical col-defn col-sm-6">{this.renderButtonDefn()}</div>
+                <div className="col-md-7 flex-vertical col-sm-6">
                     <div className="panel-group">
                         <div className="panel panel-info flex-row">
                             <div className="panel-body group-section flex-vertical col-sm-11" onDrop={this.dropOnGroup}
