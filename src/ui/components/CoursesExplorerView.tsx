@@ -43,7 +43,7 @@ export class CoursesExplorerView extends React.Component<CoursesExplorerViewProp
         this.state.whereClause = whereClause;
     }
 
-    query = () => {
+    buildQuery = () => {
         let query = $.extend({}, QUERY, this.state.whereClause, { GET: this.state.columns.map(v => v.dataset + v.name) });
         if(this.state.groupCols.length){
             $.extend(query, {
@@ -58,6 +58,11 @@ export class CoursesExplorerView extends React.Component<CoursesExplorerViewProp
             $.extend(query, this.state.sortClause);
         }
         if(query.WHERE.AND && !query.WHERE.AND.length) delete query.WHERE.AND;
+        return query;
+    }
+
+    query = () => {
+        let query = this.buildQuery();
         Store.fetch('courses', query).then(result => this.activateTable(result));
     }
 
@@ -68,7 +73,7 @@ export class CoursesExplorerView extends React.Component<CoursesExplorerViewProp
         })
         this.state.groupCols = cols.groupCols;
         this.state.applyCols = cols.applyCols;
-        this.updateColumnDefinition(newCols);
+        this.onChangeQueryDefinition(newCols);
     }
 
     onSortChange = (cols : SortCourseSelectorState) => {
@@ -87,7 +92,7 @@ export class CoursesExplorerView extends React.Component<CoursesExplorerViewProp
         });
     }
 
-    updateColumnDefinition = (cols: ColumnType[]) => {
+    onChangeQueryDefinition = (cols: ColumnType[]) => {
         this.state.columns = cols;
         if(!this.state.columns.length) this.state.columns = COURSES_COLUMNS;
 
@@ -97,6 +102,8 @@ export class CoursesExplorerView extends React.Component<CoursesExplorerViewProp
             sortDirection: SORTDIRECTION[ (this.state.sortClause && this.state.sortClause.ORDER && this.state.sortClause.ORDER.dir) || 'UP' ],
             nonSortCols: this.state.columns 
         });
+
+        this.props.onNewQuery(this.props.dataId, this.buildQuery());
     }
 
     render() {
