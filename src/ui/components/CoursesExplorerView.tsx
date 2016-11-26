@@ -94,8 +94,8 @@ export class CoursesExplorerView extends React.Component<CoursesExplorerViewProp
         let sortDiv :any = this.refs["sortSelector"];
         sortDiv.setState({
             sortCols: [],
-            sortDirection: SORTDIRECTION.UP,
-            nonSortCols: this.state.columns
+            sortDirection: SORTDIRECTION[ (this.state.sortClause && this.state.sortClause.ORDER && this.state.sortClause.ORDER.dir) || 'UP' ],
+            nonSortCols: this.state.columns 
         });
     }
 
@@ -110,10 +110,10 @@ export class CoursesExplorerView extends React.Component<CoursesExplorerViewProp
                 </div>
             </div>
             <div className="advanced-controls">
-                <GroupCourseSelector columns={COURSES_COLUMNS} className="col-md-7"
+                <GroupCourseSelector columns={COURSES_COLUMNS} className="col-md-7 col-sm-12"
                                     onStatusChanged={this.onGroupChange}/>
 
-                <SortCourseSelector columns={this.state.columns} className="col-md-4" ref="sortSelector"
+                <SortCourseSelector columns={this.state.columns} className="col-md-4 col-sm-12" ref="sortSelector"
                                     onStatusChanged={this.onSortChange}/>
             </div>
             <div className="flex-row flex-button">

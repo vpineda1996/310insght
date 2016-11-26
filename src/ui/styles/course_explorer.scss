@@ -41,6 +41,7 @@
     .advanced-controls {
         display: flex;
         justify-content: center;
+        flex-wrap: wrap;
     }
 
     .where-panel-row {
@@ -68,6 +69,46 @@
         padding-left: -40px;
         padding-right: -40px;
         margin-bottom: 20px;
+    }
+
+    .range-slider-field {
+        margin-top: 10px;
+        margin-bottom: -10px;
+    }
+
+    .range-selector-where {
+        height: 50px;
+
+        .InputRange-track {
+            height: 10px;
+        }
+
+        .InputRange-slider {
+            height: 15px;
+            width: 15px;
+            margin-top:-12px;
+        }
+
+        .InputRange-label {
+            font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+            font-size: 13px;
+        }
+
+        .InputRange-label--value {
+            top: -31px;
+        }
+
+        .InputRange-label--min, .InputRange-label--max {
+            bottom: -24px;
+        }
+
+        .card-bottom-range {
+            margin-bottom: 20px;
+        }
+    }
+    .slider-row {
+            height: 90px;
+            margin-bottom: -20px;
     }
 
 }
@@ -215,4 +256,8 @@
     display: flex;
     flex-flow: column wrap; 
     height: 100%;
+}
+
+.flex-vertical-justify {
+    justify-content: center;
 }

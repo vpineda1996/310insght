@@ -91,13 +91,13 @@ export class SortCourseSelector extends React.Component<SortCourseSelectorProps,
             <div className="panel-heading">Sort Selector</div>
             <div className="panel-body">
                 <div>
-                     <select className="form-control" id="selct" defaultValue={'0'} onChange={this.onSortOrderChanged}>
+                     <select className="form-control" id="selct" defaultValue={ this.state.sortDirection.toString() || '0' } onChange={this.onSortOrderChanged}>
                         {this.renderOptions()}
                     </select>
                 </div>
                 <div className="sort-selector-body">
-                    <div className="col-md-7 flex-vertical col-defn">{this.renderButtonDefn()}</div>
-                    <div className="col-md-5 flex-vertical">
+                    <div className="col-md-7 flex-vertical col-defn col-sm-6">{this.renderButtonDefn()}</div>
+                    <div className="col-md-5 flex-vertical col-sm-6">
                         <div className="panel-group">
                             <div className="panel panel-info flex-row">
                                 <div className="panel-body sort-section flex-vertical col-sm-11" onDrop={this.dropOnSort}

@@ -1,14 +1,28 @@
 import * as React from "react";
 import { Store } from '../store/store'
-import { COLUMNS, QUERY, APPLY_EXTENSION, COURSES_ID } from '../store/constants'
+import { COLUMNS, QUERY, APPLY_EXTENSION, COURSES_ID, RangeSelectorData } from '../store/constants'
 import { Column } from './Column';
+import InputRange = require('react-input-range');
+import { RangeCreatorModal } from './RangeCreatorModal'
+import { WhereRangeSelector } from './WhereRangeSelector'
 
 export interface CourseSelectorProps {
     onStatusChanged: Function
 }
 
-export class WhereCourseSelector extends React.Component<CourseSelectorProps, {}> {
+export interface CourseSelectorState { 
+    filterSlidersAnd: any[];
+}
+
+export class WhereCourseSelector extends React.Component<CourseSelectorProps, CourseSelectorState> {
     staticColumns = [COLUMNS.DEPARTMENT, COLUMNS.PROFESSOR, COLUMNS.YEAR];
+
+    constructor(p: any){
+        super(p);
+        this.state = {
+            filterSlidersAnd: []
+        };
+    }
 
     getWhereComponent() {
         let possibleAndCols = this.staticColumns;
@@ -31,6 +45,7 @@ export class WhereCourseSelector extends React.Component<CourseSelectorProps, {}
         let orStatements = possibleAndCols.map((colsToSearch) => {
             return { OR: fnGetOrQuery(colsToSearch) };
         }).filter(val => val.OR);
+        Array.prototype.push.apply(orStatements, this.state.filterSlidersAnd);
         return { WHERE: { "AND": orStatements } };
     }
 
@@ -84,25 +99,43 @@ export class WhereCourseSelector extends React.Component<CourseSelectorProps, {}
         this.props.onStatusChanged(this.extendWhereToCourse(this.getWhereComponent()));
     }
 
+    onRangeChange = (rangeCols : RangeSelectorData[]) => {
+        let accum : any[] = [];
+        let rangeWhere : any[] = rangeCols.reduce((prev,rangeCols) => {
+            accum.push({
+                "GT":  {[rangeCols.col.dataset + rangeCols.col.name]: (rangeCols.selectedMin || rangeCols.min) }
+            });
+            accum.push({
+                "LT":  {[rangeCols.col.dataset + rangeCols.col.name]: (rangeCols.selectedMax || rangeCols.max) }
+            });
+            return accum;
+        },accum);
+        this.state.filterSlidersAnd = rangeWhere;
+        this.queryCourses();
+    }
+
     render() {
-        return <div className="flex-row hide-overflow">
-            <Column className="col-md-3 columns-height-courses-explorer" name="Year"
-                onSelectOption={this.queryCourses.bind(this)} ref={COLUMNS.YEAR.toString()}
-                fieldId={getDatasetId(COLUMNS.YEAR)} />
-            <Column className="col-md-3 columns-height-courses-explorer" name="Professor"
-                onSelectOption={this.queryCourses.bind(this)} ref={COLUMNS.PROFESSOR.toString()}
-                fieldId={getDatasetId(COLUMNS.PROFESSOR)} />
-            <Column className="col-md-3 columns-height-courses-explorer" name="Department"
-                onSelectOption={this.queryCourses.bind(this)} ref={COLUMNS.DEPARTMENT.toString()}
-                fieldId={getDatasetId(COLUMNS.DEPARTMENT)} />
-            <Column className="col-md-3 columns-height-courses-explorer" name="Course"
-                onSelectOption={this.onStatusChanged.bind(this)} ref={COLUMNS.COURSE.toString()}
-                fieldId={getDatasetId(COLUMNS.COURSE)} />
+        return <div>
+            <div className="flex-vertical"> 
+                <div className="flex-row hide-overflow">
+                    <Column className="col-md-3 columns-height-courses-explorer" name="Year"
+                        onSelectOption={this.queryCourses.bind(this)} ref={COLUMNS.YEAR.toString()}
+                        fieldId={getDatasetId(COLUMNS.YEAR)} />
+                    <Column className="col-md-3 columns-height-courses-explorer" name="Professor"
+                        onSelectOption={this.queryCourses.bind(this)} ref={COLUMNS.PROFESSOR.toString()}
+                        fieldId={getDatasetId(COLUMNS.PROFESSOR)} />
+                    <Column className="col-md-3 columns-height-courses-explorer" name="Department"
+                        onSelectOption={this.queryCourses.bind(this)} ref={COLUMNS.DEPARTMENT.toString()}
+                        fieldId={getDatasetId(COLUMNS.DEPARTMENT)} />
+                    <Column className="col-md-3 columns-height-courses-explorer" name="Course"
+                        onSelectOption={this.onStatusChanged.bind(this)} ref={COLUMNS.COURSE.toString()}
+                        fieldId={getDatasetId(COLUMNS.COURSE)} />
+                </div>
+            </div>
+            <WhereRangeSelector onRangeChange={this.onRangeChange} />
         </div>;
     }
 }
-
-
 
 function getDatasetId(columnId: COLUMNS): string {
     // Harcoding happening here

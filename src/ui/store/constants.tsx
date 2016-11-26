@@ -18,6 +18,15 @@ export enum Datatype {
 
 export const COURSES_ID = 'courses';
 
+export interface RangeSelectorData {
+    col: ColumnType;
+    max: number;
+    min: number;
+    selectedMin?: number;
+    selectedMax?: number;
+    defaultValue?: number;
+}
+
 export const COURSES_COLUMNS: ColumnType[] = [{
     name: 'dept',
     type: Datatype.STRING,
@@ -69,6 +78,8 @@ export const COURSES_COLUMNS: ColumnType[] = [{
     locale: "Year",
     dataset: COURSES_ID + "_"
 }];
+
+export const COURSES_NUMERIC_COLUMNS = COURSES_COLUMNS.filter(col => col.type === Datatype.NUMBER);
 
 export const ROOMS_COLUMNS: ColumnType[] = [{
     name: 'fullname',
