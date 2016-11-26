@@ -6,7 +6,7 @@ require('../styles/sidebar.scss');
 export class SidebarLayout extends React.Component<{}, {}> {
     render () {
         return (
-            <div className='sidebar-layout'>
+            <div className=''>
                 {this.props.children}
             </div>
         );

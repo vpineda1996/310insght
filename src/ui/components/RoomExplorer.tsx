@@ -3,6 +3,8 @@ import * as React from 'react'
 import { SidebarLayout } from '../layout/SidebarLayout'
 import { RoomExplorerSidebar } from './RoomExplorerSidebar'
 import { RoomFilter, FilterProps, FilterOptionProps, DataType, Filters, Range } from './RoomFilter';
+import { RoomExplorerFilter } from './RoomExplorerFilter';
+import { RoomExplorerResult } from './RoomExplorerResult';
 import { Map, MarkerProps } from './Map'
 import { Store, Data } from '../store/store'
 
@@ -248,47 +250,14 @@ export class RoomExplorer extends React.Component<RoomExplorerProps, RoomExplore
         }
     }
 
-    onUpdateFilter = (key: string, field: string, value: any, index: number, stateOnly: boolean) => {
-        let keys = key.split('--');
-        keys.shift();
-        let nestings = keys.map(k => parseInt(k));
-        let state = this.state;
-        let filters: FilterProps[]|FilterOptionProps[] = this.state.filters;
-        for (let i = 0; i < nestings.length-1; i++) filters = filters[nestings[i]].filters;
-
-        if (stateOnly)
-            filters[nestings[nestings.length-1]][field] = value;
-        else
-            filters[nestings[nestings.length-1]][field][filters[nestings[nestings.length-1]].field] = value;
-
-        this.setState(state);
-    }
-
-    onNewFilter = (filter: FilterProps) => {
-        let state = this.state;
-        state.filters.push(filter);
-        this.setState(state);
-    }
-
-    onUpdateRange = (field: string, range: Range) => {
-        let state = this.state;
-        state.minMax[field] = range;
-        state.filters.forEach(filter => {
-            filter[field].range = range;
-        });
-        this.setState(state);
-    }
-
     render () {
         return (
             <div className='room-explorer'>
                 <SidebarLayout>
-                    <RoomExplorerSidebar
-                        {...this.state}
-                        performSearch={this.performSearch}
-                        onNewFilter={this.onNewFilter}
-                        onUpdateRange={this.onUpdateRange}
-                        onUpdateFilter={this.onUpdateFilter} />
+                    <RoomExplorerFilter />
+                </SidebarLayout>
+                <SidebarLayout>
+                    <RoomExplorerResult />
                 </SidebarLayout>
                 <Map markers={this.state.markers} handleClick={this.handleMarkerClick} handleDrawOverlay={this.handleDrawOverlay} />
             </div>

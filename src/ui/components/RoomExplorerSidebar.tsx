@@ -17,8 +17,7 @@ interface RoomExplorerSidebarProps {
 export class RoomExplorerSidebar extends React.Component<RoomExplorerSidebarProps, {}> {
     render () {
         return (
-            <div className='sidebar'>
-                <DataUploader uploadType={Uploadable.ROOMS} />
+            <div className='sidebar-left'>
                 <FilterContainer {...this.props} />
             </div>
         );
