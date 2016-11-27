@@ -42,14 +42,25 @@ export class RangeInput extends React.Component<RangeInputProps, RangeInputState
     }
 
     renderRangeInput = () => {
+        let range = this.state.range;
+        let value = this.props.value;
+        if (!range) {
+            range = { min: 0, max: 0 }
+            value = range;
+        }
+        // happens when range is updated and waiting for value to be updated
+        if (!value) {
+            value = range;
+        }
+
         return (
             <div className='range-slider-field'>
                 <InputRange
-                    maxValue={this.state.range.max}
-                    minValue={this.state.range.min}
-                    value={this.props.value}
+                    maxValue={range.max}
+                    minValue={range.min}
+                    value={value}
                     onChange={this.onRangeChange}
-                    step={this.calcStepSize(this.state.range)} />
+                    step={this.calcStepSize(range)} />
             </div>
         );
     }

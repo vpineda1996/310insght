@@ -95,7 +95,7 @@ export const ROOMS_COLUMNS: ColumnType[] = [{
 }, {
     name: 'shortname',
     type: Datatype.STRING,
-    locale: "Short Name",
+    locale: "Building Name",
     dataset: ROOMS_ID + "_"
 }, {
     name: 'number',

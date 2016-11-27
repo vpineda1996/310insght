@@ -27,13 +27,13 @@ export class RoomExplorerFilter extends React.Component<RoomExplorerFilterProps,
         return (
             <div className='sidebar sidebar-left sidebar-show-lg'>
                 {this.props.filters.filter(filter => filter.type === RoomFilterType.CHECKBOX).map(filter => {
-                    return <div className='col-md-3'>
+                    return <div className='col-md-3' key={'room-filter-'+filter.field}>
                         <RoomFilter {...filter} onSelect={this.props.onSelect} onSelectAll={this.props.onSelectAll} />
                         </div>
                 })}
                 <div className='range-input col-md-3'>
                     {this.props.filters.filter(filter => filter.type === RoomFilterType.RANGE).map(filter => {
-                        return <div className='row'>
+                        return <div className='row' key={'room-filter-'+filter.field}>
                             <RangeInput {...filter} onRangeChange={this.props.onRangeChange} />
                         </div>
                     })}
