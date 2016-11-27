@@ -2,9 +2,10 @@ import * as React from 'react'
 
 import { SidebarLayout } from '../layout/SidebarLayout'
 import { RoomExplorerSidebar } from './RoomExplorerSidebar'
-import { RoomFilter, FilterProps, FilterOptionProps, DataType, Filters, Range } from './RoomFilter';
-import { RoomExplorerFilter } from './RoomExplorerFilter';
-import { RoomExplorerResult } from './RoomExplorerResult';
+import { RoomFilter, FilterProps, FilterOptionProps, DataType, Filters } from './RoomFilter';
+import { RoomExplorerFilter, RoomFilterType } from './RoomExplorerFilter';
+import { Range } from './RangeInput';
+import { RoomFilterProps } from './Filter';
 import { Map, MarkerProps } from './Map'
 import { Store, Data } from '../store/store'
 
@@ -14,7 +15,7 @@ interface RoomExplorerProps {
 }
 
 interface RoomExplorerState {
-    filters: FilterOptionProps[],
+    filters: RoomFilterProps[],
     markers: MarkerProps[]
     regions: any[]
     options: Filters
@@ -96,7 +97,31 @@ export class RoomExplorer extends React.Component<RoomExplorerProps, RoomExplore
             markers: [],
             regions: [],
             options: FILTER_OPTIONS,
-            filters: [],
+            filters: [{
+              field: 'shortname',
+              type: RoomFilterType.CHECKBOX,
+              value: null
+            }, {
+                field: 'furniture',
+                type: RoomFilterType.CHECKBOX,
+                value: null
+            }, {
+                field: 'type',
+                type: RoomFilterType.CHECKBOX,
+                value: null
+            }, {
+                field: 'seats',
+                type: RoomFilterType.RANGE,
+                value: null
+            }, {
+                field: 'lat',
+                type: RoomFilterType.RANGE,
+                value: null
+            }, {
+                field: 'lon',
+                type: RoomFilterType.RANGE,
+                value: null
+            }],
             minMax: {},
             overlays: []
         };
@@ -158,7 +183,7 @@ export class RoomExplorer extends React.Component<RoomExplorerProps, RoomExplore
         this.performSearch();
     }
 
-    buildQuery = (filters: FilterOptionProps[]) => {
+    buildQuery = (filters: any[]) => {
         let query: {} = filters.reduce((query: {[key:string]:any}, filter: FilterProps) => {
             if (filter.filters && filter.filters.length !== 0) {
                 return this.buildQuery(filter.filters);
@@ -250,15 +275,41 @@ export class RoomExplorer extends React.Component<RoomExplorerProps, RoomExplore
         }
     }
 
+    onRangeChange = (field: string, component: any, value: any) => {
+        let filterIndex = this.state.filters.findIndex(filter => filter.field === field);
+        let state = this.state;
+        state.filters[filterIndex].value = value;
+        this.setState(state);
+    }
+
+    onSelect = (field: string, e: any) => {
+        let state = this.state;
+        let index = state.filters.findIndex(filter => filter.field === field);
+        if (!state.filters[index].value) {
+            state.filters[index].value = []
+        }
+
+        let val = e.target.value;
+        let valIndex = state.filters[index].value.indexOf(val);
+        if (valIndex === -1) {
+            state.filters[index].value.push(val);
+        } else {
+            state.filters[index].value.splice(valIndex,1);
+        }
+        this.setState(state);
+    }
+
     render () {
         return (
-            <div className='room-explorer'>
+            <div className='room-explorer container-fluid'>
                 <SidebarLayout>
-                    <RoomExplorerFilter />
+                    <RoomExplorerFilter filters={this.state.filters} onRangeChange={this.onRangeChange} onSelect={this.onSelect} />
                 </SidebarLayout>
-                <SidebarLayout>
-                    <RoomExplorerResult />
-                </SidebarLayout>
+                <div className='row'>
+                    <div className='col-md-12 col-sm-12'>
+                    <button className='query-btn'><strong>Try some queries!</strong></button>
+                    </div>
+                </div>
                 <Map markers={this.state.markers} handleClick={this.handleMarkerClick} handleDrawOverlay={this.handleDrawOverlay} />
             </div>
         );

@@ -1,44 +1,47 @@
 import * as React from 'react';
 
-interface RoomExplorerFilterProps {
+import { Sidebar } from './Sidebar';
+import { RoomFilter, RoomFilterProps } from './Filter';
+import { RangeInputProps, RangeInput } from './RangeInput';
+
+export enum RoomFilterType {
+    CHECKBOX,
+    TEXT,
+    RANGE
 }
+
+interface RoomExplorerFilterProps {
+    filters: Array<RoomFilterProps|RangeInputProps>;
+    onRangeChange: any;
+    onSelect: any;
+}
+
 interface RoomExplorerFilterState {
-    open: boolean;
 }
 
 export class RoomExplorerFilter extends React.Component<RoomExplorerFilterProps, RoomExplorerFilterState> {
-    constructor (props: any) {
-        super(props);
-        this.state = {
-            open: true
-        }
-    }
-
-    onOpen = () => {
-        this.setState({ open: !this.state.open });
-    }
-
-    renderCollapsed = () => {
-        return (
-            <div className='column-index'>
-                <button className='fold-btn' onClick={this.onOpen}>{this.state.open ? '<<' : '>>'}</button>
-            </div>
-        );
-    }
-
     renderExpanded = () => {
         return (
-            <div className='filter-container'>
-                <button onClick={this.onOpen}>{this.state.open ? '<<' : '>>'}</button>
+            <div>
+                {this.props.filters.map(filter => {
+                    switch (filter.type) {
+                        case RoomFilterType.CHECKBOX:
+                            return <RoomFilter {...filter} onSelect={this.props.onSelect} />
+                        case RoomFilterType.RANGE:
+                            return <RangeInput {...filter} onRangeChange={this.props.onRangeChange} />
+                        default:
+                            return <div />
+                    }
+                })}
             </div>
         );
     }
 
     render () {
         return (
-            <div className='sidebar-left'>
-                {this.state.open ? this.renderExpanded() : this.renderCollapsed()}
-            </div>
+            <Sidebar orientation='left'>
+                { this.renderExpanded() }
+            </Sidebar>
         );
     }
 }

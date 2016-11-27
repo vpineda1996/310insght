@@ -17,6 +17,7 @@ export enum Datatype {
 };
 
 export const COURSES_ID = 'courses';
+export const ROOMS_ID = 'rooms';
 
 export interface RangeSelectorData {
     col: ColumnType;
@@ -90,57 +91,57 @@ export const ROOMS_COLUMNS: ColumnType[] = [{
     name: 'fullname',
     type: Datatype.STRING,
     locale: "Full Name",
-    dataset: COURSES_ID + "_"
+    dataset: ROOMS_ID + "_"
 }, {
     name: 'shortname',
     type: Datatype.STRING,
     locale: "Short Name",
-    dataset: COURSES_ID + "_"
+    dataset: ROOMS_ID + "_"
 }, {
     name: 'number',
     type: Datatype.STRING,
     locale: "Number",
-    dataset: COURSES_ID + "_"
+    dataset: ROOMS_ID + "_"
 }, {
     name: 'name',
     type: Datatype.STRING,
     locale: "Name",
-    dataset: COURSES_ID + "_"
+    dataset: ROOMS_ID + "_"
 }, {
     name: 'address',
     type: Datatype.STRING,
     locale: "Address",
-    dataset: COURSES_ID + "_"
+    dataset: ROOMS_ID + "_"
 }, {
     name: 'lat',
     type: Datatype.NUMBER,
     locale: "Latitude",
-    dataset: COURSES_ID + "_"
+    dataset: ROOMS_ID + "_"
 }, {
     name: 'lon',
     type: Datatype.NUMBER,
     locale: "Longitude",
-    dataset: COURSES_ID + "_"
+    dataset: ROOMS_ID + "_"
 }, {
     name: 'seats',
     type: Datatype.NUMBER,
     locale: "Seats",
-    dataset: COURSES_ID + "_"
+    dataset: ROOMS_ID + "_"
 }, {
     name: 'type',
     type: Datatype.STRING,
     locale: "Type",
-    dataset: COURSES_ID + "_"
+    dataset: ROOMS_ID + "_"
 }, {
     name: 'furniture',
     type: Datatype.STRING,
     locale: "Furniture",
-    dataset: COURSES_ID + "_"
+    dataset: ROOMS_ID + "_"
 }, {
     name: 'href',
     type: Datatype.STRING,
     locale: "Link",
-    dataset: COURSES_ID + "_"
+    dataset: ROOMS_ID + "_"
 }];
 
 export enum COLUMNS {

@@ -1,66 +1,91 @@
 .sidebar-layout {
-  width: 20%;
-  height: 90vh;
-  float: left;
-  border: 2px groove red;
-  border-radius: 25px;
-  background-color: rgba(0,0,240,0.2);
-  padding: 20px; 
-  z-index: 1;
 }
 
-.sidebar {
-  width: auto;
+html, body, #example, [data-reactroot] {
+  height: 100% !important;
+}
+
+.room-explorer {
+
   height: 100%;
-  overflow: scroll;
+  .query-btn {
+    width: 80%;
+    margin-left: 10%;
+    margin-right: 10%;
+    background-color: rgba(20,20,240,0.5);
+  }
+  .sidebar {
 
-  &-left {
-    float: left;
+    background: #f9f9f9;
+    display: block;
+    max-height: none;
+    height: 200px;
+    width: 100%;
+    overflow: auto;
 
-    .fold-btn {
-       float: right;
+    &-left {
+
+      max-height: 30%;
+      [aria-expanded='false'] {
+        .sidebar-hidden-toggle {
+          display: block;
+          position: fixed;
+          left: 0;
+          float: left;
+        }
+
+        left: 0;
+      }
+      [aria-expanded='true'] {
+        .sidebar-hidden-toggle {
+          display: none;
+        }
+        left: 30;
+      }
+
+      .sidebar-toggle , [data-toggle='collapse'] {
+        display: block;
+        float: right;
+        margin-right: 15px;
+        z-index: 101;
+      }
     }
-  }
 
-  &-right {
-    float: right;
+    &-right {
+      right: 0;
 
-    .fold-btn {
-       float: left;
+      .sidebar-toggle , [data-toggle='collapse'] {
+        display: block;
+        float: left;
+        margin-left: 15px;
+        z-index: 101;
+      }
     }
-  }
 
-  .column-index {
-    width: 50px;
-    background-color: grey;
-  }
+    .filter-checkbox-container {
+      overflow: scroll;
+      padding-bottom: 25px;
+    }
 
-  .filter-container {
+    .column-index {
+      width: 50px;
+      background-color: grey;
+    }
 
-  }
+    .filter-container {
+      position: relative;
 
+      .submit-query {
+        position: absolute;
+        bottom: 0;
+        float: bottom;
+      }
+    }
 
-  &-border {
-    border: 1px solid rgba(0, 0, 0, .2);
+    &-border {
+      border: 1px solid rgba(0, 0, 0, .2);
 
-  }
-}
-
-.range-slider {
-
-  &-field {
-    margin-top: 10px;
-    margin-bottom: 10px;
-  }
-}
-
-.filter {
-  &-connector {
-    padding-top: 0;
-    padding-bottom: 0;
-    margin-top: 5px;
-    margin-bottom: 5px;
-    text-align: center;
+    }
 
   }
 }
