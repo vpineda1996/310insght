@@ -77,7 +77,11 @@ export class RangeInput extends React.Component<RangeInputProps, RangeInputState
                 min: data[0][field],
                 max: data[data.length - 1][field]
             }
-            this.setState({ range: range });
+            let oversizedRange = {
+                min: range.min - (range.max - range.min) / 10,
+                max: range.max + (range.max - range.min) / 10
+            }
+            this.setState({ range: oversizedRange });
             this.onRangeChange(undefined, range);
         });
     }
