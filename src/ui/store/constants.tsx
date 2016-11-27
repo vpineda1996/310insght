@@ -77,6 +77,11 @@ export const COURSES_COLUMNS: ColumnType[] = [{
     type: Datatype.NUMBER,
     locale: "Year",
     dataset: COURSES_ID + "_"
+}, {
+    name: 'size',
+    type: Datatype.NUMBER,
+    locale: "Course Size",
+    dataset: COURSES_ID + "_"
 }];
 
 export const COURSES_NUMERIC_COLUMNS = COURSES_COLUMNS.filter(col => col.type === Datatype.NUMBER);
