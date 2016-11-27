@@ -69,8 +69,16 @@ html, body, #example, [data-reactroot] {
       overflow: scroll;
       padding-bottom: 25px;
 
+      .room-subfilter {
+        background-color: #c6ecd7;
+        border: none;
+        padding: 0;
+        text-align: center;
+        width: 100%;
+      }
+
       .rip {
-        text-decoration: line-through;
+        opacity: 0.5;
       }
     }
 

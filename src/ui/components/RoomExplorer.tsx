@@ -235,17 +235,18 @@ export class RoomExplorer extends React.Component<RoomExplorerProps, RoomExplore
         this.setState(state);
     }
 
-    onSelect = (field: string, e: any) => {
+    onSelect = (field: string, value: string) => {
         let state = this.state;
         let index = state.filters.findIndex(filter => filter.field === field);
-        if (!state.filters[index].value) {
-            state.filters[index].value = []
+        if (!state.filters[index].value && !value) {
+            state.filters[index].value = [];
+            this.setState(state);
+            return;
         }
 
-        let val = e.target.value;
-        let valIndex = state.filters[index].value.indexOf(val);
+        let valIndex = state.filters[index].value.indexOf(value);
         if (valIndex === -1) {
-            state.filters[index].value.push(val);
+            state.filters[index].value.push(value);
         } else {
             state.filters[index].value.splice(valIndex,1);
         }

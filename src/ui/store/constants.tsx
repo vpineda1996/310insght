@@ -100,7 +100,7 @@ export const ROOMS_COLUMNS: ColumnType[] = [{
 }, {
     name: 'number',
     type: Datatype.STRING,
-    locale: "Number",
+    locale: "Room Number",
     dataset: ROOMS_ID + "_"
 }, {
     name: 'name',
