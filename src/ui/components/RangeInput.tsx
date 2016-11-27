@@ -68,18 +68,22 @@ export class RangeInput extends React.Component<RangeInputProps, RangeInputState
     fetchRange = (column: ColumnType) => {
         let field = column.dataset + column.name;
         return Store.fetch('room-range', {
-            'GET': [field, 'doCount'],
+            'GET': [field],
             'GROUP': [field],
-            'APPLY': [ {'doCount': { 'COUNT': field } } ],
+            'APPLY': [],
             'ORDER': { 'dir': 'UP', 'keys': [field] }
         }).then(data => {
             let range = {
                 min: data[0][field],
                 max: data[data.length - 1][field]
             }
+            let margin = range.max - range.min;
+            if (margin % 1 !== 0) {
+                margin = margin / 10;
+            }
             let oversizedRange = {
-                min: range.min - (range.max - range.min) / 10,
-                max: range.max + (range.max - range.min) / 10
+                min: range.min - margin,
+                max: range.max + margin
             }
             this.setState({ range: oversizedRange });
             this.onRangeChange(undefined, range);

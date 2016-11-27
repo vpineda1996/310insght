@@ -24,7 +24,6 @@ const CHECKBOX_LIST: {[column: string]: string[]} = {
     'type': []
 }
 
-
 export class RoomFilter extends React.Component<RoomFilterProps, RoomFilterState> {
 
     constructor (props: RoomFilterProps) {
@@ -66,9 +65,9 @@ export class RoomFilter extends React.Component<RoomFilterProps, RoomFilterState
     fetchOptions = (column: ColumnType) => {
         let field = column.dataset + column.name;
         return Store.fetch('room-options', {
-            'GET': [field, 'doCount'],
+            'GET': [field],
             'GROUP': [field],
-            'APPLY': [ {'doCount': { 'COUNT': field } } ]
+            'APPLY': []
         }).then(data => {
             let options = data.filter(val => val[field]).map(val => val[field]);
             let state = this.state;
