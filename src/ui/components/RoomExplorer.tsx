@@ -2,7 +2,7 @@ import * as React from 'react'
 
 import { RoomExplorerFilter, RoomFilterType } from './RoomExplorerFilter';
 import { Range } from './RangeInput';
-import { RoomFilterProps } from './Filter';
+import { RoomFilterProps, SubFilterProps } from './Filter';
 import { Map, MarkerProps } from './Map';
 import { Store, Data } from '../store/store';
 import { ROOMS_COLUMNS } from '../store/constants';
@@ -14,6 +14,7 @@ interface RoomExplorerProps {
 
 interface RoomExplorerState {
     filters: RoomFilterProps[],
+    subfilters: {[field: string]: SubFilterProps },
     markers: MarkerProps[]
     regions: any[]
     minMax: {[field:string]: Range}
@@ -108,6 +109,7 @@ export class RoomExplorer extends React.Component<RoomExplorerProps, RoomExplore
                 type: RoomFilterType.RANGE,
                 value: null
             }],
+            subfilters: {},
             minMax: {},
             overlays: []
         };
@@ -205,11 +207,58 @@ export class RoomExplorer extends React.Component<RoomExplorerProps, RoomExplore
 
         switch (filter.type) {
             case RoomFilterType.CHECKBOX:
+                let subfilter = this.state.subfilters[filter.field];
+
                 if (!filter.value || filter.value.length === 0 || filter.all) {
+                    // return all
                     return null;
-                } else {
+                } else if (!subfilter || !Object.keys(subfilter).length) {
+                    // find all the selected ones
                     return { 'OR': filter.value.map((val: string) => { return { 'IS': { [column]: val } } } ) };
                 }
+
+                // find all selected sub options
+                let conversionMap = ['number'].
+                    map((dep: string) => ROOMS_COLUMNS.find(rc => rc.name === dep)).
+                    reduce((map: {[field: string]: string}, rc: any) => {
+                        map[rc.name] = rc.dataset + rc.name;
+                        return map;
+                }, {});
+
+                /*
+                'OR': [
+                    { parent: opt0 && 'AND': [
+                        { suboption0: { OR: [suboptions] } }
+                        { suboption1: { OR: [suboptions] } }
+                    ] }
+                ]
+                */
+
+                let subquery: any = {
+                    'OR': filter.value.map((val: string) => {
+                        return {
+                            'AND': [
+                                { 'IS': { [column]: val } },
+                                { 'OR': Object.keys(subfilter[val]).map(opt => {
+                                    return {
+                                        'AND': Object.keys(subfilter[val][opt]).map(dep => {
+                                            if (subfilter[val][opt][dep]) {
+                                                return { 'IS': { [conversionMap[dep]]: opt } };
+                                            } else {
+                                                return null;
+                                            }
+                                        }).filter(dep => !!dep)
+                                    }
+                                }).filter(q => q.AND && q.AND.length)
+                            }]
+                        }
+                    }).filter((q: any) => q.AND && q.AND.length && q.AND[1].OR && q.AND[1].OR.length)
+                }
+
+                if (!subquery.OR.length) {
+                    return null;
+                }
+                return subquery;
             case RoomFilterType.RANGE:
                 return {
                     'OR': [{
@@ -235,12 +284,17 @@ export class RoomExplorer extends React.Component<RoomExplorerProps, RoomExplore
         this.setState(state);
     }
 
-    onSelect = (field: string, value: string) => {
+    onSelect = (field: string, value: string, values?: any) => {
         let state = this.state;
         let index = state.filters.findIndex(filter => filter.field === field);
         if (!state.filters[index].value && !value) {
             state.filters[index].value = [];
             this.setState(state);
+            return;
+        }
+
+        if (value.split('-----').length > 1) {
+            this.onSelectSuboptions(field, value.split('-----'), values)
             return;
         }
 
@@ -256,6 +310,23 @@ export class RoomExplorer extends React.Component<RoomExplorerProps, RoomExplore
         this.setState(state);
     }
 
+    onSelectSuboptions = (field: string, value: string[], values?: {[parent: string]: {[dep: string]: boolean}}) => {
+        let state = this.state;
+        if (!state.subfilters[field]) {
+            state.subfilters[field] = {};
+        }
+
+        if (!state.subfilters[field][value[0]] && values) {
+            state.subfilters[field][value[0]] = values;
+            this.setState(state);
+            return;
+        }
+
+        state.subfilters[field][value[0]][value[1]][value[2]] = !state.subfilters[field][value[0]][value[1]][value[2]];
+        this.setState(state);
+
+    }
+
     onSelectAll = (field: string, selected: boolean) => {
         let state = this.state;
         let index = state.filters.findIndex(filter => filter.field === field);
@@ -267,10 +338,10 @@ export class RoomExplorer extends React.Component<RoomExplorerProps, RoomExplore
     render () {
         return (
             <div className='room-explorer container-fluid'>
-                <RoomExplorerFilter filters={this.state.filters} onRangeChange={this.onRangeChange} onSelect={this.onSelect} onSelectAll={this.onSelectAll} />
+                <RoomExplorerFilter filters={this.state.filters} subfilters={this.state.subfilters} onRangeChange={this.onRangeChange} onSelect={this.onSelect} onSelectAll={this.onSelectAll} />
                 <div className='row'>
                     <div className='col-md-12 col-sm-12'>
-                    <button className='query-btn' onClick={this.performSearch}><strong>Find Me Some Rooms!</strong></button>
+                    <button className='query-btn divider-sm' onClick={this.performSearch}><strong>Find Me Some Rooms!</strong></button>
                     </div>
                 </div>
                 <Map markers={this.state.markers} handleClick={this.handleMarkerClick} handleDrawOverlay={this.handleDrawOverlay} />

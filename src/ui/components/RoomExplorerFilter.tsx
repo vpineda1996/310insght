@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { RoomFilter, RoomFilterProps } from './Filter';
+import { RoomFilter, RoomFilterProps, SubFilterProps } from './Filter';
 import { RangeInputProps, RangeInput } from './RangeInput';
 
 require('../styles/InputRange.scss');
@@ -14,6 +14,7 @@ export enum RoomFilterType {
 
 interface RoomExplorerFilterProps {
     filters: Array<RoomFilterProps|RangeInputProps>;
+    subfilters: { [field: string]: SubFilterProps };
     onRangeChange: any;
     onSelect: any;
     onSelectAll: any;
@@ -28,7 +29,7 @@ export class RoomExplorerFilter extends React.Component<RoomExplorerFilterProps,
             <div className='sidebar sidebar-left sidebar-show-lg'>
                 {this.props.filters.filter(filter => filter.type === RoomFilterType.CHECKBOX).map(filter => {
                     return <div className='col-md-3' key={'room-filter-'+filter.field}>
-                        <RoomFilter {...filter} onSelect={this.props.onSelect} onSelectAll={this.props.onSelectAll} />
+                        <RoomFilter {...filter} subfilters={this.props.subfilters[filter.field]} onSelect={this.props.onSelect} onSelectAll={this.props.onSelectAll} />
                         </div>
                 })}
                 <div className='range-input col-md-3'>

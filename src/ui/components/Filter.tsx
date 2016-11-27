@@ -3,11 +3,20 @@ import * as React from 'react';
 import { ColumnType, ROOMS_COLUMNS } from '../store/constants';
 import { Store } from '../store/store';
 
+export interface SubFilterProps {
+    [parent: string]: {
+        [opt: string]: {
+            [dependency: string]: boolean
+        }
+    };
+}
+
 export interface RoomFilterProps {
     all?: boolean;
     field: string;
     onSelect?: any;
     onSelectAll?: any;
+    subfilters?: SubFilterProps;
     type: any;
     value: any;
     [id: string]: any;
@@ -39,7 +48,10 @@ export class RoomFilter extends React.Component<RoomFilterProps, RoomFilterState
     }
 
     renderCheckBox = () => {
-        return this.state.checkboxOpions.filter(opt => !this.props.value.includes(opt)).map((opt: any) => (
+        return this.state.checkboxOpions.filter(opt =>
+            !this.props.subfilters ||
+                !this.props.subfilters[opt] ||
+                !this.props.value.includes(opt)).map((opt: any) => (
             <span key={opt}><input type='checkbox' value={opt} id={'checkbox-'+opt} onChange={this.onSelect} />
                 <small htmlFor={'checkbox-'+opt} className={this.props.all ? 'rip':''}>{opt}</small><br/>
             </span>
@@ -48,18 +60,27 @@ export class RoomFilter extends React.Component<RoomFilterProps, RoomFilterState
 
     renderSubCheckBox = () => {
         let width = Math.round(12 / (1 + CHECKBOX_LIST[this.props.field].length));
-        console.info(this.props.field,this.props.value,this.state.dependencies);
 
         return CHECKBOX_LIST[this.props.field].map(dep => (
             <div key={'checkbox-subfilter-dependency-'+dep} className={'filter-checkbox-container col-md-'+width}>
                 <strong className='checkbox-subfilter-header divider-sm'>{ROOMS_COLUMNS.find(rc => rc.name === dep).locale}</strong>
                 { this.props.value.map((key: string) => (
                     <div key={'checkbox-subfilter-'+this.props.field+'-'+key}>
-                        <button className='room-subfilter' onClick={this.onUnselect} value={key}>{key}</button>
+                        <button
+                        className='room-subfilter'
+                        onClick={this.onUnselect}
+                        value={key}>{key}</button>
                         {
                             this.state.dependencies[key] && this.state.dependencies[key][dep].map((opt: string) => (
                             <div key={'checkbox-subfilter-'+this.props.field+'-'+key+'-'+opt}>
-                                <input type='checkbox' value={[key,opt]} id={'checkbox-subfilter-'+this.props.field+'-'+key+'-'+opt+'-box'} onChange={this.onSelectSuboption}/>
+                                <input
+                                    type='checkbox'
+                                    value={key+'-----'+opt+'-----'+dep}
+                                    id={'checkbox-subfilter-'+this.props.field+'-'+key+'-'+opt+'-box'}
+                                    onChange={this.onSelect}
+                                    checked={this.props.subfilters &&
+                                        this.props.subfilters[key] &&
+                                        this.props.subfilters[key][opt][dep]} />
                                 <label htmlFor={'checkbox-subfilter-'+this.props.field+'-'+key+'-'+opt+'-box'}>{opt}</label>
                             </div>))
                         }
@@ -86,18 +107,13 @@ export class RoomFilter extends React.Component<RoomFilterProps, RoomFilterState
     onSelect = (e: any) => {
         this.props.onSelectAll(this.props.field, false);
         this.props.onSelect(this.props.field, e.target.value);
-        if (this.state.dependencies && !this.state.dependencies[e.target.value]) {
+        if (this.state.dependencies && e.target.value.split('-----').length === 1 && !this.state.dependencies[e.target.value]) {
             this.fetchSubOptions(e.target.value);
         }
     }
 
     onUnselect = (e: any) => {
-        console.info(e.target,e.target.value);
         this.props.onSelect(this.props.field, e.target.value);
-    }
-
-    onSelectSuboption = (e: any) => {
-         console.info('onSelectSuboption',e.target,e.target.value);
     }
 
     fetchOptions = (column: ColumnType) => {
@@ -131,7 +147,8 @@ export class RoomFilter extends React.Component<RoomFilterProps, RoomFilterState
         }).then(data => {
             let state = this.state;
             state.dependencies[source] = {}
-            let conversionMap: {[i:string]: string} = {};
+            let conversionMap: {[opt:string]: string} = {};
+            let initialValues: { [opt: string]: {[dep:string]: boolean}} = {};
             cols.forEach(col => {
                 conversionMap[col] = col.split('_')[1];
                 state.dependencies[source][conversionMap[col]] = [];
@@ -140,16 +157,19 @@ export class RoomFilter extends React.Component<RoomFilterProps, RoomFilterState
             data.forEach(val => {
                 Object.keys(val).forEach(key => {
                     state.dependencies[source][conversionMap[key]].push(val[key]);
+                    if (!initialValues[val[key]]) { initialValues[val[key]] = {} }
+                    initialValues[val[key]][conversionMap[key]] = true;
                 });
             });
             this.setState(state);
+
+            this.props.onSelect(this.props.field, source+'-----new', initialValues);
         });
     }
 
     render () {
         let column = ROOMS_COLUMNS.find(rc => rc.name === this.props.field);
         let width = Math.round(12 / (1 + CHECKBOX_LIST[this.props.field].length));
-        console.info(this.props.field, this.state.dependencies);
 
         return (
             <div>
