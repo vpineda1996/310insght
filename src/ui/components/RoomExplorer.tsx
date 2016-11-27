@@ -149,7 +149,8 @@ export class RoomExplorer extends React.Component<RoomExplorerProps, RoomExplore
 
     addMapOverlayFilter = (overlay: any) => {
         switch (overlay.type) {
-            case google.maps.drawing.OverlayType.RECTANGLE, google.maps.drawing.OverlayType.CIRCLE:
+            case google.maps.drawing.OverlayType.RECTANGLE:
+            case google.maps.drawing.OverlayType.CIRCLE:
                 let state = this.state;
                 state.overlays.push(overlay);
                 this.setState(state);
@@ -162,10 +163,7 @@ export class RoomExplorer extends React.Component<RoomExplorerProps, RoomExplore
     }
 
     handleDrawOverlay = (overlay: any) => {
-        let query: any = boundQuery(overlay);
         this.addMapOverlayFilter(overlay);
-        query.GET = ["rooms_shortname", "rooms_number"];
-        query.AS = "TABLE";
         this.performSearch();
     }
 
@@ -178,9 +176,9 @@ export class RoomExplorer extends React.Component<RoomExplorerProps, RoomExplore
             _query = $.extend({}, ALL_ROOM_QUERY, { "WHERE": query })
         } else {
             if (!!Object.keys(query)) {
-                _query = $.extend({}, ALL_ROOM_QUERY, { "WHERE": { "AND": [ { "OR": this.state.overlays.map(o => this.buildMapQuery(o)) }, query ] } });
+                _query = $.extend({}, ALL_ROOM_QUERY, { "WHERE": { "AND": [ { "OR": this.state.overlays.map(boundQuery) }, query ] } });
             } else {
-                _query = $.extend({}, ALL_ROOM_QUERY, { "WHERE": { "OR": this.state.overlays.map(o => this.buildMapQuery(o)) } });
+                _query = $.extend({}, ALL_ROOM_QUERY, { "WHERE": { "OR": this.state.overlays.map(boundQuery) } });
             }
         }
         this.fetchMarkerData(_query);
@@ -198,17 +196,6 @@ export class RoomExplorer extends React.Component<RoomExplorerProps, RoomExplore
             return query;
         }, {});
         return query;
-    }
-
-    buildMapQuery(overlay: any): {} {
-        switch (overlay.type) {
-            case google.maps.drawing.OverlayType.CIRCLE:
-                return CIRCULAR_QUERY(overlay.overlay);
-            case google.maps.drawing.OverlayType.RECTANGLE:
-                return RECTANGULAR_QUERY(overlay.overlay.bounds);
-            default:
-                return {}
-        }
     }
 
     buildFilterQuery(filter: RoomFilterProps): {} {
