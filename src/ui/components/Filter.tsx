@@ -38,7 +38,7 @@ export class RoomFilter extends React.Component<RoomFilterProps, RoomFilterState
     renderCheckBox = () => {
         return this.state.checkboxOpions.map((opt: any) => (
             <span key={opt}><input type='checkbox' value={opt} id={'checkbox-'+opt} onChange={this.onSelect} />
-                <small htmlFor={'checkbox-'+opt} style={this.props.all ? {textDecoration: 'line-through'}:{}}>{opt}</small><br/>
+                <small htmlFor={'checkbox-'+opt} style={this.props.all ? {opacity:0.5}:{}}>{opt}</small><br/>
             </span>
         ));
     }
@@ -70,8 +70,7 @@ export class RoomFilter extends React.Component<RoomFilterProps, RoomFilterState
             'GROUP': [field],
             'APPLY': [ {'doCount': { 'COUNT': field } } ]
         }).then(data => {
-            console.info(data);
-            let options = data.filter(val => !!val).map(val => val[column.dataset + column.name]);
+            let options = data.filter(val => val[field]).map(val => val[field]);
             let state = this.state;
             state.checkboxOpions = options;
             this.setState(state);

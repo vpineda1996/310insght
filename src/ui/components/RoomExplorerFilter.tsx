@@ -1,8 +1,10 @@
 import * as React from 'react';
 
-import { Sidebar } from './Sidebar';
 import { RoomFilter, RoomFilterProps } from './Filter';
 import { RangeInputProps, RangeInput } from './RangeInput';
+
+require('../styles/InputRange.scss');
+require('../styles/sidebar.scss');
 
 export enum RoomFilterType {
     CHECKBOX,

@@ -62,12 +62,10 @@ export class RangeInput extends React.Component<RangeInputProps, RangeInputState
             'APPLY': [ {'doCount': { 'COUNT': field } } ],
             'ORDER': { 'dir': 'UP', 'keys': [field] }
         }).then(data => {
-            console.info(column, data);
             let range = {
                 min: data[0][field],
                 max: data[data.length - 1][field]
             }
-            console.info(range);
             this.setState({ range: range });
             this.onRangeChange(undefined, range);
         });

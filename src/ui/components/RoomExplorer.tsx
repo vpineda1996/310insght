@@ -1,8 +1,5 @@
 import * as React from 'react'
 
-import { SidebarLayout } from '../layout/SidebarLayout'
-import { RoomExplorerSidebar } from './RoomExplorerSidebar'
-import { RoomFilter, FilterProps, FilterOptionProps, DataType, Filters } from './RoomFilter';
 import { RoomExplorerFilter, RoomFilterType } from './RoomExplorerFilter';
 import { Range } from './RangeInput';
 import { RoomFilterProps } from './Filter';
@@ -25,18 +22,6 @@ interface RoomExplorerState {
 
 const ALL_ROOM_QUERY = {
     "GET": ["rooms_shortname", "rooms_lat", "rooms_lon", "rooms_number", "rooms_href"]
-}
-const FILTER_OPTIONS: Filters = {
-    'seats': DataType.NUMBER,
-    'furniture': DataType.STRING,
-    'type': DataType.STRING,
-    'lat': DataType.NUMBER,
-    'lon': DataType.NUMBER
-};
-
-const PRECEDENCE: {[operator:string]: number} = {
-    'AND': 0,
-    'OR': 1
 }
 
 const boundQuery = (overlay: any) => {
@@ -88,7 +73,6 @@ const createMarker = (room: any) => {
         infoContent: [room]
     }
 }
-
 
 export class RoomExplorer extends React.Component<RoomExplorerProps, RoomExplorerState> {
     constructor (props: any) {
@@ -205,6 +189,7 @@ export class RoomExplorer extends React.Component<RoomExplorerProps, RoomExplore
     buildQuery = (filters: RoomFilterProps[]) => {
         let query: any = filters.reduce((query: any, filter: RoomFilterProps) => {
             if (!query.AND) query.AND = [];
+
             let partialQuery = this.buildFilterQuery(filter);
             if (!!partialQuery) {
                 query.AND.push(partialQuery);
@@ -233,7 +218,7 @@ export class RoomExplorer extends React.Component<RoomExplorerProps, RoomExplore
 
         switch (filter.type) {
             case RoomFilterType.CHECKBOX:
-                if (!filter.value || filter.value.length === 0) {
+                if (!filter.value || filter.value.length === 0 || filter.all) {
                     return null;
                 } else {
                     return { 'OR': filter.value.map((val: string) => { return { 'IS': { [column]: val } } } ) };
@@ -284,25 +269,20 @@ export class RoomExplorer extends React.Component<RoomExplorerProps, RoomExplore
     }
 
     onSelectAll = (field: string, selected: boolean) => {
-        console.info(field,selected);
         let state = this.state;
         let index = state.filters.findIndex(filter => filter.field === field);
 
-        console.info(this.state.filters[index].value)
         state.filters[index].all = selected;
         this.setState(state);
-        console.info(this.state.filters[index].value)
     }
 
     render () {
         return (
             <div className='room-explorer container-fluid'>
-                <SidebarLayout>
-                    <RoomExplorerFilter filters={this.state.filters} onRangeChange={this.onRangeChange} onSelect={this.onSelect} onSelectAll={this.onSelectAll} />
-                </SidebarLayout>
+                <RoomExplorerFilter filters={this.state.filters} onRangeChange={this.onRangeChange} onSelect={this.onSelect} onSelectAll={this.onSelectAll} />
                 <div className='row'>
                     <div className='col-md-12 col-sm-12'>
-                    <button className='query-btn' onClick={this.performSearch}><strong>Try some queries!</strong></button>
+                    <button className='query-btn' onClick={this.performSearch}><strong>Find Me Some Rooms!</strong></button>
                     </div>
                 </div>
                 <Map markers={this.state.markers} handleClick={this.handleMarkerClick} handleDrawOverlay={this.handleDrawOverlay} />
