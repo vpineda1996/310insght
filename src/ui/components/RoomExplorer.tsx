@@ -6,8 +6,9 @@ import { RoomFilter, FilterProps, FilterOptionProps, DataType, Filters } from '.
 import { RoomExplorerFilter, RoomFilterType } from './RoomExplorerFilter';
 import { Range } from './RangeInput';
 import { RoomFilterProps } from './Filter';
-import { Map, MarkerProps } from './Map'
-import { Store, Data } from '../store/store'
+import { Map, MarkerProps } from './Map';
+import { Store, Data } from '../store/store';
+import { ROOMS_COLUMNS } from '../store/constants';
 
 interface RoomExplorerProps {
     dataId: string;
@@ -18,7 +19,6 @@ interface RoomExplorerState {
     filters: RoomFilterProps[],
     markers: MarkerProps[]
     regions: any[]
-    options: Filters
     minMax: {[field:string]: Range}
     overlays: any[]
 }
@@ -96,16 +96,18 @@ export class RoomExplorer extends React.Component<RoomExplorerProps, RoomExplore
         this.state = {
             markers: [],
             regions: [],
-            options: FILTER_OPTIONS,
             filters: [{
-              field: 'shortname',
-              type: RoomFilterType.CHECKBOX,
-              value: null
+                all: true,
+                field: 'shortname',
+                type: RoomFilterType.CHECKBOX,
+                value: null
             }, {
+                all: true,
                 field: 'furniture',
                 type: RoomFilterType.CHECKBOX,
                 value: null
             }, {
+                all: true,
                 field: 'type',
                 type: RoomFilterType.CHECKBOX,
                 value: null
@@ -183,40 +185,6 @@ export class RoomExplorer extends React.Component<RoomExplorerProps, RoomExplore
         this.performSearch();
     }
 
-    buildQuery = (filters: any[]) => {
-        let query: {} = filters.reduce((query: {[key:string]:any}, filter: FilterProps) => {
-            if (filter.filters && filter.filters.length !== 0) {
-                return this.buildQuery(filter.filters);
-            }
-
-            if (Object.keys(query).length === 0) {
-                return this.buildFilterQuery(filter);
-            }
-
-            let key = Object.keys(query)[0];
-            let precedence1 = PRECEDENCE[filter.connector];
-            let precedence2 = PRECEDENCE[key];
-            if (typeof precedence1 === 'undefined') precedence1 = 2;
-            if (typeof precedence2 === 'undefined') precedence2 = 2;
-
-            if (precedence1 === precedence2) {
-                // append new filter
-                if (!query[key]) query[key] = [];
-                query[key].push(this.buildFilterQuery(filter));
-            } else {
-                query = {
-                    [filter.connector]: [
-                        query,
-                        this.buildFilterQuery(filter)
-                    ]
-                }
-
-            }
-            return query;
-        }, {});
-        return query;
-    }
-
     performSearch = () => {
         let query = this.buildQuery(this.state.filters);
 
@@ -234,6 +202,19 @@ export class RoomExplorer extends React.Component<RoomExplorerProps, RoomExplore
         this.fetchMarkerData(_query);
     }
 
+    buildQuery = (filters: RoomFilterProps[]) => {
+        let query: any = filters.reduce((query: any, filter: RoomFilterProps) => {
+            if (!query.AND) query.AND = [];
+            let partialQuery = this.buildFilterQuery(filter);
+            if (!!partialQuery) {
+                query.AND.push(partialQuery);
+            }
+
+            return query;
+        }, {});
+        return query;
+    }
+
     buildMapQuery(overlay: any): {} {
         switch (overlay.type) {
             case google.maps.drawing.OverlayType.CIRCLE:
@@ -245,29 +226,29 @@ export class RoomExplorer extends React.Component<RoomExplorerProps, RoomExplore
         }
     }
 
-    buildFilterQuery(filter: FilterProps): {} {
-        let field = filter.field;
-        let column = 'rooms_' + field;
+    buildFilterQuery(filter: RoomFilterProps): {} {
 
-        switch (this.state.options[field]) {
-            case DataType.STRING:
-                switch (filter.operatorValues[field]) {
-                    case 'contains':
-                        return { 'IS': { [column]: '*' + filter.textValues[field] + '*' } };
-                    case 'equals':
-                        return { 'IS': { [column]: filter.textValues[field] } };
+        let f = ROOMS_COLUMNS.find(rc => rc.name === filter.field);
+        let column = f.dataset + f.name;
+
+        switch (filter.type) {
+            case RoomFilterType.CHECKBOX:
+                if (!filter.value || filter.value.length === 0) {
+                    return null;
+                } else {
+                    return { 'OR': filter.value.map((val: string) => { return { 'IS': { [column]: val } } } ) };
                 }
-            case DataType.NUMBER:
+            case RoomFilterType.RANGE:
                 return {
                     'OR': [{
                         'AND': [
-                            { 'GT': { [column]: filter.rangeValues[field].min } },
-                            { 'LT': { [column]: filter.rangeValues[field].max } }
+                            { 'GT': { [column]: filter.value.min } },
+                            { 'LT': { [column]: filter.value.max } }
                         ]
                     }, {
-                        'EQ': { [column]: filter.rangeValues[field].min }
+                        'EQ': { [column]: filter.value.min }
                     }, {
-                        'EQ': { [column]: filter.rangeValues[field].max }
+                        'EQ': { [column]: filter.value.max }
                     }]
                 };
             default:
@@ -296,18 +277,32 @@ export class RoomExplorer extends React.Component<RoomExplorerProps, RoomExplore
         } else {
             state.filters[index].value.splice(valIndex,1);
         }
+        if (state.filters[index].value.length === 0) {
+            this.onSelectAll(field, true);
+        }
         this.setState(state);
+    }
+
+    onSelectAll = (field: string, selected: boolean) => {
+        console.info(field,selected);
+        let state = this.state;
+        let index = state.filters.findIndex(filter => filter.field === field);
+
+        console.info(this.state.filters[index].value)
+        state.filters[index].all = selected;
+        this.setState(state);
+        console.info(this.state.filters[index].value)
     }
 
     render () {
         return (
             <div className='room-explorer container-fluid'>
                 <SidebarLayout>
-                    <RoomExplorerFilter filters={this.state.filters} onRangeChange={this.onRangeChange} onSelect={this.onSelect} />
+                    <RoomExplorerFilter filters={this.state.filters} onRangeChange={this.onRangeChange} onSelect={this.onSelect} onSelectAll={this.onSelectAll} />
                 </SidebarLayout>
                 <div className='row'>
                     <div className='col-md-12 col-sm-12'>
-                    <button className='query-btn'><strong>Try some queries!</strong></button>
+                    <button className='query-btn' onClick={this.performSearch}><strong>Try some queries!</strong></button>
                     </div>
                 </div>
                 <Map markers={this.state.markers} handleClick={this.handleMarkerClick} handleDrawOverlay={this.handleDrawOverlay} />

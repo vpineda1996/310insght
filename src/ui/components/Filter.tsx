@@ -4,10 +4,12 @@ import { ColumnType, ROOMS_COLUMNS } from '../store/constants';
 import { Store } from '../store/store';
 
 export interface RoomFilterProps {
+    all?: boolean;
     field: string;
+    onSelect?: any;
+    onSelectAll?: any;
     type: any;
     value: any;
-    onSelect?: any;
     [id: string]: any;
 }
 
@@ -28,19 +30,36 @@ export class RoomFilter extends React.Component<RoomFilterProps, RoomFilterState
     constructor (props: RoomFilterProps) {
         super(props);
         this.state = {
-          checkboxOpions: null
+            checkboxOpions: null
         };
         this.fetchOptions(ROOMS_COLUMNS.find(rc => rc.name === props.field));
     }
 
     renderCheckBox = () => {
         return this.state.checkboxOpions.map((opt: any) => (
-            <span key={opt}><small><input type='checkbox' value={opt} onChange={this.onSelect} />{opt}</small><br/></span>
+            <span key={opt}><input type='checkbox' value={opt} id={'checkbox-'+opt} onChange={this.onSelect} />
+                <small htmlFor={'checkbox-'+opt} style={this.props.all ? {textDecoration: 'line-through'}:{}}>{opt}</small><br/>
+            </span>
         ));
     }
 
+    renderAllCheckBox = () => {
+        return (
+            <span><label>
+                <input type='checkbox' value='all' onChange={this.onSelectAll} checked={this.props.all} />
+                All
+            </label><br/><br/></span>
+        );
+    }
+
+    onSelectAll = (e: any) => {
+        if (!this.props.onSelectAll) { return }
+
+        this.props.onSelectAll(this.props.field, e.target.checked);
+    }
+
     onSelect = (e: any) => {
-        console.info(this.props,e.target);
+        this.props.onSelectAll(this.props.field, false);
         this.props.onSelect(this.props.field, e);
     }
 
@@ -48,22 +67,25 @@ export class RoomFilter extends React.Component<RoomFilterProps, RoomFilterState
         let field = column.dataset + column.name;
         return Store.fetch('room-options', {
             'GET': [field, 'doCount'],
-            'WHERE': {},
             'GROUP': [field],
             'APPLY': [ {'doCount': { 'COUNT': field } } ]
         }).then(data => {
             console.info(data);
-            let options = data.map(val => val[column.dataset + column.name]);
-            this.setState({ checkboxOpions: options });
+            let options = data.filter(val => !!val).map(val => val[column.dataset + column.name]);
+            let state = this.state;
+            state.checkboxOpions = options;
+            this.setState(state);
         });
     }
 
     render () {
         let column = ROOMS_COLUMNS.find(rc => rc.name === this.props.field);
         return (
-            <div className='col-md-3'>
-                <strong>{column.locale}</strong><br />
+            <div>
+                <strong>{column.locale}</strong>
+                <div className='divider-sm' />
                 <div className='filter-checkbox-container'>
+                    { this.props.onSelectAll && this.renderAllCheckBox() }
                     { this.state.checkboxOpions && this.renderCheckBox() }
                 </div>
             </div>

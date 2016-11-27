@@ -21,7 +21,7 @@ html, body, #example, [data-reactroot] {
     max-height: none;
     height: 200px;
     width: 100%;
-    overflow: auto;
+    overflow: scroll;
 
     &-left {
 
@@ -51,35 +51,32 @@ html, body, #example, [data-reactroot] {
       }
     }
 
-    &-right {
-      right: 0;
+    .range-input {
+      overflow: top;
+    }
 
-      .sidebar-toggle , [data-toggle='collapse'] {
-        display: block;
-        float: left;
-        margin-left: 15px;
-        z-index: 101;
-      }
+    .divider-sm {
+      margin-bottom: 10px;
+    }
+
+    .filter-range-container {
+      margin-left: 25px;
+      margin-right: 25px;
+      margin-bottom: 9%;
     }
 
     .filter-checkbox-container {
       overflow: scroll;
       padding-bottom: 25px;
+
+      .rip {
+        text-decoration: line-through;
+      }
     }
 
     .column-index {
       width: 50px;
       background-color: grey;
-    }
-
-    .filter-container {
-      position: relative;
-
-      .submit-query {
-        position: absolute;
-        bottom: 0;
-        float: bottom;
-      }
     }
 
     &-border {

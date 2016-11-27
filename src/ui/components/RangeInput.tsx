@@ -80,8 +80,9 @@ export class RangeInput extends React.Component<RangeInputProps, RangeInputState
     render () {
         let column = ROOMS_COLUMNS.find(rc => rc.name === this.props.field);
         return (
-            <div className='filter-checkbox-container col-md-3'>
-                <strong>{column.locale}</strong><br />
+            <div className='filter-range-container'>
+                <strong>{column.locale}</strong>
+                <div className='divider-sm' />
                 <div>
                     { this.state.range && this.renderRangeInput() }
                 </div>

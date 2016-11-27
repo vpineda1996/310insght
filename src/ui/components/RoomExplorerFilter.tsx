@@ -14,34 +14,29 @@ interface RoomExplorerFilterProps {
     filters: Array<RoomFilterProps|RangeInputProps>;
     onRangeChange: any;
     onSelect: any;
+    onSelectAll: any;
 }
 
 interface RoomExplorerFilterState {
 }
 
 export class RoomExplorerFilter extends React.Component<RoomExplorerFilterProps, RoomExplorerFilterState> {
-    renderExpanded = () => {
-        return (
-            <div>
-                {this.props.filters.map(filter => {
-                    switch (filter.type) {
-                        case RoomFilterType.CHECKBOX:
-                            return <RoomFilter {...filter} onSelect={this.props.onSelect} />
-                        case RoomFilterType.RANGE:
-                            return <RangeInput {...filter} onRangeChange={this.props.onRangeChange} />
-                        default:
-                            return <div />
-                    }
-                })}
-            </div>
-        );
-    }
-
     render () {
         return (
-            <Sidebar orientation='left'>
-                { this.renderExpanded() }
-            </Sidebar>
+            <div className='sidebar sidebar-left sidebar-show-lg'>
+                {this.props.filters.filter(filter => filter.type === RoomFilterType.CHECKBOX).map(filter => {
+                    return <div className='col-md-3'>
+                        <RoomFilter {...filter} onSelect={this.props.onSelect} onSelectAll={this.props.onSelectAll} />
+                        </div>
+                })}
+                <div className='range-input col-md-3'>
+                    {this.props.filters.filter(filter => filter.type === RoomFilterType.RANGE).map(filter => {
+                        return <div className='row'>
+                            <RangeInput {...filter} onRangeChange={this.props.onRangeChange} />
+                        </div>
+                    })}
+                </div>
+            </div>
         );
     }
 }
