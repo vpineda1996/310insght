@@ -22,3 +22,12 @@ export const GEO_ENDPOINT = "http://skaha.cs.ubc.ca:8022/api/v1/team" + TEAM_NUM
 
 export const MAX_GEO_TRIES = 3;
 export const GEO_REQ_TIMEOUT = 700; //ms
+
+export let TIMES = [].concat.apply(
+    Array.from(Array(24)).map((v: any, i: number) => 'MWF' + i),
+    Array.from(Array(16)).map((v: any, i: number) => 'TT' + i)
+);
+
+export const SECTION_SIZE = 'sectionSize';
+export const SECTION_COUNT = 'sectionCount';
+export const NUM_AVAILABLE_TIME_SLOTS = TIMES.length;
