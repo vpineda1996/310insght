@@ -108,16 +108,14 @@ export class Map extends React.Component<MapProps, {}> {
         let props: any = $.extend({}, this.props);
         props.markers = this.props.markers.map((marker) => this.renderMarker(marker, this.props.handleClick));
 
-        return <div className='room-explorer'>
-            <UBCMap
-                containerElement={<div className='map' />}
-                mapElement={<div className='map' />}
-                {...props}>
-                <DrawingManager
-                    defaultDrawingMode={google.maps.drawing.OverlayType.CIRCLE}
-                    defaultOptions={DRAWING_OPTIONS}
-                    onOverlayComplete={this.props.handleDrawOverlay} />
-            </UBCMap>
-        </div>
+        return <UBCMap
+            containerElement={<div className='map' />}
+            mapElement={<div className='map' />}
+            {...props}>
+            <DrawingManager
+                defaultDrawingMode={google.maps.drawing.OverlayType.CIRCLE}
+                defaultOptions={DRAWING_OPTIONS}
+                onOverlayComplete={this.props.handleDrawOverlay} />
+        </UBCMap>
     }
 }
