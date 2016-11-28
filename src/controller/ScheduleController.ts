@@ -43,7 +43,7 @@ export default class ScheduleController {
 
     private findRooms (query: RoomQuery): Promise<any> {
         let _query: QueryRequest = {
-            'GET': ['rooms_name', 'rooms_seats', 'rooms_fullname'],
+            'GET': ['rooms_name', 'rooms_seats', 'rooms_name'],
             'WHERE': query,
             'ORDER': { 'dir': 'DOWN', 'keys': ['rooms_seats']},
             'AS': 'TABLE'

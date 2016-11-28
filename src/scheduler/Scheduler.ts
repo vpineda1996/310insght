@@ -1,4 +1,4 @@
-import { SECTION_SIZE, SECTION_COUNT, NUM_AVAILABLE_TIME_SLOTS, TIMES } from '../common/Constants'
+import { SECTION_SIZE, SECTION_COUNT, NUM_LEGAL_TIME_SLOTS, TIMES, LEGAL_TIMES } from '../common/Constants'
 
 export interface CourseQuery {
     [column: string]: any;
@@ -10,8 +10,10 @@ export interface RoomQuery {
 
 interface Schedule {
     course: string; //uuid
-    room: string; // fullname
+    room: string; // name
     time: string; // MWF8, TT95, ...
+    course_size: number;
+    room_size: number;
 }
 
 interface CourseTimetable {
@@ -48,7 +50,7 @@ interface CourseData {
 interface RoomData {
     rooms_number: string;
     rooms_seats: number;
-    rooms_fullname: string;
+    rooms_name: string;
 }
 
 function courseCount(course: CourseData): number {
@@ -63,7 +65,7 @@ function totalCourseSize(courses: CourseData[]): number {
 
 function totalRoomSize(rooms: RoomData[]): number {
     return rooms.reduce((count: number, room: RoomData) => {
-        return count + room['rooms_seats']* NUM_AVAILABLE_TIME_SLOTS;
+        return count + room['rooms_seats']* NUM_LEGAL_TIME_SLOTS;
     }, 0);
 }
 
@@ -75,7 +77,7 @@ function everoneIsHappy (courses: CourseData[], rooms: number[]): boolean {
         }
     });
     let satisfied = courseSectionSize.every((course: number, index: number) => {
-        return course < rooms[Math.floor(index / NUM_AVAILABLE_TIME_SLOTS)];
+        return course < rooms[Math.floor(index / NUM_LEGAL_TIME_SLOTS)];
     });
     return satisfied;
 }
@@ -91,15 +93,17 @@ function happyTimetable (courses: CourseData[], rooms: RoomData[]): DailyTimetab
     });
 
     sections.forEach((section: CourseData, index: number) => {
-        let time = TIMES[index % NUM_AVAILABLE_TIME_SLOTS];
+        let time = TIMES[LEGAL_TIMES[index % NUM_LEGAL_TIME_SLOTS]];
 
         if (!timetable[time]) {
             timetable[time] = [];
         }
         timetable[time].push({
             course: section.courses_dept + '_' + section.courses_id,
-            room: rooms[Math.floor(index / NUM_AVAILABLE_TIME_SLOTS)].rooms_fullname,
-            time: time
+            room: rooms[Math.floor(index / NUM_LEGAL_TIME_SLOTS)].rooms_name,
+            time: time,
+            course_size: section[SECTION_SIZE],
+            room_size: rooms[Math.floor(index / NUM_LEGAL_TIME_SLOTS)].rooms_seats
         });
     });
 
