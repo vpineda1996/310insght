@@ -1,14 +1,16 @@
 import { SECTION_SIZE, SECTION_COUNT, NUM_LEGAL_TIME_SLOTS, TIMES, LEGAL_TIMES } from '../common/Constants'
 
 export interface CourseQuery {
+    includes?: string[];
     [column: string]: any;
 }
 
 export interface RoomQuery {
+    includes?: string[];
     [column: string]: any;
 }
 
-interface Schedule {
+export interface Schedule {
     course: string; //uuid
     room: string; // name
     time: string; // MWF8, TT95, ...
@@ -17,14 +19,14 @@ interface Schedule {
 }
 
 interface CourseTimetable {
-    [couse: string]: Schedule;
+    [couse: string]: Schedule[];
     // CPSC110: {},
     // ARTS999: {},
     // ...
 }
 
 interface RoomTimetable {
-    [room: string]: Schedule;
+    [room: string]: Schedule[];
     // DMP101: {},
     // BUCH110: {},
     // ...
@@ -37,17 +39,18 @@ interface DailyTimetable {
     // ...
 }
 
-export type Timetable = CourseTimetable | RoomTimetable | DailyTimetable;
+export interface Timetable {
+    timetable: CourseTimetable | RoomTimetable | DailyTimetable;
+    quality: number;
+}
 
-interface CourseData {
-    courses_dept: string;
-    courses_id: string;
-    courses_uuid: string;
-    courses_size: number;
+export interface CourseData {
+    courses_dept?: string;
+    courses_id?: string;
     [id: string]: any;
 }
 
-interface RoomData {
+export interface RoomData {
     rooms_number: string;
     rooms_seats: number;
     rooms_name: string;
@@ -57,7 +60,7 @@ function courseName (course: CourseData): string {
     return course.courses_dept + '_' + course.courses_id;
 }
 
-function courseCount(course: CourseData): number {
+export function courseCount(course: CourseData): number {
     return Math.floor(course[SECTION_COUNT]/ 3) + 1;
 }
 
@@ -67,7 +70,7 @@ function totalCourseSize(courses: CourseData[]): number {
     }, 0);
 }
 
-function quickTimetable (courses: CourseData[], rooms: RoomData[]): DailyTimetable {
+function quickTimetable (courses: CourseData[], rooms: RoomData[]): Timetable{
     let schedules: DailyTimetable = {};
     let onHold: CourseData[] = [];
     let failed: CourseData[] = [];
@@ -75,13 +78,15 @@ function quickTimetable (courses: CourseData[], rooms: RoomData[]): DailyTimetab
 
     let allCourses: CourseData[] = [];
     courses.forEach(course => {
-        for (let i = 0; i < courseCount(course); ++i) {
+        for (let i = 0; i < courseCount(course); i++) {
             allCourses.push(course);
         }
     });
     let totalSize = allCourses.length;
+    let roomSize = rooms.length * NUM_LEGAL_TIME_SLOTS;
 
-    while (allCourses && (filled + failed.length < totalSize)) {
+    while (allCourses && (filled + failed.length < totalSize) && filled < roomSize) {
+
         let course = allCourses[0];
         if (!course) { break; }
         let room = rooms[Math.floor(filled / NUM_LEGAL_TIME_SLOTS)];
@@ -105,7 +110,11 @@ function quickTimetable (courses: CourseData[], rooms: RoomData[]): DailyTimetab
 
     // TODO do whatever with failed courses
 
-    return schedules;
+    let timetable = {
+        timetable: schedules,
+        quality: filled / totalSize
+    }
+    return timetable;
 
     function impossible (time: string, room: RoomData, course: CourseData): boolean {
         return course[SECTION_SIZE] > room.rooms_seats;
@@ -117,13 +126,13 @@ function quickTimetable (courses: CourseData[], rooms: RoomData[]): DailyTimetab
             return true;
         }
 
-        let index = schedules[time].findIndex(c => c.course === courseName(course));
+        let index = schedules[time].findIndex((s: Schedule) => s.course === courseName(course));
         return index === -1;
     }
 
     function tryScheduleAgain (time: string, room: RoomData): number {
         let index = 0;
-        while (index <= onHold.length) {
+        while (index < onHold.length) {
             if (trySchedule(time, room, onHold[index])) {
                 return index;
             }
@@ -172,10 +181,58 @@ function findquickTimetable (courses: CourseData[], rooms: RoomData[]): DailyTim
     return timetable;
 }
 
-export function computeQuick (courses: CourseData[], rooms: RoomData[]): Timetable {
+export function computeQuick (courses: CourseData[], rooms: RoomData[], PER?: string): Timetable {
+
+    if (!PER) { PER = 'DAILY' }
 
     let schedules = quickTimetable(courses, rooms);
-    return schedules;
+    if (PER === 'ROOMS') {
+        return convertDailyToRoom(schedules);
+    } else if (PER === 'COURSES') {
+        return convertDailyToCourse(schedules);
+    } else {
+        return schedules;
+    }
+}
+
+function convertDailyToRoom (timetable: Timetable): Timetable {
+    let schedules: RoomTimetable = {};
+
+    Object.keys(timetable.timetable).forEach(key => {
+        (<Schedule[]>timetable.timetable[key]).forEach(schedule => {
+            let room = schedule.room;
+            if (!schedules[room]) {
+                schedules[room] = [];
+            }
+            schedules[room].push(schedule);
+        });
+    })
+
+    let _timetable: Timetable = {
+        timetable: schedules,
+        quality: timetable.quality
+    }
+    return _timetable;
+}
+
+function convertDailyToCourse (timetable: Timetable): Timetable {
+    let schedules: RoomTimetable = {};
+
+    Object.keys(timetable.timetable).forEach(key => {
+        (<Schedule[]>timetable.timetable[key]).forEach(schedule => {
+            let course = schedule.course;
+            if (!schedules[course]) {
+                schedules[course] = [];
+            }
+            schedules[course].push(schedule);
+        });
+    })
+
+    let _timetable: Timetable = {
+        timetable: schedules,
+        quality: timetable.quality
+    }
+    return _timetable;
 }
 
 export function computeDirty (courses: CourseData[], rooms: RoomData[]): Timetable {
