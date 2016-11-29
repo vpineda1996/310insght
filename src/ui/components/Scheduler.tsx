@@ -67,7 +67,7 @@ export class Scheduler extends React.Component<SchedulerProps, SchedulerState> {
                         Go Back</button>
                     <button id="bottom-button-rooms-view" type="button"
                         className="col-md-5 btn btn-primary" onClick={this.onQueryClick}>
-                        Query!</button>
+                        Show Schedule!</button>
                 </div></div>;
             default:
                 throw new Error("wat");
