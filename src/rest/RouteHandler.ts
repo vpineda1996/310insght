@@ -129,7 +129,7 @@ export default class RouteHandler {
             return next();
         }
 
-        ScheduleController.getInstance().computeTimetable(courseQuery, roomQuery).then((timetable: any) => {
+        ScheduleController.getInstance().computeTimetable(courseQuery, roomQuery, req.params.PER).then((timetable: any) => {
             if (!!timetable) {
                 Log.trace('RouteHandler::Schedule(..) - processed');
                 res.json(200, timetable);

@@ -15,7 +15,7 @@ export default class ScheduleController {
         return this.instance;
     }
 
-    public computeTimetable (courseQuery: CourseQuery, roomQuery: RoomQuery): Promise<Timetable> {
+    public computeTimetable (courseQuery: CourseQuery, roomQuery: RoomQuery, per?: string): Promise<Timetable> {
         return new Promise<Timetable>((resolve, reject) => {
 
             let courses: any[];
@@ -29,7 +29,7 @@ export default class ScheduleController {
                     if (!r) { throw null; }
                     rooms = r;
 
-                    let timetable = computeQuick(courses, rooms);
+                    let timetable = computeQuick(courses, rooms, per);
                     if (!timetable) {
                         timetable = computeDirty(courses, rooms);
                     }
@@ -42,16 +42,25 @@ export default class ScheduleController {
     }
 
     private findRooms (query: RoomQuery): Promise<any> {
+        let GET = query.includes;
+        delete query.includes;
+
         let _query: QueryRequest = {
             'GET': ['rooms_name', 'rooms_seats', 'rooms_name'],
             'WHERE': query,
             'ORDER': { 'dir': 'DOWN', 'keys': ['rooms_seats']},
             'AS': 'TABLE'
         }
+        // [].concat.apply gives ts error??
+        _query.GET.concat.apply(_query.GET, GET);
+
         return this.getData(_query);
     }
 
     private findCourses (query: CourseQuery): Promise<any> {
+        let GET = query.includes;
+        delete query.includes;
+
         let _query: QueryRequest = {
             'GET': ['courses_dept', 'courses_id', SECTION_SIZE, SECTION_COUNT],
             'WHERE': query,
@@ -63,6 +72,8 @@ export default class ScheduleController {
             'ORDER': { 'dir': 'DOWN', 'keys': [SECTION_SIZE]},
             'AS': 'TABLE'
         }
+        _query.GET.concat.apply(_query.GET, GET);
+
         return this.getData(_query);
     }
 
