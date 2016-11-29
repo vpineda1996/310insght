@@ -53,6 +53,10 @@ interface RoomData {
     rooms_name: string;
 }
 
+function courseName (course: CourseData): string {
+    return course.courses_dept + '_' + course.courses_id;
+}
+
 function courseCount(course: CourseData): number {
     return Math.floor(course[SECTION_COUNT]/ 3) + 1;
 }
@@ -63,26 +67,84 @@ function totalCourseSize(courses: CourseData[]): number {
     }, 0);
 }
 
-function totalRoomSize(rooms: RoomData[]): number {
-    return rooms.reduce((count: number, room: RoomData) => {
-        return count + room['rooms_seats']* NUM_LEGAL_TIME_SLOTS;
-    }, 0);
-}
+function quickTimetable (courses: CourseData[], rooms: RoomData[]): DailyTimetable {
+    let schedules: DailyTimetable = {};
+    let onHold: CourseData[] = [];
+    let failed: CourseData[] = [];
+    let filled: number = 0;
 
-function everoneIsHappy (courses: CourseData[], rooms: number[]): boolean {
-    let courseSectionSize: number[] = [];
+    let allCourses: CourseData[] = [];
     courses.forEach(course => {
         for (let i = 0; i < courseCount(course); ++i) {
-            courseSectionSize.push(course[SECTION_SIZE]);
+            allCourses.push(course);
         }
     });
-    let satisfied = courseSectionSize.every((course: number, index: number) => {
-        return course < rooms[Math.floor(index / NUM_LEGAL_TIME_SLOTS)];
-    });
-    return satisfied;
+    let totalSize = allCourses.length;
+
+    while (allCourses && (filled + failed.length < totalSize)) {
+        let course = allCourses[0];
+        if (!course) { break; }
+        let room = rooms[Math.floor(filled / NUM_LEGAL_TIME_SLOTS)];
+        let time = TIMES[LEGAL_TIMES[ filled % NUM_LEGAL_TIME_SLOTS ]];
+        let index: number = -1;
+
+        if (onHold.length && (index = tryScheduleAgain(time, room)) !== -1) {
+            addSchedule(time, room, onHold[index]);
+            onHold.splice(index, 1);
+        } else if (impossible(time, room, course)) {
+            failed.push(course);
+            allCourses.shift();
+        } else if (trySchedule(time, room, course)) {
+            addSchedule(time, room, course);
+            allCourses.shift();
+        } else {
+            onHold.push(course);
+            allCourses.shift();
+        }
+    }
+
+    // TODO do whatever with failed courses
+
+    return schedules;
+
+    function impossible (time: string, room: RoomData, course: CourseData): boolean {
+        return course[SECTION_SIZE] > room.rooms_seats;
+    }
+
+    function trySchedule (time: string, room: RoomData, course: CourseData): boolean {
+        if (!schedules[time]) {
+            schedules[time] = [];
+            return true;
+        }
+
+        let index = schedules[time].findIndex(c => c.course === courseName(course));
+        return index === -1;
+    }
+
+    function tryScheduleAgain (time: string, room: RoomData): number {
+        let index = 0;
+        while (index <= onHold.length) {
+            if (trySchedule(time, room, onHold[index])) {
+                return index;
+            }
+            index ++;
+        }
+        return -1;
+    }
+
+    function addSchedule (time: string, room: RoomData, course: CourseData): void {
+        schedules[time].push({
+            course: courseName(course),
+            room: room.rooms_name,
+            room_size: room.rooms_seats,
+            course_size: course[SECTION_SIZE],
+            time: time
+        });
+        filled ++;
+    }
 }
 
-function happyTimetable (courses: CourseData[], rooms: RoomData[]): DailyTimetable {
+function findquickTimetable (courses: CourseData[], rooms: RoomData[]): DailyTimetable {
     let timetable: DailyTimetable = {};
 
     let sections: CourseData[] = [];
@@ -112,12 +174,8 @@ function happyTimetable (courses: CourseData[], rooms: RoomData[]): DailyTimetab
 
 export function computeQuick (courses: CourseData[], rooms: RoomData[]): Timetable {
 
-    let roomSize = rooms.map(room => room.rooms_seats);
-    if (everoneIsHappy(courses, roomSize)) {
-        return happyTimetable(courses, rooms);
-    } else {
-        return null;
-    }
+    let schedules = quickTimetable(courses, rooms);
+    return schedules;
 }
 
 export function computeDirty (courses: CourseData[], rooms: RoomData[]): Timetable {
