@@ -19,14 +19,14 @@ export interface Schedule {
 }
 
 interface CourseTimetable {
-    [couse: string]: Schedule;
+    [couse: string]: Schedule[];
     // CPSC110: {},
     // ARTS999: {},
     // ...
 }
 
 interface RoomTimetable {
-    [room: string]: Schedule;
+    [room: string]: Schedule[];
     // DMP101: {},
     // BUCH110: {},
     // ...
@@ -181,11 +181,58 @@ function findquickTimetable (courses: CourseData[], rooms: RoomData[]): DailyTim
     return timetable;
 }
 
-export function computeQuick (courses: CourseData[], rooms: RoomData[]): Timetable {
+export function computeQuick (courses: CourseData[], rooms: RoomData[], PER?: string): Timetable {
+
+    if (!PER) { PER = 'DAILY' }
 
     let schedules = quickTimetable(courses, rooms);
-    console.info('schedules:quality',schedules.quality);
-    return schedules;
+    if (PER === 'ROOMS') {
+        return convertDailyToRoom(schedules);
+    } else if (PER === 'COURSES') {
+        return convertDailyToCourse(schedules);
+    } else {
+        return schedules;
+    }
+}
+
+function convertDailyToRoom (timetable: Timetable): Timetable {
+    let schedules: RoomTimetable = {};
+
+    Object.keys(timetable.timetable).forEach(key => {
+        (<Schedule[]>timetable.timetable[key]).forEach(schedule => {
+            let room = schedule.room;
+            if (!schedules[room]) {
+                schedules[room] = [];
+            }
+            schedules[room].push(schedule);
+        });
+    })
+
+    let _timetable: Timetable = {
+        timetable: schedules,
+        quality: timetable.quality
+    }
+    return _timetable;
+}
+
+function convertDailyToCourse (timetable: Timetable): Timetable {
+    let schedules: RoomTimetable = {};
+
+    Object.keys(timetable.timetable).forEach(key => {
+        (<Schedule[]>timetable.timetable[key]).forEach(schedule => {
+            let course = schedule.course;
+            if (!schedules[course]) {
+                schedules[course] = [];
+            }
+            schedules[course].push(schedule);
+        });
+    })
+
+    let _timetable: Timetable = {
+        timetable: schedules,
+        quality: timetable.quality
+    }
+    return _timetable;
 }
 
 export function computeDirty (courses: CourseData[], rooms: RoomData[]): Timetable {

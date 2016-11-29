@@ -15,7 +15,7 @@ export default class ScheduleController {
         return this.instance;
     }
 
-    public computeTimetable (courseQuery: CourseQuery, roomQuery: RoomQuery): Promise<Timetable> {
+    public computeTimetable (courseQuery: CourseQuery, roomQuery: RoomQuery, per?: string): Promise<Timetable> {
         return new Promise<Timetable>((resolve, reject) => {
 
             let courses: any[];
@@ -29,7 +29,7 @@ export default class ScheduleController {
                     if (!r) { throw null; }
                     rooms = r;
 
-                    let timetable = computeQuick(courses, rooms);
+                    let timetable = computeQuick(courses, rooms, per);
                     if (!timetable) {
                         timetable = computeDirty(courses, rooms);
                     }
