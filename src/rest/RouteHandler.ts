@@ -6,6 +6,8 @@ import fs = require('fs');
 
 import DatasetController from '../controller/DatasetController';
 import QueryController from '../controller/QueryController';
+import ScheduleController from '../controller/ScheduleController';
+import { CourseQuery, RoomQuery, Timetable } from '../scheduler/Scheduler';
 
 import { isFormatValid } from '../queryHelpers/querable';
 
@@ -112,6 +114,30 @@ export default class RouteHandler {
             Log.error('RouteHandler::deleteDataset(..) - ERROR: ' + error.message);
             res.send(400, {error: error.message});
         }
+        return next();
+    }
+
+    public static schedule(req: restify.Request, res: restify.Response, next: restify.Next) {
+        Log.trace('RouteHandler::schedule(..) - params: ' + JSON.stringify(req.params));
+
+        let courseQuery: CourseQuery = req.params.COURSES;
+        let roomQuery: RoomQuery = req.params.ROOMS;
+
+        if (!courseQuery || !roomQuery) {
+            Log.trace('RouteHandler::Schedule(..) - empty data');
+            res.send(400, { error: 'plz send some constraints' });
+            return next();
+        }
+
+        ScheduleController.getInstance().computeTimetable(courseQuery, roomQuery).then((timetable: any) => {
+            if (!!timetable) {
+                Log.trace('RouteHandler::Schedule(..) - processed');
+                res.json(200, timetable);
+            } else {
+                Log.error('RouteHandler::Schedule(..) - could not processed');
+                res.json(418, 'enjoy your tea');
+            }
+        });
         return next();
     }
 }
