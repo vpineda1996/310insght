@@ -1,4 +1,4 @@
-import { fetch } from './dispatcher'
+import { fetch, fetchSchedule } from './dispatcher'
 
 const BASE_QUERY = {
     "AS": "TABLE",
@@ -40,6 +40,13 @@ export class Store {
         return this.getInstance().fetch(id, _query);
     }
 
+    public static fetchSchedule(id: string, query: {}): Promise<any> {
+        let _query = query;
+        console.info('Store::Fetch', JSON.stringify(_query));
+
+        return this.getInstance().fetchSchedule(id, _query);
+    }
+
     private fetch(id: string, query: {}): Promise<any[]> {
         let dataContainer = this._data[id];
         if (!dataContainer) return this.load(id, query);
@@ -50,6 +57,48 @@ export class Store {
         if (!data || data.value === [] || data.expires_at < new Date().getTime()) return this.load(id, query);
 
         return new Promise<any[]>((resolve, reject) => resolve(data.value));
+    }
+
+    private fetchSchedule(id: string, query: {}): Promise<any> {
+        let dataContainer = this._data[id];
+        if (!dataContainer) return this.loadSchedule(id, query);
+
+        let key = JSON.stringify(query);
+        let data: Data = dataContainer[key];
+
+        if (!data || data.value === [] || data.expires_at < new Date().getTime()) return this.loadSchedule(id, query);
+
+        return new Promise<any[]>((resolve, reject) => resolve(data.value));
+    }
+
+    private loadSchedule(id: string, query: {}): Promise<any[]> {
+        let key = JSON.stringify(query);
+        let dataContainer = this._data[id];
+        if (!dataContainer) dataContainer = {};
+
+        let data = dataContainer[key];
+        if (!data) {
+            data = {
+                id: id,
+                query_key: key,
+                value: [],
+                expires_at: null
+            };
+        }
+        data.expires_at = new Date().getTime() + 5 * 60000 // 5 mins
+
+        return new Promise<any[]>((resolve, reject) => {
+            return fetchSchedule(id, query).then(res => {
+                data.value = res;
+                dataContainer[key] = data;
+                this._data[id] = dataContainer;
+                return resolve(res);
+            }).fail((xhr, status, error) => {
+                dataContainer[key] = data;
+                this._data[id] = dataContainer;
+                return reject(error);
+            });
+        });
     }
 
     private load(id: string, query: {}): Promise<any[]> {

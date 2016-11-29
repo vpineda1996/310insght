@@ -18,6 +18,7 @@ export enum Datatype {
 
 export const COURSES_ID = 'courses';
 export const ROOMS_ID = 'rooms';
+export const SCHEDULE_ID = 'schedule';
 
 export interface RangeSelectorData {
     col: ColumnType;
