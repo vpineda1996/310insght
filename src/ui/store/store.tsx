@@ -35,6 +35,7 @@ export class Store {
 
     public static fetch(id: string, query: {}): Promise<any[]> {
         let _query = $.extend({}, BASE_QUERY, query);
+        console.info('Store::Fetch', JSON.stringify(_query));
 
         return this.getInstance().fetch(id, _query);
     }
