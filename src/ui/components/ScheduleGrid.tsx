@@ -6,7 +6,8 @@ export interface ScheduleGridProps { }
 export interface ScheduleGridState {
     quality: number,
     data: TimetableByBldng,
-    currentBldg?: string
+    currentBldg?: string,
+    failed?: string[]
 }
 
 export interface TimetableByBldng {
@@ -71,7 +72,7 @@ export class ScheduleGrid extends React.Component<ScheduleGridProps, ScheduleGri
 
     renderQuality = () => {
         if(this.state.quality === -1) return <div />;
-        return <p>Quality: {this.state.quality * 100 + '% of courses are fit within 8am - 5pm'}</p>
+        return <div><p>Quality: {this.state.quality * 100 + '% of courses are fit within 8am - 5pm'}</p>Failed: {this.state.failed.join(", ") || 0 }<p></p></div>
     }
 
     render () {
