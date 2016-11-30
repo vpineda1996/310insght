@@ -113,7 +113,8 @@ export class Scheduler extends React.Component<SchedulerProps, SchedulerState> {
             });
             scheduleDiv.setState({
                 quality: data.quality,
-                data: { timetable: data.timetable }
+                data: { timetable: data.timetable },
+                failed: data.failed
             });
         });
     }
