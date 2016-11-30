@@ -21,6 +21,7 @@
     "mocha": "^2.5.3",
     "mochawesome": "^1.5.2",
     "node-sass": "^3.13.0",
+    "react-d3-basic": "^1.6.11",
     "react-hot-loader": "^3.0.0-beta.6",
     "react-modal-bootstrap": "^1.1.0",
     "sass-loader": "^4.0.2",

@@ -66,6 +66,11 @@ export class ScheduleGrid extends React.Component<ScheduleGridProps, ScheduleGri
     renderRoomTable = () => {
         if(!this.state.currentBldg) return <div />
         let buldingSchedule = this.state.data.timetable[this.state.currentBldg];
+        if(!buldingSchedule) buldingSchedule = [];
+        buldingSchedule = buldingSchedule.map((obj: any)=> {
+            obj.time = obj.time.day + " " + obj.time.time;
+            return obj;
+        });
         return <RoomSchedule rowData={buldingSchedule} columns={TimetableEntryList}/>
     }
 

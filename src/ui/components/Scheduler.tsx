@@ -61,12 +61,12 @@ export class Scheduler extends React.Component<SchedulerProps, SchedulerState> {
                         Next</button>
                 </div>;
             case SchedulerView.SCHEDULEVIEW:
-                return <div className="container"><div className="row button-padding-schedule">
+                return <div className="container-fluid"><div className="row text-center button-padding-schedule">
                     <button id="bottom-button-rooms-view" type="button"
-                        className="col-md-5 btn btn-primary" onClick={this.onPrevClick}>
+                        className="col-md-6 btn btn-primary" onClick={this.onPrevClick}>
                         Go Back</button>
                     <button id="bottom-button-rooms-view" type="button"
-                        className="col-md-5 btn btn-primary" onClick={this.onQueryClick}>
+                        className="col-md-6 btn btn-primary" onClick={this.onQueryClick}>
                         Show Schedule!</button>
                 </div></div>;
             default:
