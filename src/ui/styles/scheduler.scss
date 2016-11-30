@@ -1,0 +1,64 @@
+.course-scheduler {
+
+    > .flex-vertical {
+        height: 500px
+    }
+
+    #rooms-view {
+        display: none;
+
+        .map {
+            height: 500px;
+            overflow: hidden;
+        }
+
+        .sidebar-layout {
+            height: 500px;
+            overflow: hidden;
+        }
+    }
+
+    #rooms-view.active {
+        display: block;
+    }
+
+    #schedule-view {
+        display: none;
+
+        .where-panel {
+            padding-left: 0px;
+            padding-right: 0px;
+        }
+
+        .schedule-panel {
+            padding-left: 0px;
+            padding-right: 0px;
+        }
+    }
+
+    #schedule-view.active {
+        display: block;
+    }
+
+    .button-padding {
+        margin-top: 15px;
+    }
+
+    .button-padding-schedule {
+        margin-bottom: 15px;
+    }
+
+    #bottom-button-rooms-view {
+        flex-grow: 1;
+    }
+
+    .container-max-width {
+        width: 95%;
+    }
+
+}
+
+
+.room-schedule-grid {
+    height: 500px;
+}

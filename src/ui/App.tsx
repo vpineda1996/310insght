@@ -7,7 +7,8 @@ import { CoursesExplorerView } from './components/CoursesExplorerView'
 import { Scheduler, SchedulerProps } from './components/Scheduler'
 
 interface AppState extends SchedulerProps {
-    currentTab: NavBarStates
+    currentTab: NavBarStates,
+    queries: any
 }
 
 export class App extends React.Component<{}, AppState> {
