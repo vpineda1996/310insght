@@ -110,6 +110,10 @@ export class RoomSchedule extends React.Component<RoomScheduleProps, {}> {
         this.api.sizeColumnsToFit();
     };
 
+    componentDidMount() {
+        this.api.sizeColumnsToFit();
+    }
+
     getHeaderDefinition = () => {
         return this.props.columns.map(colDefn => {
             return { headerName: colDefn.locale, field: colDefn.key }

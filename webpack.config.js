@@ -44,18 +44,18 @@ module.exports = {
     plugins: [
         new webpack.HotModuleReplacementPlugin(),
         new webpack.DefinePlugin({
-                'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV)
-            }),
-            new webpack.optimize.DedupePlugin(),
-            new webpack.optimize.OccurenceOrderPlugin(),
-            new webpack.optimize.UglifyJsPlugin({
-                compress: { warnings: false },
-                mangle: true,
-                sourcemap: false,
-                beautify: false,
-                dead_code: true
-            }),
-            new WebpackNotifierPlugin()
+            'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV)
+        }),
+        // new webpack.optimize.DedupePlugin(),
+        // new webpack.optimize.OccurenceOrderPlugin(),
+        // new webpack.optimize.UglifyJsPlugin({
+        //     compress: { warnings: false },
+        //     mangle: true,
+        //     sourcemap: false,
+        //     beautify: false,
+        //     dead_code: true
+        // }),
+        new WebpackNotifierPlugin()
     ],
     sassLoader: {
         includePaths: [path.resolve(__dirname, 'src', 'ui', 'styles')]
@@ -66,7 +66,7 @@ module.exports = {
         host: '0.0.0.0',
         port: 8000,
         proxy: [{
-            context: ['/query*', '/dataset/*'],
+            context: ['/query*', '/dataset/*', '/bruteforce*'],
             target: 'http://localhost:4321',
             secure: false
         }]
