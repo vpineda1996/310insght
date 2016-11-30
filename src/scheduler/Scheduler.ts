@@ -48,6 +48,7 @@ interface DailyTimetable {
 export interface Timetable {
     timetable: CourseTimetable | RoomTimetable | DailyTimetable;
     quality: number;
+    failed: string[]
 }
 
 export interface CourseData {
@@ -76,10 +77,10 @@ function totalCourseSize(courses: CourseData[]): number {
     }, 0);
 }
 
-function quickTimetable (courses: CourseData[], rooms: RoomData[]): Timetable{
+function quickTimetable (courses: CourseData[], rooms: RoomData[]): Timetable {
     let schedules: DailyTimetable = {};
     let onHold: CourseData[] = [];
-    let failed: CourseData[] = [];
+    let failed: string[] = [];
     let filled: number = 0;
 
     let allCourses: CourseData[] = [];
@@ -103,7 +104,7 @@ function quickTimetable (courses: CourseData[], rooms: RoomData[]): Timetable{
             addSchedule(time, room, onHold[index]);
             onHold.splice(index, 1);
         } else if (impossible(time, room, course)) {
-            failed.push(course);
+            failed.push(courseName(course));
             allCourses.shift();
         } else if (trySchedule(time, room, course)) {
             addSchedule(time, room, course);
@@ -118,7 +119,8 @@ function quickTimetable (courses: CourseData[], rooms: RoomData[]): Timetable{
 
     let timetable = {
         timetable: schedules,
-        quality: filled / totalSize
+        quality: filled / totalSize,
+        failed: failed
     }
     return timetable;
 
@@ -231,7 +233,8 @@ function convertDailyToRoom (timetable: Timetable): Timetable {
 
     let _timetable: Timetable = {
         timetable: schedules,
-        quality: timetable.quality
+        quality: timetable.quality,
+        failed: timetable.failed
     }
     return _timetable;
 }
@@ -251,7 +254,8 @@ function convertDailyToCourse (timetable: Timetable): Timetable {
 
     let _timetable: Timetable = {
         timetable: schedules,
-        quality: timetable.quality
+        quality: timetable.quality,
+        failed: timetable.failed
     }
     return _timetable;
 }
