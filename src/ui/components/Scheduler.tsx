@@ -105,6 +105,12 @@ export class Scheduler extends React.Component<SchedulerProps, SchedulerState> {
         }
         Store.fetchSchedule(SCHEDULE_ID,reqBody).then(data => {
             let scheduleDiv : any = this.refs["scheduleGrid"];
+            Object.keys(data.timetable).forEach((key: string) => {
+                data.timetable[key] = data.timetable[key].map((col : any)=> {
+                    if(typeof col === 'object') col.time = col.time.day + " " + col.time.time;
+                    return col;
+                });
+            });
             scheduleDiv.setState({
                 quality: data.quality,
                 data: { timetable: data.timetable }
