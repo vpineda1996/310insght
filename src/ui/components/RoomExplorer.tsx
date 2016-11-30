@@ -148,14 +148,30 @@ export class RoomExplorer extends React.Component<RoomExplorerProps, RoomExplore
     }
 
     buildQuery = (filters: RoomFilterProps[]) => {
+        console.info(filters);
+        let OR_query: any = null;
+
         let query: any = filters.reduce((query: any, filter: RoomFilterProps) => {
             if (!query.AND) query.AND = [];
 
             let partialQuery = buildRoomQuery(filter, this.state.subfilters);
             if (!!partialQuery) {
-                query.AND.push(partialQuery);
+                if (filter.field === 'furniture' || filter.field === 'type') {
+                    console.info(filter,partialQuery)
+                    if (!OR_query) {
+                        OR_query = [];
+                    }
+                    OR_query.push(partialQuery);
+                } else {
+                    query.AND.push(partialQuery);
+                }
             }
 
+            if (!!OR_query) {
+                query.AND.push({
+                    'OR': OR_query
+                });
+            }
             return query;
         }, {});
         return query;
