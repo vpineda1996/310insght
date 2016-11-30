@@ -80,6 +80,8 @@ export class RangeInput extends React.Component<RangeInputProps, RangeInputState
             let margin = range.max - range.min;
             if (margin % 1 !== 0) {
                 margin = margin / 10;
+            } else {
+                margin = 0;
             }
             let oversizedRange = {
                 min: range.min - margin,

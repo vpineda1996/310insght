@@ -69,7 +69,7 @@ const DRAWING_OPTIONS = {
         fillOpacity: 0.25,
         strokeWeight: 5,
         clickable: false,
-        editable: true,
+        editable: false,
         zIndex: 1,
     },
 };

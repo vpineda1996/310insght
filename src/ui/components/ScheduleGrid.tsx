@@ -42,7 +42,7 @@ export class ScheduleGrid extends React.Component<ScheduleGridProps, ScheduleGri
 
     constructor(p:any){
         super(p);
-        this.state = { 
+        this.state = {
             quality: -1,
             data: { timetable: {} },
             currentBldg: undefined
@@ -71,14 +71,14 @@ export class ScheduleGrid extends React.Component<ScheduleGridProps, ScheduleGri
 
     renderQuality = () => {
         if(this.state.quality === -1) return <div />;
-        return <p>Quality: {this.state.quality}</p>
+        return <p>Quality: {this.state.quality * 100 + '% of courses are fit within 8am - 5pm'}</p>
     }
 
     render () {
         return <div>
             <ul className="nav nav-pills">
                 {this.renderNav()}
-            </ul> 
+            </ul>
                 {this.renderRoomTable()}
             <div>
                 {this.renderQuality()}
