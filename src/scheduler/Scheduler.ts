@@ -10,10 +10,16 @@ export interface RoomQuery {
     [column: string]: any;
 }
 
+interface Time {
+    day: string;
+    key: number;
+    time: string;
+}
+
 export interface Schedule {
     course: string; //uuid
     room: string; // name
-    time: string; // MWF8, TT95, ...
+    time: Time; // MWF8, TT95, ...
     course_size: number;
     room_size: number;
 }
@@ -142,12 +148,27 @@ function quickTimetable (courses: CourseData[], rooms: RoomData[]): Timetable{
     }
 
     function addSchedule (time: string, room: RoomData, course: CourseData): void {
+        let displayTime: Time;
+        if (time.startsWith('MWF')) {
+            displayTime = {
+                day: 'Mon/Wed/Fri',
+                key: parseInt(time.substring(3)),
+                time: parseInt(time.substring(3)) + 1 + ':00'
+            }
+        } else {
+            displayTime = {
+                day: 'Tues/Thurs',
+                key: parseInt(time.substring(2)),
+                time: Math.floor(parseInt(time.substring(2)) * 1.5 + parseInt(time.substring(2)) % 2) + ':' + (parseInt(time.substring(2)) % 2 === 0 ? '30' : '00')
+            }
+        }
+
         schedules[time].push({
             course: courseName(course),
             room: room.rooms_name,
             room_size: room.rooms_seats,
             course_size: course[SECTION_SIZE],
-            time: time
+            time: displayTime
         });
         filled ++;
     }
