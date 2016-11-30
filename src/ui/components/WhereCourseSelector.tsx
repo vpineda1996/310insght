@@ -76,7 +76,7 @@ export class WhereCourseSelector extends React.Component<CourseSelectorProps, Co
             return this.setData(COLUMNS.YEAR, data);
         });
         this.getData(COLUMNS.PROFESSOR).then((data: any) => {
-            return this.setData(COLUMNS.PROFESSOR, data);
+            return this.setData(COLUMNS.PROFESSOR, data.filter((d : any) => d[getDatasetId(COLUMNS.PROFESSOR)] !== ""));
         });
         this.getData(COLUMNS.DEPARTMENT).then((data: any) => {
             return this.setData(COLUMNS.DEPARTMENT, data);
