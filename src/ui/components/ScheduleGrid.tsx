@@ -65,9 +65,7 @@ export class ScheduleGrid extends React.Component<ScheduleGridProps, ScheduleGri
 
     renderRoomTable = () => {
         if(!this.state.currentBldg) return <div />
-
         let buldingSchedule = this.state.data.timetable[this.state.currentBldg];
-
         return <RoomSchedule rowData={buldingSchedule} columns={TimetableEntryList}/>
     }
 
@@ -109,6 +107,7 @@ export class RoomSchedule extends React.Component<RoomScheduleProps, {}> {
     onGridReady = (params: any) => {
         this.api = params.api;
         this.columnApi = params.columnApi;
+        this.api.sizeColumnsToFit();
     };
 
     getHeaderDefinition = () => {
@@ -117,7 +116,7 @@ export class RoomSchedule extends React.Component<RoomScheduleProps, {}> {
         });
     }
     render() {
-        return <div className="room-schedule-grid"><AgGridReact
+        return <div ag-grid="gridOptions" className="room-schedule-grid ag-fresh"><AgGridReact
                 columnDefs={this.getHeaderDefinition()}
                 onGridReady={this.onGridReady}
 
@@ -125,7 +124,7 @@ export class RoomSchedule extends React.Component<RoomScheduleProps, {}> {
                 rowSelection="multiple"
                 enableSorting="true"
                 enableFilter="true"
-                rowHeight="22"
+                rowHeight="75"
                 rowData={this.props.rowData}
             />
             </div>
