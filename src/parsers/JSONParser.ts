@@ -33,6 +33,9 @@ const COLUMNS: ColumnType[] = [{
 }, {
     name: 'year',
     type: Datatype.NUMBER
+},{
+    name: 'size',
+    type: Datatype.NUMBER
 }];
 
 const COURSE_KEY_LEN = 4;
@@ -88,6 +91,7 @@ export default class JSONParser {
                                 datatable.columns[7].insertCellFast(this.getCourseAudit(courseOffering));
                                 datatable.columns[8].insertCellFast(this.getCourseUUID(courseOffering));
                                 datatable.columns[9].insertCellFast(this.getCourseYear(courseOffering));
+                                datatable.columns[10].insertCellFast(this.getCourseSize(courseOffering));
                             }
                         });
                     } else if (!listOfCourseYears.courses && !listOfCourseYears.result && listOfCourseYears.rank === undefined) {
@@ -151,5 +155,9 @@ export default class JSONParser {
     }
     private static getCourseYear(courseOffering: any) {
         return courseOffering.Section === 'overall' ? 1900 : parseInt(courseOffering.Year) || 1900;
+    }
+
+    private static getCourseSize(courseOffering: any) {
+        return this.getCoursePass(courseOffering) + this.getCourseFail(courseOffering)
     }
 };
